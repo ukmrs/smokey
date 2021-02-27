@@ -102,7 +102,7 @@ fn main() -> crossterm::Result<()> {
 
                     KeyCode::Backspace => {
                         if app.done > 1 {
-                            if test_text[done - 1].content.is_empty() {
+                            if test_text[app.done - 1].content.is_empty() {
                                 app.done -= 2;
                                 current_char = app.fetch_content(app.done).chars().next().unwrap();
                                 app.test_text[app.done].style = app.todocolor;
