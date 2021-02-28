@@ -1,14 +1,17 @@
-mod terminal_prep;
 mod application;
+mod colorscheme;
 mod drawing;
-
+mod langs;
+mod terminal_prep;
 
 use std::time::{Duration, Instant};
 use std::{borrow::Cow, error::Error, fs::File, io::stdout, sync::mpsc, thread};
 
-use terminal_prep::{cleanup_terminal, init_terminal};
 use application::App;
+use colorscheme::Theme;
 use drawing::draw;
+use langs::prepare_test;
+use terminal_prep::{cleanup_terminal, init_terminal};
 
 #[allow(unused_imports)]
 #[macro_use]
@@ -38,7 +41,6 @@ fn del_last_char(text: &str) -> String {
     String::from(&text[..cut])
 }
 
-
 fn main() -> crossterm::Result<()> {
     WriteLogger::init(
         LevelFilter::Debug,
@@ -46,31 +48,23 @@ fn main() -> crossterm::Result<()> {
         File::create("smokey.log").unwrap(),
     )
     .unwrap();
+
     init_terminal();
 
+    #[allow(unused_mut)]
     let mut sout = stdout();
+
     let backend = CrosstermBackend::new(sout);
     let mut terminal = Terminal::new(backend)?;
 
-    let rainbow = "quick brown fox jumps over the lazy dog!";
+    let mut app = App::create_app();
+    let theme = Theme::initial();
 
-    let test_length: usize = rainbow.len() * 2;
-    let mut string = rainbow.chars();
-    let mut current_char = string.next().unwrap();
-    let mut done: usize = 1;
+    app.test_text = prepare_test("./languages/english", 5, &theme);
+    let mut current_char = app.test_text[app.done].content.chars().next().unwrap();
+    let mut test_length: usize = app.test_text.len();
+    app.start_timer();
 
-    let mut app = App::default();
-    app.wrongcolor = Style::default().fg(Color::Red);
-
-    let mut test_text = Vec::with_capacity(test_length);
-    for chr in rainbow.chars() {
-        test_text.push(Span::styled(String::new(), app.wrongcolor));
-        test_text.push(Span::styled(chr.to_string(), app.todocolor));
-    }
-    app.test_text = test_text.clone();
-
-
-    app.start();
     loop {
         draw(&mut terminal, &mut app);
 
@@ -81,13 +75,15 @@ fn main() -> crossterm::Result<()> {
                     KeyCode::Char(c) => {
                         // user pressed the correct key
                         if c == current_char {
-                            app.test_text[app.done].style = app.donecolor;
+                            app.test_text[app.done].style = theme.done;
                             app.done += 2;
                             if app.done < test_length {
-                                current_char = app.test_text[app.done].content.chars().next().unwrap();
+                                current_char =
+                                    app.test_text[app.done].content.chars().next().unwrap();
                             } else {
-                                // break
+                                debug!("{}", app.calculate_wpm());
                             }
+
                         // wrong key
                         } else {
                             let mut append = app.test_text[app.done - 1].content.to_string();
@@ -102,15 +98,21 @@ fn main() -> crossterm::Result<()> {
 
                     KeyCode::Backspace => {
                         if app.done > 1 {
-                            if test_text[app.done - 1].content.is_empty() {
+                            if app.test_text[app.done - 1].content.is_empty() {
                                 app.done -= 2;
                                 current_char = app.fetch_content(app.done).chars().next().unwrap();
-                                app.test_text[app.done].style = app.todocolor;
+                                app.test_text[app.done].style = theme.todo;
                             } else {
-                                let temp = app.fetch_content(app.done  - 1);
+                                let temp = app.fetch_content(app.done - 1);
                                 app.change_content(app.done - 1, del_last_char(&temp))
                             }
                         }
+                    }
+
+                    KeyCode::Tab => {
+                        app.restart_test(&theme);
+                        current_char = app.test_text[app.done].content.chars().next().unwrap();
+                        test_length = app.test_text.len();
                     }
 
                     KeyCode::Esc => break,
