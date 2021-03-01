@@ -12,7 +12,6 @@ use crossterm::{
 pub fn init_terminal() {
     let mut sout = stdout();
     execute!(sout, EnterAlternateScreen).expect("Unable to enter alternate screen");
-    // Restore cursor position and clear screen for TTYs
     execute!(sout, cursor::MoveTo(0, 0)).expect("Attempt to write to alternate screen failed.");
     // execute!(sout, cursor::Hide).expect("Unable to hide cursor");
     execute!(sout, Clear(ClearType::All)).expect("Unable to clear screen.");
@@ -21,7 +20,6 @@ pub fn init_terminal() {
 
 pub fn cleanup_terminal() {
     let mut sout = stdout();
-    // Restore cursor position and clear screen for TTYs
     // execute!(sout, cursor::MoveTo(0, 0)).expect("Attempt to write to alternate screen failed.");
     execute!(sout, Clear(ClearType::All)).expect("Unable to clear screen.");
     execute!(sout, LeaveAlternateScreen).expect("Unable to leave alternate screen.");

@@ -373,6 +373,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe0f37c9e8f3c5a4a66ad655a93c74daac4ad00c441533bf5c6e7990bb42604e"
 
 [[package]]
+name = "smokey"
+version = "0.1.0"
+dependencies = [
+ "crossterm 0.19.0",
+ "log",
+ "rand",
+ "simplelog",
+ "tui",
+]
+
+[[package]]
 name = "socket2"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -381,17 +392,6 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "winapi",
-]
-
-[[package]]
-name = "st"
-version = "0.1.0"
-dependencies = [
- "crossterm 0.19.0",
- "log",
- "rand",
- "simplelog",
- "tui",
 ]
 
 [[package]]

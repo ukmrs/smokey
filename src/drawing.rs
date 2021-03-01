@@ -22,6 +22,9 @@ pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
                 .split(frame.size());
 
+            frame.set_cursor(app.cursor_x, chunks[0].height + 1);
+
+
             let wpm: String = app.calculate_wpm().round().to_string();
             let block = Paragraph::new(Span::from(wpm))
                 .block(Block::default().title("WPM").borders(Borders::ALL));

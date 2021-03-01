@@ -74,6 +74,8 @@ fn main() -> crossterm::Result<()> {
                 match event.code {
                     KeyCode::Char(c) => {
                         // user pressed the correct key
+                        app.cursor_x += 1;
+
                         if c == current_char {
                             app.test_text[app.done].style = theme.done;
                             app.done += 2;
@@ -82,6 +84,7 @@ fn main() -> crossterm::Result<()> {
                                     app.test_text[app.done].content.chars().next().unwrap();
                             } else {
                                 debug!("{}", app.calculate_wpm());
+                                app.restart_test(&theme, &mut current_char, &mut test_length);
                             }
 
                         // wrong key
@@ -98,6 +101,7 @@ fn main() -> crossterm::Result<()> {
 
                     KeyCode::Backspace => {
                         if app.done > 1 {
+                            app.cursor_x -= 1;
                             if app.test_text[app.done - 1].content.is_empty() {
                                 app.done -= 2;
                                 current_char = app.fetch_content(app.done).chars().next().unwrap();
@@ -110,9 +114,7 @@ fn main() -> crossterm::Result<()> {
                     }
 
                     KeyCode::Tab => {
-                        app.restart_test(&theme);
-                        current_char = app.test_text[app.done].content.chars().next().unwrap();
-                        test_length = app.test_text.len();
+                        app.restart_test(&theme, &mut current_char, &mut test_length);
                     }
 
                     KeyCode::Esc => break,

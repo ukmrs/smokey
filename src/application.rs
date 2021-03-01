@@ -1,5 +1,5 @@
-use crate::langs;
 use crate::colorscheme;
+use crate::langs;
 
 use colorscheme::Theme;
 use langs::prepare_test;
@@ -19,7 +19,7 @@ pub struct App<'a> {
     pub source: String,
     pub test_text: Vec<Span<'a>>,
     pub test_length: u32,
-
+    pub cursor_x: u16,
 }
 
 impl<'a> App<'a> {
@@ -30,6 +30,7 @@ impl<'a> App<'a> {
             done: 1,
             source: "./languages/english".to_string(),
             test_length: 15,
+            cursor_x: 1,
         }
     }
 
@@ -37,12 +38,19 @@ impl<'a> App<'a> {
         self.begining = Instant::now();
     }
 
-    pub fn restart_test(&mut self, th: &'a Theme) {
+    pub fn restart_test(
+        &mut self,
+        th: &'a Theme,
+        current_char: &mut char,
+        test_length: &mut usize,
+    ) {
         self.done = 1;
+        self.cursor_x = 1;
         self.test_text = prepare_test(&self.source, self.test_length, th);
         self.begining = Instant::now();
+        *current_char = self.test_text[self.done].content.chars().next().unwrap();
+        *test_length = self.test_text.len();
     }
-
 
     pub fn calculate_wpm(&self) -> f64 {
         let numerator: f64 = 12.0 * ((self.done - 1) as f64 / 2.0);
