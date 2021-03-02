@@ -9,7 +9,7 @@ use tui::text::Span;
 
 #[allow(dead_code)]
 pub fn mock<'a>(th: &'a Theme) -> Vec<Span<'a>> {
-    let msg = "My name is Giovanni Georgio";
+    let msg = fs::read_to_string("./typedbg/typetest").expect("coudn't load test");
     let mut test = Vec::with_capacity(msg.len() * 2);
 
     for c in msg.chars() {

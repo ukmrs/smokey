@@ -20,6 +20,7 @@ pub struct App<'a> {
     pub test_text: Vec<Span<'a>>,
     pub test_length: u32,
     pub cursor_x: u16,
+    pub mistakes: u32,
 }
 
 impl<'a> App<'a> {
@@ -31,6 +32,7 @@ impl<'a> App<'a> {
             source: "./languages/english".to_string(),
             test_length: 15,
             cursor_x: 1,
+            mistakes: 0,
         }
     }
 
@@ -46,8 +48,10 @@ impl<'a> App<'a> {
     ) {
         self.done = 1;
         self.cursor_x = 1;
-        self.test_text = prepare_test(&self.source, self.test_length, th);
+        // self.test_text = prepare_test(&self.source, self.test_length, th);
+        self.test_text = langs::mock(th);
         self.begining = Instant::now();
+        self.mistakes = 0;
         *current_char = self.test_text[self.done].content.chars().next().unwrap();
         *test_length = self.test_text.len();
     }

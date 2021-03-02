@@ -64,6 +64,7 @@ fn main() -> crossterm::Result<()> {
     let mut current_char = app.test_text[app.done].content.chars().next().unwrap();
     let mut test_length: usize = app.test_text.len();
     app.start_timer();
+    let mut correct = 0;
 
     loop {
         draw(&mut terminal, &mut app);
@@ -75,6 +76,7 @@ fn main() -> crossterm::Result<()> {
                     KeyCode::Char(c) => {
                         // user pressed the correct key
                         app.cursor_x += 1;
+                        correct += 1;
 
                         if c == current_char {
                             app.test_text[app.done].style = theme.done;
@@ -84,18 +86,29 @@ fn main() -> crossterm::Result<()> {
                                     app.test_text[app.done].content.chars().next().unwrap();
                             } else {
                                 debug!("{}", app.calculate_wpm());
+                                let hah = test_length as f64 / 2.0;
                                 app.restart_test(&theme, &mut current_char, &mut test_length);
                             }
 
                         // wrong key
                         } else {
-                            let mut append = app.test_text[app.done - 1].content.to_string();
-                            if c == ' ' {
-                                append.push('_');
-                            } else {
+                            app.mistakes += 1;
+                            if current_char == ' ' {
+                                let mut append = app.test_text[app.done - 1].content.to_string();
                                 append.push(c);
+                                app.test_text[app.done - 1].content = Cow::from(append);
+                            } else {
+                                app.test_text[app.done].style = theme.wrong;
+                                app.done += 2;
+
+                                if app.done < test_length {
+                                    current_char =
+                                        app.test_text[app.done].content.chars().next().unwrap();
+                                } else {
+                                    debug!("{}", app.calculate_wpm());
+                                    app.restart_test(&theme, &mut current_char, &mut test_length);
+                                }
                             }
-                            app.test_text[app.done - 1].content = Cow::from(append);
                         }
                     }
 
