@@ -80,13 +80,23 @@ fn main() -> crossterm::Result<()> {
 
                         if c == current_char {
                             app.test_text[app.done].style = theme.done;
-                            app.done += 2;
+                            app.done += 1;
                             if app.done < test_length {
-                                current_char =
-                                    app.test_text[app.done].content.chars().next().unwrap();
+                                let opt_char = app.test_text[app.done].content.chars().next();
+
+                                if let Some(c) = opt_char {
+                                    current_char = c;
+                                } else {
+                                    app.done += 1;
+                                    current_char = app.test_text[app.done]
+                                        .content
+                                        .chars()
+                                        .next()
+                                        .expect("oof, somehow there is two times blank space");
+                                }
                             } else {
                                 debug!("{}", app.calculate_wpm());
-                                let hah = test_length as f64 / 2.0;
+                                let _hah = test_length as f64 / 2.0;
                                 app.restart_test(&theme, &mut current_char, &mut test_length);
                             }
 
@@ -99,11 +109,19 @@ fn main() -> crossterm::Result<()> {
                                 app.test_text[app.done - 1].content = Cow::from(append);
                             } else {
                                 app.test_text[app.done].style = theme.wrong;
-                                app.done += 2;
+                                app.done += 1;
 
                                 if app.done < test_length {
-                                    current_char =
-                                        app.test_text[app.done].content.chars().next().unwrap();
+                                    let opt_char = app.test_text[app.done].content.chars().next();
+                                    if let Some(c) = opt_char {
+                                        current_char = c;
+                                    } else {
+                                        app.done += 1;
+                                        current_char =
+                                            app.test_text[app.done].content.chars().next().expect(
+                                                "oof, somehow there is two times blank space",
+                                            );
+                                    }
                                 } else {
                                     debug!("{}", app.calculate_wpm());
                                     app.restart_test(&theme, &mut current_char, &mut test_length);
@@ -113,15 +131,24 @@ fn main() -> crossterm::Result<()> {
                     }
 
                     KeyCode::Backspace => {
-                        if app.done > 1 {
+                        if app.done > 0 {
                             app.cursor_x -= 1;
-                            if app.test_text[app.done - 1].content.is_empty() {
-                                app.done -= 2;
+
+                            if current_char == ' ' {
+                                if app.test_text[app.done - 1].content.is_empty() {
+                                    app.done -= 2;
+                                    current_char =
+                                        app.fetch_content(app.done).chars().next().unwrap();
+                                    app.test_text[app.done].style = theme.todo;
+                                } else {
+                                    let temp = app.fetch_content(app.done - 1);
+                                    app.change_content(app.done - 1, del_last_char(&temp))
+                                }
+
+                            } else {
+                                app.done -= 1;
                                 current_char = app.fetch_content(app.done).chars().next().unwrap();
                                 app.test_text[app.done].style = theme.todo;
-                            } else {
-                                let temp = app.fetch_content(app.done - 1);
-                                app.change_content(app.done - 1, del_last_char(&temp))
                             }
                         }
                     }
