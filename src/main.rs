@@ -8,10 +8,9 @@ mod testkeys;
 use std::time::{Duration, Instant};
 use std::{borrow::Cow, error::Error, fs::File, io::stdout, sync::mpsc, thread};
 
-use application::{App, TestState};
+use application::{App, Screen, TestState};
 use colorscheme::Theme;
 use drawing::draw;
-use langs::prepare_test;
 use terminal_prep::{cleanup_terminal, init_terminal};
 use testkeys::test_key_handle;
 
@@ -23,20 +22,7 @@ use simplelog::*;
 
 use crossterm::event::{poll, read, Event as CEvent, KeyCode, KeyEvent, KeyModifiers};
 
-#[allow(unused_imports)]
-use tui::{
-    backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
-    symbols,
-    text::{Span, Spans},
-    widgets::canvas::{Canvas, Line, Map, MapResolution, Rectangle},
-    widgets::{
-        Axis, BarChart, Block, Borders, Chart, Dataset, Gauge, List, ListItem, Paragraph, Row,
-        Sparkline, Table, Tabs, Wrap,
-    },
-    Frame, Terminal,
-};
+use tui::{backend::CrosstermBackend, Terminal};
 
 fn main() -> crossterm::Result<()> {
     WriteLogger::init(
@@ -58,7 +44,6 @@ fn main() -> crossterm::Result<()> {
     let mut app = App::create_app();
     let theme = Theme::initial();
 
-    app.test_text = prepare_test("./languages/english", 5, &theme);
     test.restart_test(&mut app, &theme);
 
     loop {
@@ -66,7 +51,10 @@ fn main() -> crossterm::Result<()> {
             break;
         }
 
-        draw(&mut terminal, &mut app, &mut test);
+        match app.screen {
+            Screen::Test => draw(&mut terminal, &mut app, &mut test),
+            _ => todo!(),
+        }
 
         if poll(Duration::from_millis(250))? {
             let read = read()?;
