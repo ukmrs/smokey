@@ -53,6 +53,7 @@ pub fn test_key_handle<'a>(key: KeyCode, app: &mut App, test: &mut TestState<'a>
                             test.current_char = c;
                         } else {
                             test.done += 1;
+                            test.blanks += 1;
                             test.set_next_char();
                         }
                     // the end of the test

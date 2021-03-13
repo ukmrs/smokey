@@ -5,8 +5,8 @@ mod langs;
 mod terminal_prep;
 mod testkeys;
 
-use std::time::{Duration, Instant};
-use std::{borrow::Cow, error::Error, fs::File, io::stdout, sync::mpsc, thread};
+use std::time::Duration;
+use std::{fs::File, io::stdout};
 
 use application::{App, Screen, TestState};
 use colorscheme::Theme;
@@ -14,13 +14,12 @@ use drawing::draw;
 use terminal_prep::{cleanup_terminal, init_terminal};
 use testkeys::test_key_handle;
 
-#[allow(unused_imports)]
 #[macro_use]
 extern crate log;
 
 use simplelog::*;
 
-use crossterm::event::{poll, read, Event as CEvent, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{poll, read, Event as CEvent};
 
 use tui::{backend::CrosstermBackend, Terminal};
 
