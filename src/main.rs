@@ -58,7 +58,8 @@ fn main() -> crossterm::Result<()> {
         if poll(Duration::from_millis(250))? {
             let read = read()?;
             if let CEvent::Key(event) = read {
-                test_key_handle(event.code, &mut app, &mut test, &theme);
+                debug!("{:?}", event);
+                test_key_handle(event, &mut app, &mut test, &theme);
             }
         } else {
             // TODO a tick event?

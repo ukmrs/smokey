@@ -1,6 +1,6 @@
 use crate::application::{App, TestState};
 use crate::colorscheme::Theme;
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyEvent, KeyCode};
 use std::borrow::Cow;
 
 fn del_last_char(text: &str) -> String {
@@ -8,31 +8,43 @@ fn del_last_char(text: &str) -> String {
     String::from(&text[..cut])
 }
 
-pub fn test_key_handle<'a>(key: KeyCode, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
-    match key {
-        KeyCode::Char(c) => {
-            // user pressed the correct key
-            app.cursor_x += 1;
-            test.correct += 1;
+fn set_next_char_beware_blanks<'a>(test: &mut TestState<'a>) {
+    let opt_char = test.get_next_char();
+    if let Some(c) = opt_char {
+        test.current_char = c;
+    } else {
+        test.done += 1;
+        test.blanks += 1;
+        test.set_next_char();
+    }
+}
 
+fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
+    if test.done < test.test_length {
+        set_next_char_beware_blanks(test)
+    } else {
+        debug!("{}", test.calculate_wpm());
+        test.restart_test(app, theme);
+    }
+}
+
+pub fn test_key_handle<'a>(
+    key: KeyEvent,
+    app: &mut App,
+    test: &mut TestState<'a>,
+    theme: &'a Theme,
+) {
+    match key.code {
+        KeyCode::Char(c) => {
+            // debug!("{:?}, {:?}", key.code, key.modifiers);
+            app.cursor_x += 1;
+
+            // user pressed the correct key
             if c == test.current_char {
+                test.correct += 1;
                 test.text[test.done].style = theme.done;
                 test.done += 1;
-                if test.done < test.test_length {
-                    let opt_char = test.get_next_char();
-
-                    if let Some(c) = opt_char {
-                        test.current_char = c;
-                    } else {
-                        test.done += 1;
-                        test.blanks += 1;
-                        test.set_next_char();
-                    }
-                } else {
-                    debug!("{}", test.calculate_wpm());
-                    let _hah = test.test_length as f64 / 2.0;
-                    test.restart_test(app, theme);
-                }
+                set_next_char_or_end(app, test, theme);
 
             // wrong key
             } else {
@@ -46,28 +58,15 @@ pub fn test_key_handle<'a>(key: KeyCode, app: &mut App, test: &mut TestState<'a>
                 } else {
                     test.text[test.done].style = theme.wrong;
                     test.done += 1;
-
-                    if test.done < test.test_length {
-                        let opt_char = test.get_next_char();
-                        if let Some(c) = opt_char {
-                            test.current_char = c;
-                        } else {
-                            test.done += 1;
-                            test.blanks += 1;
-                            test.set_next_char();
-                        }
-                    // the end of the test
-                    // TODO calculate wpm, acc and show post screen
-                    } else {
-                        debug!("{}", test.calculate_wpm());
-                        test.restart_test(app, theme);
-                    }
+                    set_next_char_or_end(app, test, theme);
                 }
             }
         }
 
         // TODO impl ctrl+Backspace
+        // CTRL BACKSPACE registers as ctrl 7
         KeyCode::Backspace => {
+            debug!("{:?}", key.modifiers);
             if test.done > 0 {
                 app.cursor_x -= 1;
 

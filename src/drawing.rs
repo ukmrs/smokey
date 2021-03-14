@@ -25,7 +25,13 @@ pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut Te
             frame.set_cursor(app.cursor_x, chunks[0].height + 1);
 
 
+
             let wpm: String = test.calculate_wpm().round().to_string();
+
+            // ---***---
+            // let wpm = wpm + (&format!("   blanks: {}", test.blanks));
+            // ---***---
+
             let block = Paragraph::new(Span::from(wpm))
                 .block(Block::default().title("WPM").borders(Borders::ALL));
 
