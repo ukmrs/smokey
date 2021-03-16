@@ -103,8 +103,8 @@ impl<'a> TestState<'a> {
         self.text[self.done].content.chars().next()
     }
 
-    pub fn fetch(&self, index: usize) -> String {
-        self.text[index].content.to_string()
+    pub fn fetch(&self, index: usize) -> &str {
+        self.text[index].content.as_ref()
     }
 
     pub fn change(&mut self, index: usize, item: String) {

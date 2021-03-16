@@ -28,11 +28,19 @@ pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut Te
 
             let wpm: String = test.calculate_wpm().round().to_string();
 
-            // ---***---
-            // let wpm = wpm + (&format!("   blanks: {}", test.blanks));
-            // ---***---
+            #[allow(unused_mut)]
+            let mut dbg_info = String::new();
 
-            let block = Paragraph::new(Span::from(wpm))
+            // ---***---
+            // dbg_info += &format!("blanks: {}/ ", test.blanks);
+            // dbg_info += &format!("done: {}/ ", test.done);
+            // dbg_info += &format!("fetch: {}/ ", test.fetch(test.done));
+            // dbg_info += &format!("cchar: {}/ ", test.current_char);
+            // // ---***---
+            
+            let up_txt = vec![Spans::from(wpm), Spans::from(dbg_info)];
+
+            let block = Paragraph::new(up_txt)
                 .block(Block::default().title("WPM").borders(Borders::ALL));
 
             frame.render_widget(block, chunks[0]);
@@ -41,7 +49,7 @@ pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut Te
 
             let paragraph = Paragraph::new(txt)
                 .block(Block::default().title("Text box").borders(Borders::ALL))
-                .style(Style::default().fg(Color::White).bg(Color::Black));
+                .style(Style::default().fg(Color::White));
 
             frame.render_widget(paragraph, chunks[1]);
         }).unwrap();
