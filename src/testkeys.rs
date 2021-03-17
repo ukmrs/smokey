@@ -1,7 +1,6 @@
 use crate::application::{App, TestState};
 use crate::colorscheme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::borrow::Cow;
 
 fn set_next_char_beware_blanks<'a>(test: &mut TestState<'a>) {
     if let Some(c) = test.get_next_char() {
@@ -22,6 +21,7 @@ fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, theme: &'a 
     }
 }
 
+/// handles keys during test
 pub fn test_key_handle<'a>(
     key: KeyEvent,
     app: &mut App,
@@ -69,7 +69,6 @@ pub fn test_key_handle<'a>(
 
     match key.code {
         KeyCode::Char(c) => {
-            // debug!("{:?}, {:?}", key.code, key.modifiers);
             app.cursor_x += 1;
 
             // user pressed the correct key
@@ -87,7 +86,7 @@ pub fn test_key_handle<'a>(
                     if test.fetch(test.done - 1).len() < 8 {
                         test.text[test.done - 1].content.to_mut().push(c);
                     } else {
-                        // I preemptively push cursor when KeyCode::Char is matched
+                        // cursor is pushed +1 when KeyCode::Char is matched
                         // well in this rare case nothing happens so it needs to reverse
                         app.cursor_x -= 1;
                     }
@@ -103,7 +102,6 @@ pub fn test_key_handle<'a>(
         // TODO impl ctrl+Backspace
         // CTRL BACKSPACE registers as ctrl 7
         KeyCode::Backspace => {
-            debug!("{:?}", key.modifiers);
             if test.done > 0 {
                 app.cursor_x -= 1;
 
