@@ -70,10 +70,7 @@ fn main() -> crossterm::Result<()> {
 
     test.restart_test(&mut app, &theme);
 
-    loop {
-        if app.should_quit {
-            break;
-        }
+    while !app.should_quit {
 
         match app.screen {
             Screen::Test => draw(&mut terminal, &mut app, &mut test),
