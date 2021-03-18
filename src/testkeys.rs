@@ -17,7 +17,7 @@ fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, theme: &'a 
         set_next_char_beware_blanks(test)
     } else {
         debug!("{}", test.calculate_wpm());
-        test.restart_test(app, theme);
+        test.reset(app, theme);
     }
 }
 
@@ -123,7 +123,7 @@ pub fn test_key_handle<'a>(
         }
 
         KeyCode::Tab => {
-            test.restart_test(app, theme);
+            test.reset(app, theme);
         }
 
         KeyCode::Esc => app.should_quit = true,

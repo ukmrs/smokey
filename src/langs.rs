@@ -7,16 +7,23 @@ use std::fs;
 use tui::text::Span;
 
 #[allow(dead_code)]
+
 pub fn mock<'a>(th: &'a Theme) -> Vec<Span<'a>> {
-    let msg = fs::read_to_string("./typedbg/typetest").expect("coudn't load test");
+    let msg = fs::read_to_string("./typedbg/typetest").expect("can load test");
+    let msg = msg.trim_end();
     let mut test = Vec::with_capacity(msg.len() * 2);
 
     for c in msg.chars() {
-        test.push(Span::styled("", th.wrong));
-        test.push(Span::styled(c.to_string(), th.todo));
+        if c == ' ' {
+            test.push(Span::styled("", th.wrong));
+            test.push(Span::styled(" ", th.todo));
+        } else {
+            test.push(Span::styled(c.to_string(), th.todo));
+        }
     }
     test
 }
+
 
 pub fn prepare_test<'a>(source: &str, length: u32, th: &'a Theme) -> Vec<Span<'a>> {
     let rd = fs::read_to_string(source).unwrap();

@@ -24,7 +24,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn create_app() -> Self {
+    pub fn new() -> Self {
         App {
             screen: Screen::Test,
             should_quit: false,
@@ -33,10 +33,49 @@ impl App {
     }
 }
 
+#[derive(Debug)]
+pub struct WpmHoarder {
+    pub wpms: Vec<f64>,
+    pub capacity: usize,
+    pub seconds: u64,
+}
+
+impl WpmHoarder {
+    fn new(capacity: usize) -> Self {
+        WpmHoarder {
+            capacity,
+            wpms: Vec::with_capacity(capacity),
+            seconds: 1,
+        }
+    }
+
+    fn reset(&mut self) {
+        self.wpms.clear();
+        self.seconds = 1;
+    }
+
+    fn is_due(&mut self, begining: Instant) -> bool {
+        let elapsed = begining.elapsed().as_secs();
+        let due_time = self.seconds * (self.wpms.len() as u64 + 1);
+        elapsed >= due_time
+    }
+
+    fn push(&mut self, wpm: f64) {
+        self.wpms.push(wpm);
+        if self.wpms.len() == self.capacity {
+            let new_len: usize = self.wpms.len() / 2;
+            for i in 0..(self.wpms.len() / 2) {
+                self.wpms[i] = (self.wpms[i + 1] + self.wpms[i]) / 2.;
+            }
+            self.wpms.resize(new_len, 0.);
+            self.seconds *= 2;
+        }
+    }
+}
 
 #[allow(dead_code)]
 pub struct TestState<'a> {
-    // letter inputs 
+    // letter inputs
     pub done: usize,
     // blanks are unfortuante consequence of appending mistakes
     // at the end of the word
@@ -56,6 +95,7 @@ pub struct TestState<'a> {
 
     pub text: Vec<Span<'a>>,
     pub test_length: usize,
+    pub hoarder: WpmHoarder,
 }
 
 impl<'a> Default for TestState<'a> {
@@ -71,11 +111,12 @@ impl<'a> Default for TestState<'a> {
             source: "./languages/english".to_string(),
             test_length: 0,
             current_char: ' ',
-            word_amount: 5,
+            word_amount: 20,
+            hoarder: WpmHoarder::new(30),
         }
     }
-
 }
+
 impl<'a> TestState<'a> {
     pub fn calculate_wpm(&self) -> f64 {
         let numerator: f64 = 12. * (self.done - self.blanks) as f64;
@@ -83,23 +124,31 @@ impl<'a> TestState<'a> {
         numerator / elapsed
     }
 
-    pub fn restart_test(&mut self, app: &mut App, th: &'a Theme) {
+    pub fn reset(&mut self, app: &mut App, th: &'a Theme) {
         app.cursor_x = 1;
         self.blanks = 0;
         self.done = 0;
         self.text = prepare_test(&self.source, self.word_amount, th);
-        // self.test_text = langs::mock(th);
+        // self.text = langs::mock(th);
         self.begining = Instant::now();
         self.mistakes = 0;
         self.current_char = self.text[self.done].content.chars().next().unwrap();
         self.test_length = self.text.len();
+        debug!("{:?}", self.hoarder);
+        self.hoarder.reset();
     }
 
-    pub fn set_next_char(&mut self){ 
+    pub fn update_wpm_history(&mut self) {
+        if self.hoarder.is_due(self.begining) {
+            self.hoarder.push(self.calculate_wpm());
+        }
+    }
+
+    pub fn set_next_char(&mut self) {
         self.current_char = self.text[self.done].content.chars().next().expect("oof");
     }
 
-    pub fn get_next_char(&mut self) -> Option<char> { 
+    pub fn get_next_char(&mut self) -> Option<char> {
         self.text[self.done].content.chars().next()
     }
 

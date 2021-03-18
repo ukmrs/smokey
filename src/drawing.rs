@@ -15,7 +15,7 @@ use tui::{
 
 use crate::application::{App, TestState};
 
-pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
+pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
         terminal.draw(|frame| {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)

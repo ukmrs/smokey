@@ -12,7 +12,7 @@ use std::{fs::File, io::stdout};
 use application::{App, Screen, TestState};
 use colorscheme::Theme;
 use crossterm::{execute, style::Print};
-use drawing::draw;
+use drawing::draw_test;
 use terminal_prep::{cleanup_terminal, init_terminal};
 use testkeys::test_key_handle;
 
@@ -28,7 +28,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 /// In case of panic restores terminal before program terminates
 fn panic_hook(panic_info: &panic::PanicInfo) {
     cleanup_terminal();
-    // from what I discovered 
+    // from what I discovered
     // overflows expects
     let msg = match panic_info.payload().downcast_ref::<String>() {
         Some(s) => format!("p! {}", s),
@@ -40,9 +40,6 @@ fn panic_hook(panic_info: &panic::PanicInfo) {
             None => String::from("weird panic hook"),
         },
     };
-
-
-
     let location = panic_info.location().unwrap();
     let mut sout = stdout();
     execute!(sout, Print(format!("{}\n{}\n", msg, location))).unwrap();
@@ -65,16 +62,18 @@ fn main() -> crossterm::Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut test = TestState::default();
-    let mut app = App::create_app();
+    let mut app = App::new();
     let theme = Theme::initial();
 
-    test.restart_test(&mut app, &theme);
+    test.reset(&mut app, &theme);
 
     while !app.should_quit {
-
         match app.screen {
-            Screen::Test => draw(&mut terminal, &mut app, &mut test),
-            _ => todo!(),
+            Screen::Test => {
+                draw_test(&mut terminal, &mut app, &mut test);
+                test.update_wpm_history();
+            }
+            Screen::Post => todo!(),
         }
 
         if poll(Duration::from_millis(250))? {
