@@ -1,3 +1,7 @@
+//! This mod keeps tabs that on the state of the app
+//! as well as current typing test
+//! main structs App and TestState
+
 use crate::colorscheme;
 use crate::langs;
 
@@ -12,6 +16,8 @@ use tui::{
 
 use std::borrow::Cow;
 
+
+
 pub enum Screen {
     Test,
     Post,
@@ -21,6 +27,7 @@ pub struct App {
     pub screen: Screen,
     pub should_quit: bool,
     pub cursor_x: u16,
+    pub margin: u16,
 }
 
 impl App {
@@ -29,10 +36,18 @@ impl App {
             screen: Screen::Test,
             should_quit: false,
             cursor_x: 1,
+            margin: 2,
         }
+    }
+    pub fn end_test(&mut self) {
+        self.screen = Screen::Post;
     }
 }
 
+/// keeps track of wpms roughly every second
+/// absolute precisiion is not important here
+/// If decide against it there is spin-sleep,
+/// crossterm events can be wrapped in a channel
 #[derive(Debug)]
 pub struct WpmHoarder {
     pub wpms: Vec<f64>,
@@ -73,6 +88,7 @@ impl WpmHoarder {
     }
 }
 
+
 #[allow(dead_code)]
 pub struct TestState<'a> {
     // letter inputs
@@ -111,8 +127,8 @@ impl<'a> Default for TestState<'a> {
             source: "./languages/english".to_string(),
             test_length: 0,
             current_char: ' ',
-            word_amount: 20,
-            hoarder: WpmHoarder::new(30),
+            word_amount: 6,
+            hoarder: WpmHoarder::new(32),
         }
     }
 }

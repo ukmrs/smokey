@@ -12,12 +12,13 @@ fn set_next_char_beware_blanks<'a>(test: &mut TestState<'a>) {
     }
 }
 
-fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
+fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, _theme: &'a Theme) {
     if test.done < test.test_length {
         set_next_char_beware_blanks(test)
     } else {
         debug!("{}", test.calculate_wpm());
-        test.reset(app, theme);
+        // test.reset(app, theme);
+        app.end_test()
     }
 }
 
@@ -112,7 +113,11 @@ pub fn test_key_handle<'a>(
                         test.set_next_char();
                         test.text[test.done].style = theme.todo;
                     } else {
-                        test.text[test.done - 1].content.to_mut().pop().expect("checked above");
+                        test.text[test.done - 1]
+                            .content
+                            .to_mut()
+                            .pop()
+                            .expect("checked above");
                     }
                 } else {
                     test.done -= 1;

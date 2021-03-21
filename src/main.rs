@@ -1,3 +1,6 @@
+//! smokey by ukmrs https://github.com/ukmrs/smokey
+//! A simple typing test terminal UI app 
+
 mod application;
 mod colorscheme;
 mod drawing;
@@ -12,7 +15,7 @@ use std::{fs::File, io::stdout};
 use application::{App, Screen, TestState};
 use colorscheme::Theme;
 use crossterm::{execute, style::Print};
-use drawing::draw_test;
+use drawing::*;
 use terminal_prep::{cleanup_terminal, init_terminal};
 use testkeys::test_key_handle;
 
@@ -51,7 +54,7 @@ fn main() -> crossterm::Result<()> {
         Config::default(),
         File::create("smokey.log").unwrap(),
     )
-    .unwrap();
+    .expect("logger init went fine");
     init_terminal();
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
@@ -63,7 +66,7 @@ fn main() -> crossterm::Result<()> {
 
     let mut test = TestState::default();
     let mut app = App::new();
-    let theme = Theme::initial();
+    let theme = Theme::new();
 
     test.reset(&mut app, &theme);
 
@@ -72,8 +75,8 @@ fn main() -> crossterm::Result<()> {
             Screen::Test => {
                 draw_test(&mut terminal, &mut app, &mut test);
                 test.update_wpm_history();
-            }
-            Screen::Post => todo!(),
+            },
+            Screen::Post => draw_post(&mut terminal, &mut app, &mut test),
         }
 
         if poll(Duration::from_millis(250))? {

@@ -9,6 +9,7 @@ use crossterm::{
     },
 };
 
+/// enters alt screen and all that good stuff
 pub fn init_terminal() {
     let mut sout = stdout();
     execute!(sout, EnterAlternateScreen).expect("enter alt screen");
@@ -17,6 +18,8 @@ pub fn init_terminal() {
     enable_raw_mode().expect("Unable to enter raw mode.");
 }
 
+/// leaves the alt screen and leaves terminal as it was before
+/// launching the program
 pub fn cleanup_terminal() {
     let mut sout = stdout();
     execute!(sout, Clear(ClearType::All)).expect("Unable to clear screen.");
