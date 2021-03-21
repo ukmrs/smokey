@@ -8,7 +8,7 @@ use tui::{
     widgets::canvas::{Canvas, Line, Map, MapResolution, Rectangle},
     widgets::{
         Axis, BarChart, Block, Borders, Chart, Dataset, Gauge, List, ListItem, Paragraph, Row,
-        Sparkline, Table, Tabs, Wrap,
+        Sparkline, Table, Tabs, Wrap, GraphType
     },
     Frame, Terminal,
 };
@@ -94,6 +94,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
                 .name("wpm")
                 .marker(symbols::Marker::Dot)
                 .style(Style::default().fg(Color::Blue))
+                .graph_type(GraphType::Line)
                 .data(&data)];
 
             let x_labels: Vec<Span> = data
@@ -108,7 +109,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
                 .block(
                     Block::default()
                         .title(Span::styled(
-                            "Chart 1",
+                            "wpm chart",
                             Style::default()
                                 .fg(Color::Cyan)
                                 .add_modifier(Modifier::BOLD),

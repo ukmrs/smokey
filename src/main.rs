@@ -17,7 +17,7 @@ use colorscheme::Theme;
 use crossterm::{execute, style::Print};
 use drawing::*;
 use terminal_prep::{cleanup_terminal, init_terminal};
-use testkeys::test_key_handle;
+use testkeys::key_handle;
 
 #[macro_use]
 extern crate log;
@@ -82,7 +82,7 @@ fn main() -> crossterm::Result<()> {
         if poll(Duration::from_millis(250))? {
             let read = read()?;
             if let CEvent::Key(event) = read {
-                test_key_handle(event, &mut app, &mut test, &theme);
+                key_handle(event, &mut app, &mut test, &theme);
             }
         } else {
             // TODO a tick event?

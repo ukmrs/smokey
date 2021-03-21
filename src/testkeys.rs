@@ -1,6 +1,18 @@
-use crate::application::{App, TestState};
+use crate::application::{App, Screen, TestState};
 use crate::colorscheme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+pub fn key_handle<'a>(
+    key: KeyEvent,
+    app: &mut App,
+    test: &mut TestState<'a>,
+    theme: &'a Theme,
+) {
+    match app.screen {
+        Screen::Test => handle_keys_test(key, app, test, theme),
+        Screen::Post => handle_keys_post(key, app, test, theme),
+    }
+}
 
 fn set_next_char_beware_blanks<'a>(test: &mut TestState<'a>) {
     if let Some(c) = test.get_next_char() {
@@ -23,7 +35,7 @@ fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, _theme: &'a
 }
 
 /// handles keys during test
-pub fn test_key_handle<'a>(
+fn handle_keys_test<'a>(
     key: KeyEvent,
     app: &mut App,
     test: &mut TestState<'a>,
@@ -135,4 +147,21 @@ pub fn test_key_handle<'a>(
 
         _ => (),
     }
+}
+
+fn handle_keys_post<'a>(
+    key: KeyEvent,
+    app: &mut App,
+    test: &mut TestState<'a>,
+    theme: &'a Theme,
+) {
+    match key.code {
+        KeyCode::Esc => app.should_quit = true,
+        KeyCode::Tab => {
+            app.screen = Screen::Test;
+            test.reset(app, theme);
+        }
+        _ => (),
+    }
+
 }
