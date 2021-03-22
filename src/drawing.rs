@@ -33,7 +33,7 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
             let mut dbg_info = String::new();
 
             // ---***---
-            dbg_info += &format!("mistakes: {}/ ", test.mistakes);
+            // dbg_info += &format!("mistakes: {}/ ", test.mistakes);
             // dbg_info += &format!("done: {}/ ", test.done);
             // dbg_info += &format!("fetch: {}/ ", test.fetch(test.done));
             // dbg_info += &format!("cchar: {}/ ", test.current_char);
@@ -50,7 +50,8 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
 
             let paragraph = Paragraph::new(txt)
                 .block(Block::default().title("Text box").borders(Borders::ALL))
-                .style(Style::default().fg(Color::White));
+                .style(Style::default().fg(Color::White))
+                .wrap(Wrap {trim: false});
 
             frame.render_widget(paragraph, chunks[1]);
         })
