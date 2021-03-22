@@ -7,8 +7,8 @@ use tui::{
     text::{Span, Spans},
     widgets::canvas::{Canvas, Line, Map, MapResolution, Rectangle},
     widgets::{
-        Axis, BarChart, Block, Borders, Chart, Dataset, Gauge, List, ListItem, Paragraph, Row,
-        Sparkline, Table, Tabs, Wrap, GraphType
+        Axis, BarChart, Block, Borders, Chart, Dataset, Gauge, GraphType, List, ListItem,
+        Paragraph, Row, Sparkline, Table, Tabs, Wrap,
     },
     Frame, Terminal,
 };
@@ -18,7 +18,6 @@ use crate::application::{App, TestState};
 pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
     terminal
         .draw(|frame| {
-
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
@@ -65,8 +64,8 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
-                .vertical_margin(2)
-                .horizontal_margin(2)
+                .vertical_margin(app.margin)
+                .horizontal_margin(app.margin)
                 .split(frame.size());
 
             let up_txt = "some bs";
@@ -78,9 +77,14 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
 
             let secs: f64 = test.hoarder.seconds as f64;
             let length: f64 = test.hoarder.wpms.len() as f64;
-            // maybe color depending on how well the test went
-            // its kinda sad to calculate this closure all the time
-            // even though its not a big deal, change that later
+            let (_, max_wpm): (f64, f64) = test.hoarder.get_min_and_max();
+
+            // meh kinda sucks writing a for loop
+            // when functional rust is so sexy
+            // well still left it, because its my code who cares
+            // but I should realy merge it with max function
+            // or better yet get my life together and don't be such a wimp
+
             let data = test
                 .hoarder
                 .wpms
@@ -88,7 +92,6 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
                 .enumerate()
                 .map(|(i, val)| (((i + 1) as f64 * secs as f64), *val))
                 .collect::<Vec<(f64, f64)>>();
-
 
             let wpm_datasets = vec![Dataset::default()
                 .name("wpm")
@@ -102,8 +105,15 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
                 .map(|&(i, _)| Span::styled(format!("{}", i), Style::default().fg(Color::Blue)))
                 .collect();
 
+            let margin: f64 = 20.;
+            let y_upper_bound: f64 = max_wpm.div_euclid(10.) * 10. + margin;
 
-            debug!("{:?}", x_labels);
+            let y_labels: Vec<Span> = (0..=y_upper_bound.div_euclid(10.) as i32)
+                .map(|i| Span::styled(format!("{}", i * 10), Style::default().fg(Color::Blue)))
+                .collect();
+
+            debug!("{:?}", y_labels);
+            debug!("{:?}", y_upper_bound);
 
             let chart = Chart::new(wpm_datasets)
                 .block(
@@ -118,7 +128,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
                 )
                 .x_axis(
                     Axis::default()
-                        .title("X Axis")
+                        .title("time (s)")
                         .style(Style::default().fg(Color::Gray))
                         // TODO importance: meh
                         // this has to panic if length is zero right
@@ -129,9 +139,10 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
                 )
                 .y_axis(
                     Axis::default()
-                        .title("Y Axis")
+                        .title("wpm")
                         .style(Style::default().fg(Color::Gray))
-                        .bounds([0., 100.]),
+                        .bounds([0., y_upper_bound])
+                        .labels(y_labels)
                 );
 
             frame.render_widget(chart, chunks[1]);

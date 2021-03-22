@@ -1,5 +1,5 @@
 //! smokey by ukmrs https://github.com/ukmrs/smokey
-//! A simple typing test terminal UI app 
+//! A simple typing test terminal UI app
 
 mod application;
 mod colorscheme;
@@ -75,7 +75,7 @@ fn main() -> crossterm::Result<()> {
             Screen::Test => {
                 draw_test(&mut terminal, &mut app, &mut test);
                 test.update_wpm_history();
-            },
+            }
             Screen::Post => draw_post(&mut terminal, &mut app, &mut test),
         }
 
@@ -85,7 +85,6 @@ fn main() -> crossterm::Result<()> {
                 key_handle(event, &mut app, &mut test, &theme);
             }
         } else {
-            // TODO a tick event?
             // sneak an afk?
             // Timeout expired and no `Event` is available
         }

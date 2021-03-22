@@ -2,7 +2,6 @@ use crate::colorscheme;
 use colorscheme::Theme;
 
 use rand::seq::SliceRandom;
-use rand::Rng;
 use std::fs;
 use tui::text::Span;
 

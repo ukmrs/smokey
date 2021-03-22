@@ -2,12 +2,7 @@ use crate::application::{App, Screen, TestState};
 use crate::colorscheme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-pub fn key_handle<'a>(
-    key: KeyEvent,
-    app: &mut App,
-    test: &mut TestState<'a>,
-    theme: &'a Theme,
-) {
+pub fn key_handle<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
     match app.screen {
         Screen::Test => handle_keys_test(key, app, test, theme),
         Screen::Post => handle_keys_post(key, app, test, theme),
@@ -35,12 +30,7 @@ fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, _theme: &'a
 }
 
 /// handles keys during test
-fn handle_keys_test<'a>(
-    key: KeyEvent,
-    app: &mut App,
-    test: &mut TestState<'a>,
-    theme: &'a Theme,
-) {
+fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
     // well doing this in terminal was a bad idea XD
     // Ctrl + Backspace registers as weird thing in terminals
     // I got ctrl(h) and ctrl(7) among others
@@ -49,6 +39,12 @@ fn handle_keys_test<'a>(
     // its iffy but works
     // renders ctrl useless during test for other uses though
     if let KeyModifiers::CONTROL = key.modifiers {
+        if let KeyCode::Char(c) = key.code {
+            if c == 'c' {
+                app.should_quit = true;
+                return
+            }
+        }
         debug!("{:?}", key);
         if test.done == 0 {
             return;
@@ -149,19 +145,20 @@ fn handle_keys_test<'a>(
     }
 }
 
-fn handle_keys_post<'a>(
-    key: KeyEvent,
-    app: &mut App,
-    test: &mut TestState<'a>,
-    theme: &'a Theme,
-) {
+fn handle_keys_post<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
     match key.code {
         KeyCode::Esc => app.should_quit = true,
         KeyCode::Tab => {
             app.screen = Screen::Test;
             test.reset(app, theme);
         }
+        KeyCode::Char(c) => {
+            if let KeyModifiers::CONTROL = key.modifiers {
+                if c == 'c' {
+                    app.should_quit = true;
+                }
+            }
+        }
         _ => (),
     }
-
 }

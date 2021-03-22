@@ -8,15 +8,10 @@ use crate::langs;
 use colorscheme::Theme;
 use langs::prepare_test;
 
-use std::time::{Duration, Instant};
-use tui::{
-    style::{Color, Modifier, Style},
-    text::Span,
-};
+use std::time::Instant;
+use tui::text::Span;
 
 use std::borrow::Cow;
-
-
 
 pub enum Screen {
     Test,
@@ -46,10 +41,11 @@ impl App {
 
 /// keeps track of wpms roughly every second
 /// absolute precisiion is not important here
-/// If decide against it there is spin-sleep,
-/// crossterm events can be wrapped in a channel
 #[derive(Debug)]
 pub struct WpmHoarder {
+    // If decide against it there is spin-sleep,
+    // crossterm events can be wrapped in a channel
+    // would be interesting for sure
     pub wpms: Vec<f64>,
     pub capacity: usize,
     pub seconds: u64,
@@ -86,8 +82,20 @@ impl WpmHoarder {
             self.seconds *= 2;
         }
     }
-}
 
+    pub fn get_min_and_max(&self) -> (f64, f64) {
+        let mut min: f64 = self.wpms[0];
+        let mut max: f64 = min;
+        for wpm in &self.wpms[1..] {
+            if *wpm < min {
+                min = *wpm
+            } else if *wpm > max {
+                max = *wpm
+            }
+        }
+        (min, max)
+    }
+}
 
 #[allow(dead_code)]
 pub struct TestState<'a> {
@@ -127,7 +135,7 @@ impl<'a> Default for TestState<'a> {
             source: "./languages/english".to_string(),
             test_length: 0,
             current_char: ' ',
-            word_amount: 6,
+            word_amount: 15,
             hoarder: WpmHoarder::new(32),
         }
     }
@@ -160,6 +168,8 @@ impl<'a> TestState<'a> {
         }
     }
 
+    // this section feels awful
+    // aaaaaah
     pub fn set_next_char(&mut self) {
         self.current_char = self.text[self.done].content.chars().next().expect("oof");
     }
