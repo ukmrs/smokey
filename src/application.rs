@@ -105,9 +105,7 @@ pub struct TestState<'a> {
     // at the end of the word
     pub blanks: usize,
     // corrects are 99% not needed
-    pub correct: u32,
     pub mistakes: u32,
-    pub extras: u32,
 
     pub current_char: char,
     pub word_amount: u32,
@@ -129,8 +127,6 @@ impl<'a> Default for TestState<'a> {
             begining: Instant::now(),
             done: 0,
             blanks: 0,
-            correct: 0,
-            extras: 0,
             mistakes: 0,
             source: "./languages/english".to_string(),
             test_length: 0,
@@ -165,6 +161,14 @@ impl<'a> TestState<'a> {
     pub fn update_wpm_history(&mut self) {
         if self.hoarder.is_due(self.begining) {
             self.hoarder.push(self.calculate_wpm());
+        }
+    }
+
+    /// chekcs if char is a mistake and deducts it from
+    /// the total count
+    pub fn if_mistake_deduct(&mut self, index: usize, th: &'a Theme) {
+        if th.wrong_color == self.text[index].style.fg.unwrap() {
+            self.mistakes -= 1;
         }
     }
 
