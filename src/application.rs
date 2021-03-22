@@ -34,9 +34,6 @@ impl App {
             margin: 2,
         }
     }
-    pub fn end_test(&mut self) {
-        self.screen = Screen::Post;
-    }
 }
 
 /// keeps track of wpms roughly every second
@@ -49,6 +46,7 @@ pub struct WpmHoarder {
     pub wpms: Vec<f64>,
     pub capacity: usize,
     pub seconds: u64,
+    pub final_wpm: f64, 
 }
 
 impl WpmHoarder {
@@ -57,6 +55,7 @@ impl WpmHoarder {
             capacity,
             wpms: Vec::with_capacity(capacity),
             seconds: 1,
+            final_wpm: 0.,
         }
     }
 
@@ -139,7 +138,7 @@ impl<'a> Default for TestState<'a> {
 
 impl<'a> TestState<'a> {
     pub fn calculate_wpm(&self) -> f64 {
-        let numerator: f64 = 12. * (self.done - self.blanks) as f64;
+        let numerator: f64 = 12. * (self.done - self.blanks - self.mistakes as usize) as f64;
         let elapsed = Instant::now().duration_since(self.begining).as_secs() as f64;
         numerator / elapsed
     }
@@ -156,6 +155,11 @@ impl<'a> TestState<'a> {
         self.test_length = self.text.len();
         debug!("{:?}", self.hoarder);
         self.hoarder.reset();
+    }
+
+    pub fn end(&mut self, app: &mut App) {
+        app.screen = Screen::Post;
+        self.hoarder.final_wpm = self.calculate_wpm();
     }
 
     pub fn update_wpm_history(&mut self) {

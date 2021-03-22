@@ -62,13 +62,27 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
     terminal
         .draw(|frame| {
             let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(15), Constraint::Percentage(85)].as_ref())
                 .vertical_margin(app.margin)
                 .horizontal_margin(app.margin)
                 .split(frame.size());
 
-            let up_txt = "some bs";
+            let final_wpm = format!("{}", test.hoarder.final_wpm.round());
+
+            let up_txt = vec![
+                Spans::from(vec![
+                    Span::raw("wpm: "),
+                    Span::styled(final_wpm, Style::default().fg(Color::Blue)),
+                ]),
+                Spans::from(vec![
+                    Span::raw("mistakes: "),
+                    Span::styled(
+                        format!("{}", test.mistakes),
+                        Style::default().fg(Color::Red),
+                    ),
+                ]),
+            ];
 
             let block =
                 Paragraph::new(up_txt).block(Block::default().title("WPM").borders(Borders::ALL));
@@ -142,7 +156,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
                         .title("wpm")
                         .style(Style::default().fg(Color::Gray))
                         .bounds([0., y_upper_bound])
-                        .labels(y_labels)
+                        .labels(y_labels),
                 );
 
             frame.render_widget(chart, chunks[1]);

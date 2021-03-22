@@ -25,7 +25,7 @@ fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, _theme: &'a
     } else {
         debug!("{}", test.calculate_wpm());
         // test.reset(app, theme);
-        app.end_test()
+        test.end(app);
     }
 }
 
