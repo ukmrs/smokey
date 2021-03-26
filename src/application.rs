@@ -127,7 +127,7 @@ impl<'a> Default for TestState<'a> {
             done: 0,
             blanks: 0,
             mistakes: 0,
-            source: "./words/english".to_string(),
+            source: "storage/words/english".to_string(),
             test_length: 0,
             current_char: ' ',
             word_amount: 15,

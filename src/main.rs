@@ -1,6 +1,7 @@
 //! smokey by ukmrs https://github.com/ukmrs/smokey
 //! A simple typing test terminal UI app
 
+mod config;
 mod application;
 mod colorscheme;
 mod drawing;
