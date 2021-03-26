@@ -1,4 +1,5 @@
 use crate::colorscheme;
+use crate::application::Config;
 use colorscheme::Theme;
 
 use rand::seq::SliceRandom;
@@ -83,14 +84,15 @@ pub fn mock<'a>(th: &'a Theme) -> Vec<Span<'a>> {
     test
 }
 
-pub fn prepare_test<'a>(source: &str, length: u32, th: &'a Theme) -> Vec<Span<'a>> {
-    let rd = fs::read_to_string(source).unwrap();
+pub fn prepare_test<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
+    debug!("{:?}", &config.get_source());
+    let rd = fs::read_to_string(&config.get_source()).unwrap();
     let prep = rd.trim_end().split('\n').collect::<Vec<&str>>();
 
     let mut test: Vec<Span> = vec![];
     let mut rng = rand::thread_rng();
 
-    for _ in 0..length - 1 {
+    for _ in 0..config.length - 1 {
         for c in prep.choose(&mut rng).unwrap().chars() {
             test.push(Span::styled(c.to_string(), th.todo));
         }

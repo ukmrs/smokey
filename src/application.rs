@@ -4,9 +4,11 @@
 
 use crate::colorscheme;
 use crate::langs;
+use std::path::PathBuf;
 
 use colorscheme::Theme;
-use langs::prepare_test;
+use directories_next::ProjectDirs;
+use langs::{prepare_test, Punctuation};
 
 use std::time::Instant;
 use tui::text::Span;
@@ -23,6 +25,7 @@ pub struct App {
     pub should_quit: bool,
     pub cursor_x: u16,
     pub margin: u16,
+    pub config: Config,
 }
 
 impl App {
@@ -32,7 +35,41 @@ impl App {
             should_quit: false,
             cursor_x: 1,
             margin: 2,
+            config: Config::default(),
         }
+    }
+}
+
+#[derive(Default)]
+pub struct TestType {
+    pub punctuation: Option<Punctuation>,
+}
+
+pub struct Config {
+    words: PathBuf,
+    pub source: String,
+    pub length: u32,
+    pub test_type: TestType,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        let base = ProjectDirs::from("pl", "ukmrs", "smokey")
+            .unwrap()
+            .data_dir()
+            .to_path_buf();
+        Config {
+            words: base.join("words"),
+            source: String::from("english"),
+            length: 15,
+            test_type: TestType::default(),
+        }
+    }
+}
+
+impl Config {
+    pub fn get_source(&self) -> PathBuf {
+        self.words.join(&self.source)
     }
 }
 
@@ -46,7 +83,7 @@ pub struct WpmHoarder {
     pub wpms: Vec<f64>,
     pub capacity: usize,
     pub seconds: u64,
-    pub final_wpm: f64, 
+    pub final_wpm: f64,
 }
 
 impl WpmHoarder {
@@ -82,6 +119,7 @@ impl WpmHoarder {
         }
     }
 
+    // delet this
     pub fn get_min_and_max(&self) -> (f64, f64) {
         let mut min: f64 = self.wpms[0];
         let mut max: f64 = min;
@@ -147,7 +185,7 @@ impl<'a> TestState<'a> {
         app.cursor_x = 1;
         self.blanks = 0;
         self.done = 0;
-        self.text = prepare_test(&self.source, self.word_amount, th);
+        self.text = prepare_test(&app.config, th);
         // self.text = langs::mock(th);
         self.begining = Instant::now();
         self.mistakes = 0;

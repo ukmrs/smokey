@@ -1,7 +1,6 @@
 //! smokey by ukmrs https://github.com/ukmrs/smokey
 //! A simple typing test terminal UI app
 
-mod config;
 mod application;
 mod colorscheme;
 mod drawing;
@@ -80,7 +79,7 @@ fn main() -> crossterm::Result<()> {
             Screen::Post => draw_post(&mut terminal, &mut app, &mut test),
         }
 
-        if poll(Duration::from_millis(250))? {
+        if poll(Duration::from_millis(300))? {
             let read = read()?;
             if let CEvent::Key(event) = read {
                 key_handle(event, &mut app, &mut test, &theme);
