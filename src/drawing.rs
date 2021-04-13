@@ -127,9 +127,6 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
                 .map(|i| Span::styled(format!("{}", i * 10), Style::default().fg(Color::Blue)))
                 .collect();
 
-            debug!("{:?}", y_labels);
-            debug!("{:?}", y_upper_bound);
-
             let chart = Chart::new(wpm_datasets)
                 .block(
                     Block::default()

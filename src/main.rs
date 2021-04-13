@@ -2,6 +2,7 @@
 //! A simple typing test terminal UI app
 
 mod application;
+mod randorst;
 mod colorscheme;
 mod drawing;
 mod langs;

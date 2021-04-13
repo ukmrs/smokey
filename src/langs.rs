@@ -1,14 +1,19 @@
-use crate::colorscheme;
 use crate::application::Config;
+use crate::colorscheme;
+use crate::randorst::Randorst;
 use colorscheme::Theme;
 
+use fastrand::Rng as FastRng;
 use rand::seq::SliceRandom;
 use std::fs;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use tui::text::Span;
 
 #[allow(dead_code)]
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Punctuation {
@@ -84,8 +89,9 @@ pub fn mock<'a>(th: &'a Theme) -> Vec<Span<'a>> {
     test
 }
 
-pub fn prepare_test<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
+pub fn prepare_test2<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
     debug!("{:?}", &config.get_source());
+    let now = Instant::now();
     let rd = fs::read_to_string(&config.get_source()).unwrap();
     let prep = rd.trim_end().split('\n').collect::<Vec<&str>>();
 
@@ -104,5 +110,57 @@ pub fn prepare_test<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
         test.push(Span::styled(c.to_string(), th.todo));
     }
 
+    debug!("preparing test {:?}", now.elapsed().as_secs_f64());
+    debug!("{}", prep.len());
+    test
+}
+
+fn get_shuffled_words(config: &Config) -> Vec<String> {
+    let file = File::open(&config.get_source()).expect("couldn't open file");
+    let reader = BufReader::new(file);
+    let mut line_iter = reader.lines();
+    let mut container: Vec<String> = Vec::new();
+
+    let mut prng = Randorst::gen(config.length, 0..config.freq_cut_off);
+    let mut last = prng.next().unwrap();
+    let out = line_iter.nth(last).unwrap().unwrap();
+    container.push(out);
+    let mut cached_word: usize = container.len() - 1;
+
+    for (i, val) in prng.enumerate() {
+        debug!("val {}", val);
+        if val == last {
+            container.push(container[cached_word].to_string());
+            continue;
+        }
+        container.push(line_iter.nth(val - last - 1).unwrap().unwrap());
+        cached_word = i + 1;
+        last = val;
+    }
+
+    FastRng::new().shuffle(&mut container);
+    container
+}
+
+pub fn prepare_test<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
+    let now = Instant::now();
+    let prep = get_shuffled_words(config);
+
+    let mut test: Vec<Span> = vec![];
+
+    for word in &prep {
+        for c in word.chars() {
+            test.push(Span::styled(c.to_string(), th.todo));
+        }
+        test.push(Span::styled("", th.wrong));
+        test.push(Span::styled(" ", th.todo));
+    }
+
+    test.pop();
+    test.pop();
+
+
+    debug!("preparing test {:?}", now.elapsed().as_secs_f64());
+    debug!("{}", prep.len());
     test
 }

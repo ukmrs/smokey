@@ -125,6 +125,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastrand"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca5faf057445ce5c9d4329e382b2ce7ca38550ef3b73a5348362d5f24e0c7fe3"
+dependencies = [
+ "instant",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -409,6 +418,7 @@ version = "0.1.0"
 dependencies = [
  "crossterm 0.19.0",
  "directories-next",
+ "fastrand",
  "log",
  "rand",
  "simplelog",

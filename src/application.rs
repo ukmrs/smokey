@@ -48,8 +48,9 @@ pub struct TestType {
 pub struct Config {
     words: PathBuf,
     pub source: String,
-    pub length: u32,
+    pub length: usize,
     pub test_type: TestType,
+    pub freq_cut_off: usize,
 }
 
 impl Default for Config {
@@ -63,6 +64,7 @@ impl Default for Config {
             source: String::from("english"),
             length: 15,
             test_type: TestType::default(),
+            freq_cut_off: 60000,
         }
     }
 }
@@ -191,7 +193,6 @@ impl<'a> TestState<'a> {
         self.mistakes = 0;
         self.current_char = self.text[self.done].content.chars().next().unwrap();
         self.test_length = self.text.len();
-        debug!("{:?}", self.hoarder);
         self.hoarder.reset();
     }
 
