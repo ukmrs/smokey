@@ -79,9 +79,6 @@ impl Config {
 /// absolute precisiion is not important here
 #[derive(Debug)]
 pub struct WpmHoarder {
-    // If decide against it there is spin-sleep,
-    // crossterm events can be wrapped in a channel
-    // would be interesting for sure
     pub wpms: Vec<f64>,
     pub capacity: usize,
     pub seconds: u64,
@@ -188,7 +185,6 @@ impl<'a> TestState<'a> {
         self.blanks = 0;
         self.done = 0;
         self.text = prepare_test(&app.config, th);
-        // self.text = langs::mock(th);
         self.begining = Instant::now();
         self.mistakes = 0;
         self.current_char = self.text[self.done].content.chars().next().unwrap();
