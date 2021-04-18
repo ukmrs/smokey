@@ -64,7 +64,7 @@ impl Default for Config {
             source: String::from("english"),
             length: 15,
             test_type: TestType::default(),
-            freq_cut_off: 60000,
+            freq_cut_off: 10_000,
         }
     }
 }

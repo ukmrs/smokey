@@ -89,32 +89,6 @@ pub fn mock<'a>(th: &'a Theme) -> Vec<Span<'a>> {
     test
 }
 
-pub fn prepare_test2<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
-    debug!("{:?}", &config.get_source());
-    let now = Instant::now();
-    let rd = fs::read_to_string(&config.get_source()).unwrap();
-    let prep = rd.trim_end().split('\n').collect::<Vec<&str>>();
-
-    let mut test: Vec<Span> = vec![];
-    let mut rng = rand::thread_rng();
-
-    for _ in 0..config.length - 1 {
-        for c in prep.choose(&mut rng).unwrap().chars() {
-            test.push(Span::styled(c.to_string(), th.todo));
-        }
-        test.push(Span::styled("", th.wrong));
-        test.push(Span::styled(" ", th.todo));
-    }
-
-    for c in prep.choose(&mut rng).unwrap().chars() {
-        test.push(Span::styled(c.to_string(), th.todo));
-    }
-
-    debug!("preparing test {:?}", now.elapsed().as_secs_f64());
-    debug!("{}", prep.len());
-    test
-}
-
 fn get_shuffled_words(config: &Config) -> Vec<String> {
     let file = File::open(&config.get_source()).expect("couldn't open file");
     let reader = BufReader::new(file);
@@ -128,7 +102,6 @@ fn get_shuffled_words(config: &Config) -> Vec<String> {
     let mut cached_word: usize = container.len() - 1;
 
     for (i, val) in prng.enumerate() {
-        debug!("val {}", val);
         if val == last {
             container.push(container[cached_word].to_string());
             continue;
@@ -164,3 +137,5 @@ pub fn prepare_test<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
     debug!("{}", prep.len());
     test
 }
+
+
