@@ -7,6 +7,7 @@ pub struct StatefulList<T> {
     pub items: Vec<T>,
 }
 
+#[allow(dead_code)]
 impl<T> StatefulList<T> {
     pub fn new() -> StatefulList<T> {
         StatefulList {

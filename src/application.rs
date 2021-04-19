@@ -14,28 +14,35 @@ use std::time::Instant;
 use tui::text::Span;
 
 use std::borrow::Cow;
+use super::util::StatefulList;
 
 pub enum Screen {
     Test,
     Post,
 }
 
-pub struct App {
+pub struct App<'a> {
     pub screen: Screen,
     pub should_quit: bool,
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
+    pub length_choice_list: StatefulList<&'a str>,
+    pub freq_choice_list: StatefulList<&'a str>,
 }
 
-impl App {
+impl<'a> App<'a> {
     pub fn new() -> Self {
+        let length_list = vec!["10", "15", "25", "50", "100"];
+        let freq_cut_list = vec!["100", "1k", "5k", "10k", "max"];
         App {
             screen: Screen::Test,
             should_quit: false,
             cursor_x: 1,
             margin: 2,
             config: Config::default(),
+            length_choice_list: StatefulList::with_items(length_list),
+            freq_choice_list: StatefulList::with_items(freq_cut_list),
         }
     }
 }
