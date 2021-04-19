@@ -13,14 +13,18 @@ use langs::{prepare_test, Punctuation};
 use std::time::Instant;
 use tui::text::Span;
 
-use std::borrow::Cow;
 use super::util::StatefulList;
+use std::borrow::Cow;
 
 pub enum Screen {
     Test,
     Post,
     Settings,
 }
+
+pub const app_logo: &'static str = " _._ _  _ |  _    
+_>| | |(_)|<(/_\\/ 
+               /  ";
 
 pub struct App<'a> {
     pub screen: Screen,
@@ -67,6 +71,7 @@ impl Default for Config {
             .unwrap()
             .data_dir()
             .to_path_buf();
+
         Config {
             words: base.join("words"),
             source: String::from("english"),

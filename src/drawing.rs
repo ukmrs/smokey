@@ -1,3 +1,5 @@
+use super::application::app_logo;
+
 #[allow(unused_imports)]
 use tui::{
     backend::{Backend, CrosstermBackend},
@@ -163,48 +165,73 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
 }
 
 pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
-    terminal.draw(|f| {
-        let chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-            .split(f.size());
+    terminal
+        .draw(|f| {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .split(f.size());
 
-        let items: Vec<ListItem> = app
-            .length_choice_list
-            .items
-            .iter()
-            .map(|i| ListItem::new(*i).style(Style::default().fg(Color::Black).bg(Color::White)))
-            .collect();
+            draw_title(f, app, chunks[0]);
+            draw_row_with_freq_and_len(f, app, chunks[1]);
+        })
+        .expect("drawing settings");
+}
 
-        let items = List::new(items)
-            .block(Block::default().borders(Borders::ALL).title("List"))
-            .highlight_style(
-                Style::default()
-                    .bg(Color::LightGreen)
-                    .add_modifier(Modifier::BOLD),
-            )
-            .highlight_symbol(">> ");
+pub fn draw_title<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(area);
 
-        f.render_stateful_widget(items, chunks[0], &mut app.length_choice_list.state);
+    let block = Paragraph::new(app_logo).block(Block::default().borders(Borders::NONE));
 
+    f.render_widget(block, chunks[0]);
 
-        let items: Vec<ListItem> = app
-            .freq_choice_list
-            .items
-            .iter()
-            .map(|i| ListItem::new(*i).style(Style::default().fg(Color::Black).bg(Color::White)))
-            .collect();
+    let block = Paragraph::new(app_logo).block(Block::default().borders(Borders::NONE));
 
-        let items = List::new(items)
-            .block(Block::default().borders(Borders::ALL).title("List"))
-            .highlight_style(
-                Style::default()
-                    .bg(Color::LightGreen)
-                    .add_modifier(Modifier::BOLD),
-            )
-            .highlight_symbol(">> ");
+    f.render_widget(block, chunks[1]);
+}
 
-        f.render_stateful_widget(items, chunks[1], &mut app.freq_choice_list.state);
+pub fn draw_row_with_freq_and_len<B: Backend>(f: &mut Frame<B>, app: &mut App, rect: Rect) {
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(rect);
 
-    }).expect("drawing settings");
+    let items: Vec<ListItem> = app
+        .length_choice_list
+        .items
+        .iter()
+        .map(|i| ListItem::new(*i).style(Style::default().fg(Color::Gray)))
+        .collect();
+
+    let items = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(
+            Style::default()
+                .bg(Color::LightGreen)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    f.render_stateful_widget(items, chunks[0], &mut app.length_choice_list.state);
+
+    let items: Vec<ListItem> = app
+        .freq_choice_list
+        .items
+        .iter()
+        .map(|i| ListItem::new(*i).style(Style::default().fg(Color::Gray)))
+        .collect();
+
+    let items = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(
+            Style::default()
+                .bg(Color::LightGreen)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    f.render_stateful_widget(items, chunks[1], &mut app.freq_choice_list.state);
 }
