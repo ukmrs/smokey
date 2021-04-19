@@ -72,22 +72,6 @@ impl PFreq {
     }
 }
 
-pub fn mock<'a>(th: &'a Theme) -> Vec<Span<'a>> {
-    let msg = fs::read_to_string("./typedbg/typetest").expect("can load test");
-    let msg = msg.trim_end();
-    let mut test = Vec::with_capacity(msg.len() * 2);
-
-    for c in msg.chars() {
-        if c == ' ' {
-            test.push(Span::styled("", th.wrong));
-            test.push(Span::styled(" ", th.todo));
-        } else {
-            test.push(Span::styled(c.to_string(), th.todo));
-        }
-    }
-    test
-}
-
 fn get_shuffled_words(config: &Config) -> Vec<String> {
     let file = File::open(&config.get_source()).expect("couldn't open file");
     let reader = BufReader::new(file);
@@ -131,10 +115,7 @@ pub fn prepare_test<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
     test.pop();
     test.pop();
 
-
     debug!("preparing test {:?}", now.elapsed().as_secs_f64());
     debug!("{}", prep.len());
     test
 }
-
-
