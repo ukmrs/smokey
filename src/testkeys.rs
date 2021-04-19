@@ -195,9 +195,26 @@ fn handle_keys_settings<'a>(
             if let KeyModifiers::CONTROL = key.modifiers {
                 if c == 'c' {
                     app.should_quit = true;
+                    return
                 }
             }
+
+            match c {
+                'h' => {},
+                'j' => {},
+                'k' => {},
+                'l' => {},
+                'q' => app.should_quit = true,
+                _ => {},
+            }
+
         }
+
+        KeyCode::Left => {},
+        KeyCode::Down => {},
+        KeyCode::Up => {},
+        KeyCode::Right => {},
+
         _ => (),
     }
 }
