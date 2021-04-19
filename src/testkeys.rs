@@ -6,6 +6,7 @@ pub fn key_handle<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, th
     match app.screen {
         Screen::Test => handle_keys_test(key, app, test, theme),
         Screen::Post => handle_keys_post(key, app, test, theme),
+        Screen::Settings => handle_keys_settings(key, app, test, theme),
     }
 }
 
@@ -42,7 +43,7 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
         if let KeyCode::Char(c) = key.code {
             if c == 'c' {
                 app.should_quit = true;
-                return
+                return;
             }
         }
 
@@ -151,13 +152,45 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
     }
 }
 
-fn handle_keys_post<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
+fn handle_keys_post<'a>(
+    key: KeyEvent,
+    app: &mut App,
+    test: &mut TestState<'a>,
+    theme: &'a Theme,
+) {
     match key.code {
         KeyCode::Esc => app.should_quit = true,
+
         KeyCode::Tab => {
             app.screen = Screen::Test;
             test.reset(app, theme);
         }
+
+        KeyCode::Char(c) => {
+            if let KeyModifiers::CONTROL = key.modifiers {
+                if c == 'c' {
+                    app.should_quit = true;
+                }
+            }
+        }
+        _ => (),
+    }
+}
+
+fn handle_keys_settings<'a>(
+    key: KeyEvent,
+    app: &mut App,
+    test: &mut TestState<'a>,
+    theme: &'a Theme,
+) {
+    match key.code {
+        KeyCode::Esc => app.should_quit = true,
+
+        KeyCode::Tab => {
+            app.screen = Screen::Test;
+            test.reset(app, theme);
+        }
+
         KeyCode::Char(c) => {
             if let KeyModifiers::CONTROL = key.modifiers {
                 if c == 'c' {

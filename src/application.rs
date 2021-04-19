@@ -19,6 +19,7 @@ use super::util::StatefulList;
 pub enum Screen {
     Test,
     Post,
+    Settings,
 }
 
 pub struct App<'a> {

@@ -69,6 +69,7 @@ fn main() -> crossterm::Result<()> {
     let theme = Theme::new();
 
     test.reset(&mut app, &theme);
+    app.screen = Screen::Settings;
 
     while !app.should_quit {
         match app.screen {
@@ -77,6 +78,7 @@ fn main() -> crossterm::Result<()> {
                 test.update_wpm_history();
             }
             Screen::Post => draw_post(&mut terminal, &mut app, &mut test),
+            Screen::Settings => draw_settings(&mut terminal, &mut app, &mut test),
         }
 
         if poll(Duration::from_millis(300))? {

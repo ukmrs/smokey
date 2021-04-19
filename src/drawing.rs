@@ -8,14 +8,12 @@ use tui::{
     widgets::canvas::{Canvas, Line, Map, MapResolution, Rectangle},
     widgets::{
         Axis, BarChart, Block, Borders, Chart, Dataset, Gauge, GraphType, List, ListItem,
-        Paragraph, Row, Sparkline, Table, Tabs, Wrap, ListState,
+        ListState, Paragraph, Row, Sparkline, Table, Tabs, Wrap,
     },
     Frame, Terminal,
 };
 
-
 use crate::application::{App, TestState};
-use super::util::StatefulList;
 
 pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
     terminal
@@ -53,7 +51,7 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
             let paragraph = Paragraph::new(txt)
                 .block(Block::default().title("Text box").borders(Borders::ALL))
                 .style(Style::default().fg(Color::White))
-                .wrap(Wrap {trim: false});
+                .wrap(Wrap { trim: false });
 
             frame.render_widget(paragraph, chunks[1]);
         })
@@ -162,4 +160,51 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
             frame.render_widget(chart, chunks[1]);
         })
         .expect("drawing post went fine")
+}
+
+pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
+    terminal.draw(|f| {
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .split(f.size());
+
+        let items: Vec<ListItem> = app
+            .length_choice_list
+            .items
+            .iter()
+            .map(|i| ListItem::new(*i).style(Style::default().fg(Color::Black).bg(Color::White)))
+            .collect();
+
+        let items = List::new(items)
+            .block(Block::default().borders(Borders::ALL).title("List"))
+            .highlight_style(
+                Style::default()
+                    .bg(Color::LightGreen)
+                    .add_modifier(Modifier::BOLD),
+            )
+            .highlight_symbol(">> ");
+
+        f.render_stateful_widget(items, chunks[0], &mut app.length_choice_list.state);
+
+
+        let items: Vec<ListItem> = app
+            .freq_choice_list
+            .items
+            .iter()
+            .map(|i| ListItem::new(*i).style(Style::default().fg(Color::Black).bg(Color::White)))
+            .collect();
+
+        let items = List::new(items)
+            .block(Block::default().borders(Borders::ALL).title("List"))
+            .highlight_style(
+                Style::default()
+                    .bg(Color::LightGreen)
+                    .add_modifier(Modifier::BOLD),
+            )
+            .highlight_symbol(">> ");
+
+        f.render_stateful_widget(items, chunks[1], &mut app.freq_choice_list.state);
+
+    }).expect("drawing settings");
 }
