@@ -2,12 +2,11 @@
 //! A simple typing test terminal UI app
 
 mod application;
-mod randorst;
 mod colorscheme;
 mod drawing;
 mod langs;
-mod terminal_prep;
 mod testkeys;
+mod util;
 
 use std::panic;
 use std::time::Duration;
@@ -17,8 +16,8 @@ use application::{App, Screen, TestState};
 use colorscheme::Theme;
 use crossterm::{execute, style::Print};
 use drawing::*;
-use terminal_prep::{cleanup_terminal, init_terminal};
 use testkeys::key_handle;
+use util::terminal_prep;
 
 #[macro_use]
 extern crate log;
@@ -31,7 +30,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 
 /// In case of panic restores terminal before program terminates
 fn panic_hook(panic_info: &panic::PanicInfo) {
-    cleanup_terminal();
+    terminal_prep::cleanup_terminal();
     // from what I discovered
     // overflows expects
     let msg = match panic_info.payload().downcast_ref::<String>() {
@@ -56,7 +55,7 @@ fn main() -> crossterm::Result<()> {
         File::create("smokey.log").unwrap(),
     )
     .expect("logger init went fine");
-    init_terminal();
+    terminal_prep::init_terminal();
     panic::set_hook(Box::new(|info| panic_hook(info)));
 
     #[allow(unused_mut)]
@@ -91,6 +90,6 @@ fn main() -> crossterm::Result<()> {
         }
     }
 
-    cleanup_terminal();
+    terminal_prep::cleanup_terminal();
     Ok(())
 }

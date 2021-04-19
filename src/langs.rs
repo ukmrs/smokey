@@ -1,10 +1,9 @@
 use crate::application::Config;
 use crate::colorscheme;
-use crate::randorst::Randorst;
 use colorscheme::Theme;
 
 use fastrand::Rng as FastRng;
-use rand::seq::SliceRandom;
+use super::util::randorst::Randorst;
 use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
