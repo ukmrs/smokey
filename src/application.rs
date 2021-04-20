@@ -4,7 +4,8 @@
 
 use crate::colorscheme;
 use crate::langs;
-use std::path::PathBuf;
+use crate::vec_of_strings;
+use std::path::{Path, PathBuf};
 
 use colorscheme::Theme;
 use directories_next::ProjectDirs;
@@ -26,28 +27,52 @@ pub const APPLOGO: &'static str = " _._ _  _ |  _
 _>| | |(_)|<(/_\\/ 
                /  ";
 
-pub struct App<'a> {
+pub struct App {
     pub screen: Screen,
     pub should_quit: bool,
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
-    pub length_choice_list: StatefulList<&'a str>,
-    pub freq_choice_list: StatefulList<&'a str>,
+    pub settings: Settings,
 }
 
-impl<'a> App<'a> {
+impl App {
     pub fn new() -> Self {
-        let length_list = vec!["10", "15", "25", "50", "100"];
-        let freq_cut_list = vec!["100", "1k", "5k", "10k", "max"];
-        App {
+        let config = Config::default();
+        let settings = Settings::new(&PathBuf::from(config.source.clone()));
+        Self {
             screen: Screen::Test,
             should_quit: false,
             cursor_x: 1,
             margin: 2,
-            config: Config::default(),
-            length_choice_list: StatefulList::with_items(length_list),
-            freq_choice_list: StatefulList::with_items(freq_cut_list),
+            config,
+            settings,
+        }
+    }
+}
+
+pub struct Settings {
+    pub length_list: StatefulList<String>,
+    pub frequency_list: StatefulList<String>,
+    pub words_list: StatefulList<String>,
+    pub mods_list: StatefulList<String>,
+}
+
+impl Settings {
+    fn new(path: &Path) -> Self {
+        let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
+        let frequency_list = StatefulList::with_items(vec_of_strings!["100", "1k", "5k", "10k", "max"]);
+        let words_list: Vec<String> = path
+            .iter()
+            .map(|i| i.to_string_lossy().to_string())
+            .collect();
+        let mod_list = vec_of_strings!["Punctuation"];
+
+        Self {
+            length_list,
+            frequency_list,
+            words_list: StatefulList::with_items(words_list),
+            mods_list: StatefulList::with_items(mod_list),
         }
     }
 }
