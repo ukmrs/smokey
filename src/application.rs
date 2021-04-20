@@ -22,7 +22,7 @@ pub enum Screen {
     Settings,
 }
 
-pub const app_logo: &'static str = " _._ _  _ |  _    
+pub const APPLOGO: &'static str = " _._ _  _ |  _    
 _>| | |(_)|<(/_\\/ 
                /  ";
 
@@ -219,7 +219,7 @@ impl<'a> TestState<'a> {
     /// chekcs if char is a mistake and deducts it from
     /// the total count
     pub fn if_mistake_deduct(&mut self, index: usize, th: &'a Theme) {
-        if th.wrong_color == self.text[index].style.fg.unwrap() {
+        if th.wrong == self.text[index].style.fg.unwrap() {
             self.mistakes -= 1;
         }
     }

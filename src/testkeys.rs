@@ -1,5 +1,5 @@
 use crate::application::{App, Screen, TestState};
-use crate::colorscheme::Theme;
+use crate::colorscheme::{Theme, ToForeground};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub fn key_handle<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
@@ -57,15 +57,15 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
             test.change(test.done - 1, String::new());
             test.done -= 2;
             test.if_mistake_deduct(test.done, theme);
-            test.text[test.done].style = theme.todo;
+            test.text[test.done].style = theme.todo.fg();
             test.blanks -= 1;
         } else if test.fetch(test.done - 1) == " " {
-            test.text[test.done - 1].style = theme.todo;
+            test.text[test.done - 1].style = theme.todo.fg();
             app.cursor_x -= test.fetch(test.done - 2).len() as u16 + 2;
             test.change(test.done - 2, String::new());
             test.done -= 3;
             test.if_mistake_deduct(test.done, theme);
-            test.text[test.done].style = theme.todo;
+            test.text[test.done].style = theme.todo.fg();
             test.blanks -= 1;
         }
 
@@ -74,7 +74,7 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
             app.cursor_x -= 1;
             test.done -= 1;
             test.if_mistake_deduct(test.done, theme);
-            test.text[test.done].style = theme.todo;
+            test.text[test.done].style = theme.todo.fg();
         }
         test.set_next_char();
         return;
@@ -86,7 +86,7 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
 
             // user pressed the correct key
             if c == test.current_char {
-                test.text[test.done].style = theme.done;
+                test.text[test.done].style = theme.done.fg();
                 test.done += 1;
                 set_next_char_or_end(app, test, theme);
 
@@ -106,7 +106,7 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
                 // just changes to wrong and moves on
                 } else {
                     test.mistakes += 1;
-                    test.text[test.done].style = theme.wrong;
+                    test.text[test.done].style = theme.wrong.fg();
                     test.done += 1;
                     set_next_char_or_end(app, test, theme);
                 }
@@ -125,7 +125,7 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
                         test.done -= 2;
                         test.blanks -= 1;
                         test.set_next_char();
-                        test.text[test.done].style = theme.todo;
+                        test.text[test.done].style = theme.todo.fg();
                     } else {
                         test.text[test.done - 1]
                             .content
@@ -137,7 +137,7 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
                     test.done -= 1;
                     test.if_mistake_deduct(test.done, theme);
                     test.set_next_char();
-                    test.text[test.done].style = theme.todo;
+                    test.text[test.done].style = theme.todo.fg();
                 }
             }
         }

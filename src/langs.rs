@@ -1,6 +1,6 @@
 use crate::application::Config;
 use crate::colorscheme;
-use colorscheme::Theme;
+use colorscheme::{Theme, ToForeground};
 
 use fastrand::Rng as FastRng;
 use super::util::randorst::Randorst;
@@ -106,10 +106,10 @@ pub fn prepare_test<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
 
     for word in &prep {
         for c in word.chars() {
-            test.push(Span::styled(c.to_string(), th.todo));
+            test.push(Span::styled(c.to_string(), th.todo.fg()));
         }
-        test.push(Span::styled("", th.wrong));
-        test.push(Span::styled(" ", th.todo));
+        test.push(Span::styled("", th.wrong.fg()));
+        test.push(Span::styled(" ", th.todo.fg()));
     }
 
     test.pop();

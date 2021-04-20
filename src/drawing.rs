@@ -1,4 +1,4 @@
-use super::application::app_logo;
+use super::application::APPLOGO;
 
 #[allow(unused_imports)]
 use tui::{
@@ -184,16 +184,59 @@ pub fn draw_title<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(area);
 
-    let block = Paragraph::new(app_logo).block(Block::default().borders(Borders::NONE));
+    let block = Paragraph::new(APPLOGO).block(Block::default().borders(Borders::NONE));
 
     f.render_widget(block, chunks[0]);
 
-    let block = Paragraph::new(app_logo).block(Block::default().borders(Borders::NONE));
+    let block = Paragraph::new(APPLOGO).block(Block::default().borders(Borders::NONE));
 
     f.render_widget(block, chunks[1]);
 }
 
 pub fn draw_row_with_freq_and_len<B: Backend>(f: &mut Frame<B>, app: &mut App, rect: Rect) {
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(rect);
+
+    let items: Vec<ListItem> = app
+        .length_choice_list
+        .items
+        .iter()
+        .map(|i| ListItem::new(*i).style(Style::default().fg(Color::Gray)))
+        .collect();
+
+    let items = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(
+            Style::default()
+                .bg(Color::LightGreen)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    f.render_stateful_widget(items, chunks[0], &mut app.length_choice_list.state);
+
+    let items: Vec<ListItem> = app
+        .freq_choice_list
+        .items
+        .iter()
+        .map(|i| ListItem::new(*i).style(Style::default().fg(Color::Gray)))
+        .collect();
+
+    let items = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(
+            Style::default()
+                .bg(Color::LightGreen)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    f.render_stateful_widget(items, chunks[1], &mut app.freq_choice_list.state);
+}
+
+pub fn draw_row_with_words_and_mods<B: Backend>(f: &mut Frame<B>, app: &mut App, rect: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
