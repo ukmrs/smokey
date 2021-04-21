@@ -97,12 +97,6 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
             let length: f64 = test.hoarder.wpms.len() as f64;
             let (_, max_wpm): (f64, f64) = test.hoarder.get_min_and_max();
 
-            // meh kinda sucks writing a for loop
-            // when functional rust is so sexy
-            // well still left it, because its my code who cares
-            // but I should realy merge it with max function
-            // or better yet get my life together and don't be such a wimp
-
             let data = test
                 .hoarder
                 .wpms
