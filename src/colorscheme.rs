@@ -25,7 +25,7 @@ pub struct Theme {
 impl Theme {
     pub fn new() -> Self {
         Theme {
-            done: Color::LightCyan,
+            done: Color::White,
             wrong: Color::Red,
             todo: Color::DarkGray,
         }
