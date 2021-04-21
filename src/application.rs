@@ -61,7 +61,8 @@ pub struct Settings {
 impl Settings {
     fn new(path: &Path) -> Self {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
-        let frequency_list = StatefulList::with_items(vec_of_strings!["100", "1k", "5k", "10k", "max"]);
+        let frequency_list =
+            StatefulList::with_items(vec_of_strings!["100", "1k", "5k", "10k", "max"]);
         let words_list: Vec<String> = path
             .iter()
             .map(|i| i.to_string_lossy().to_string())

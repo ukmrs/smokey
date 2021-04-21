@@ -1,14 +1,6 @@
-use crate::application::{App, Screen, TestState};
+use crate::application::{App, TestState};
 use crate::colorscheme::{Theme, ToForeground};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-
-pub fn key_handle<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
-    match app.screen {
-        Screen::Test => handle_keys_test(key, app, test, theme),
-        Screen::Post => handle_keys_post(key, app, test, theme),
-        Screen::Settings => handle_keys_settings(key, app, test, theme),
-    }
-}
 
 fn set_next_char_beware_blanks<'a>(test: &mut TestState<'a>) {
     if let Some(c) = test.get_next_char() {
@@ -31,7 +23,12 @@ fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, _theme: &'a
 }
 
 /// handles keys during test
-fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
+pub fn handle<'a>(
+    key: KeyEvent,
+    app: &mut App,
+    test: &mut TestState<'a>,
+    theme: &'a Theme,
+) {
     // well doing this in terminal was a bad idea XD
     // Ctrl + Backspace registers as weird thing in terminals
     // I got ctrl(h) and ctrl(7) among others
@@ -100,7 +97,7 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
                         test.text[test.done - 1].content.to_mut().push(c);
                     } else {
                         // cursor is pushed +1 when KeyCode::Char is matched
-                        // well in this rare case nothing happens so it needs to reverse
+                        // well in this rare case nothing happens so it needs to revert
                         app.cursor_x -= 1;
                     }
                 // just changes to wrong and moves on
@@ -147,73 +144,6 @@ fn handle_keys_test<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, 
         }
 
         KeyCode::Esc => app.should_quit = true,
-
-        _ => (),
-    }
-}
-
-fn handle_keys_post<'a>(
-    key: KeyEvent,
-    app: &mut App,
-    test: &mut TestState<'a>,
-    theme: &'a Theme,
-) {
-    match key.code {
-        KeyCode::Esc => app.should_quit = true,
-
-        KeyCode::Tab => {
-            app.screen = Screen::Test;
-            test.reset(app, theme);
-        }
-
-        KeyCode::Char(c) => {
-            if let KeyModifiers::CONTROL = key.modifiers {
-                if c == 'c' {
-                    app.should_quit = true;
-                }
-            }
-        }
-        _ => (),
-    }
-}
-
-fn handle_keys_settings<'a>(
-    key: KeyEvent,
-    app: &mut App,
-    test: &mut TestState<'a>,
-    theme: &'a Theme,
-) {
-    match key.code {
-        KeyCode::Esc => app.should_quit = true,
-
-        KeyCode::Tab => {
-            app.screen = Screen::Test;
-            test.reset(app, theme);
-        }
-
-        KeyCode::Char(c) => {
-            if let KeyModifiers::CONTROL = key.modifiers {
-                if c == 'c' {
-                    app.should_quit = true;
-                    return
-                }
-            }
-
-            match c {
-                'h' => {},
-                'j' => {},
-                'k' => {},
-                'l' => {},
-                'q' => app.should_quit = true,
-                _ => {},
-            }
-
-        }
-
-        KeyCode::Left => {},
-        KeyCode::Down => {},
-        KeyCode::Up => {},
-        KeyCode::Right => {},
 
         _ => (),
     }

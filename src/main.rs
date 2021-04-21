@@ -8,8 +8,8 @@ mod application;
 mod colorscheme;
 mod drawing;
 mod langs;
-mod testkeys;
 mod util;
+mod handlers;
 
 use std::panic;
 use std::time::Duration;
@@ -19,8 +19,8 @@ use application::{App, Screen, TestState};
 use colorscheme::Theme;
 use crossterm::{execute, style::Print};
 use drawing::*;
-use testkeys::key_handle;
 use util::terminal_prep;
+use handlers::key_handle;
 
 #[macro_use]
 extern crate log;
@@ -84,7 +84,7 @@ fn main() -> crossterm::Result<()> {
             Screen::Settings => draw_settings(&mut terminal, &mut app, &mut test),
         }
 
-        if poll(Duration::from_millis(300))? {
+        if poll(Duration::from_millis(250))? {
             let read = read()?;
             if let CEvent::Key(event) = read {
                 key_handle(event, &mut app, &mut test, &theme);
