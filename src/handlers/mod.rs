@@ -13,3 +13,7 @@ pub fn key_handle<'a>(key: KeyEvent, app: &mut App<'a>, theme: &'a Theme) {
         Screen::Settings => settings::handle(key, app, theme),
     }
 }
+
+pub trait Handler {
+    fn handle<'a>(key: KeyEvent, app: &mut App<'a>, theme: &'a Theme);
+}
