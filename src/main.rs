@@ -6,7 +6,7 @@
 
 mod application;
 mod colorscheme;
-mod drawing;
+mod painters;
 mod langs;
 mod util;
 mod handlers;
@@ -14,11 +14,11 @@ mod handlers;
 use std::panic;
 use std::time::Duration;
 use std::{fs::File, io::stdout};
+use painters::*;
 
 use application::{App, Screen};
 use colorscheme::Theme;
 use crossterm::{execute, style::Print};
-use drawing::*;
 use util::terminal_prep;
 use handlers::key_handle;
 
