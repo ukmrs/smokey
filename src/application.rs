@@ -4,17 +4,23 @@
 
 use crate::colorscheme;
 use crate::langs;
+use crate::painters::*;
 use crate::vec_of_strings;
 use std::path::{Path, PathBuf};
+use tui::{
+    backend::{Backend, CrosstermBackend},
+    Terminal,
+};
 
 use colorscheme::Theme;
 use directories_next::ProjectDirs;
 use langs::{prepare_test, Punctuation};
 
+use std::io::Stdout;
 use std::time::Instant;
 use tui::text::Span;
 
-use super::util::StatefulList;
+use crate::utils::StatefulList;
 use std::borrow::Cow;
 
 pub enum Screen {
@@ -35,6 +41,13 @@ pub struct App<'t> {
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
+    pub painter: Painter<CrosstermBackend<Stdout>>,
+}
+
+fn draw_and_update<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
+    draw_test(terminal, app);
+    app.test.update_wpm_history();
+    debug!("i work");
 }
 
 impl<'t> App<'t> {
@@ -49,6 +62,7 @@ impl<'t> App<'t> {
             margin: 2,
             config,
             settings,
+            painter: draw_and_update,
         }
     }
 
@@ -57,8 +71,24 @@ impl<'t> App<'t> {
         self.test.reset(&self.config, th);
     }
 
-    pub fn end_test(&mut self) {
+    pub fn switch_to_settings(&mut self) {
+        self.screen = Screen::Settings;
+        self.painter = draw_settings;
+    }
+
+    pub fn switch_to_post(&mut self) {
         self.screen = Screen::Post;
+        self.painter = draw_post;
+    }
+
+    //TODO should this reset test?
+    pub fn switch_to_test(&mut self) {
+        self.screen = Screen::Test;
+        self.painter = draw_and_update;
+    }
+
+    pub fn end_test(&mut self) {
+        self.switch_to_post();
         self.test.end();
     }
 }
@@ -113,7 +143,7 @@ impl Default for Config {
         Config {
             words: base.join("words"),
             source: String::from("english"),
-            length: 15,
+            length: 10,
             test_type: TestType::default(),
             freq_cut_off: 10_000,
         }

@@ -1,4 +1,4 @@
-use crate::application::{App, Screen};
+use crate::application::App;
 use crate::colorscheme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -11,7 +11,7 @@ pub fn handle<'a>(
         KeyCode::Esc => app.should_quit = true,
 
         KeyCode::Tab => {
-            app.screen = Screen::Test;
+            app.switch_to_test();
             app.reset_test(theme);
         }
 

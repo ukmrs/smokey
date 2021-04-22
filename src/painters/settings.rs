@@ -26,14 +26,14 @@ pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .horizontal_margin(app.margin)
                 .split(f.size());
 
-            draw_title(f, app, chunks[0]);
+            draw_title(f, chunks[0]);
             draw_row_with_freq_and_len(f, app, chunks[1]);
             draw_row_with_words_and_mods(f, app, chunks[2]);
         })
         .expect("drawing settings");
 }
 
-pub fn draw_title<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
+pub fn draw_title<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())

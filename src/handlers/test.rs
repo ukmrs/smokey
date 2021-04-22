@@ -143,7 +143,7 @@ pub fn handle<'a>(
             app.reset_test(theme);
         }
 
-        KeyCode::Esc => app.should_quit = true,
+        KeyCode::Esc => app.switch_to_settings(),
 
         _ => (),
     }

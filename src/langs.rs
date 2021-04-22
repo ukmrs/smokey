@@ -3,7 +3,7 @@ use crate::colorscheme;
 use colorscheme::{Theme, ToForeground};
 
 use fastrand::Rng as FastRng;
-use super::util::randorst::Randorst;
+use super::utils::randorst::Randorst;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use tui::text::Span;

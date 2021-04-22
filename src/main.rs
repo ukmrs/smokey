@@ -8,18 +8,17 @@ mod application;
 mod colorscheme;
 mod painters;
 mod langs;
-mod util;
+mod utils;
 mod handlers;
 
 use std::panic;
 use std::time::Duration;
 use std::{fs::File, io::stdout};
-use painters::*;
 
 use application::{App, Screen};
 use colorscheme::Theme;
 use crossterm::{execute, style::Print};
-use util::terminal_prep;
+use utils::terminal_prep;
 use handlers::key_handle;
 
 #[macro_use]
@@ -71,17 +70,11 @@ fn main() -> crossterm::Result<()> {
     let theme = Theme::new();
 
     app.reset_test(&theme);
-    app.screen = Screen::Settings;
+    app.screen = Screen::Test;
 
     while !app.should_quit {
-        match app.screen {
-            Screen::Test => {
-                draw_test(&mut terminal, &mut app);
-                app.test.update_wpm_history();
-            }
-            Screen::Post => draw_post(&mut terminal, &mut app),
-            Screen::Settings => draw_settings(&mut terminal, &mut app),
-        }
+
+        (app.painter)(&mut terminal, &mut app);
 
         if poll(Duration::from_millis(250))? {
             let read = read()?;
@@ -90,7 +83,6 @@ fn main() -> crossterm::Result<()> {
             }
         } else {
             // sneak an afk?
-            // Timeout expired and no `Event` is available
         }
     }
 
