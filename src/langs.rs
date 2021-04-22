@@ -4,7 +4,6 @@ use colorscheme::{Theme, ToForeground};
 
 use fastrand::Rng as FastRng;
 use super::util::randorst::Randorst;
-use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use tui::text::Span;
@@ -27,6 +26,7 @@ pub enum Punctuation {
     Null,
 }
 
+#[allow(dead_code)]
 struct PFreq {
     weighted_index: WeightedIndex<u16>,
     symbols: Vec<Punctuation>,
@@ -66,6 +66,7 @@ impl Default for PFreq {
     }
 }
 
+#[allow(dead_code)]
 impl PFreq {
     fn choose(&self, rng: &mut ThreadRng) -> Punctuation {
         self.symbols[self.weighted_index.sample(rng)]
@@ -98,7 +99,7 @@ fn get_shuffled_words(config: &Config) -> Vec<String> {
     container
 }
 
-pub fn prepare_test<'a>(config: &Config, th: &'a Theme) -> Vec<Span<'a>> {
+pub fn prepare_test<'a>(config: &Config, th: &Theme) -> Vec<Span<'a>> {
     let now = Instant::now();
     let prep = get_shuffled_words(config);
 

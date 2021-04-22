@@ -1,11 +1,10 @@
-use crate::application::{App, Screen, TestState};
+use crate::application::{App, Screen};
 use crate::colorscheme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub fn handle<'a>(
     key: KeyEvent,
     app: &mut App,
-    test: &mut TestState<'a>,
     theme: &'a Theme,
 ) {
     match key.code {
@@ -13,7 +12,7 @@ pub fn handle<'a>(
 
         KeyCode::Tab => {
             app.screen = Screen::Test;
-            test.reset(app, theme);
+            app.reset_test(theme);
         }
 
         KeyCode::Char(c) => {

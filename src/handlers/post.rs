@@ -1,14 +1,14 @@
-use crate::application::{App, Screen, TestState};
+use crate::application::{App, Screen};
 use crate::colorscheme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-pub fn handle<'a>(key: KeyEvent, app: &mut App, test: &mut TestState<'a>, theme: &'a Theme) {
+pub fn handle<'a>(key: KeyEvent, app: &mut App, theme: &'a Theme) {
     match key.code {
         KeyCode::Esc => app.should_quit = true,
 
         KeyCode::Tab => {
             app.screen = Screen::Test;
-            test.reset(app, theme);
+            app.reset_test(theme);
         }
 
         KeyCode::Char(c) => {

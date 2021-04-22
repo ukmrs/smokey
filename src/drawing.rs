@@ -18,9 +18,11 @@ use tui::{
 
 use crate::application::{App, TestState};
 
-pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
+pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal
         .draw(|frame| {
+            let test = &mut app.test;
+
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
@@ -49,7 +51,7 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
 
             frame.render_widget(block, chunks[0]);
 
-            let txt = vec![Spans::from(test.text.clone())];
+            let txt = vec![Spans::from(app.test.text.clone())];
 
             let paragraph = Paragraph::new(txt)
                 .block(Block::default().title("Text box").borders(Borders::ALL))
@@ -62,9 +64,10 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
 }
 
 /// draws post screen
-pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
+pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal
         .draw(|frame| {
+            let test = &mut app.test;
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Percentage(15), Constraint::Percentage(85)].as_ref())
@@ -159,7 +162,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &m
         .expect("drawing post went fine")
 }
 
-pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App, test: &mut TestState) {
+pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal
         .draw(|f| {
             let chunks = Layout::default()

@@ -15,7 +15,7 @@ use std::panic;
 use std::time::Duration;
 use std::{fs::File, io::stdout};
 
-use application::{App, Screen, TestState};
+use application::{App, Screen};
 use colorscheme::Theme;
 use crossterm::{execute, style::Print};
 use drawing::*;
@@ -67,27 +67,26 @@ fn main() -> crossterm::Result<()> {
     let backend = CrosstermBackend::new(sout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut test = TestState::default();
     let mut app = App::new();
     let theme = Theme::new();
 
-    test.reset(&mut app, &theme);
+    app.reset_test(&theme);
     app.screen = Screen::Settings;
 
     while !app.should_quit {
         match app.screen {
             Screen::Test => {
-                draw_test(&mut terminal, &mut app, &mut test);
-                test.update_wpm_history();
+                draw_test(&mut terminal, &mut app);
+                app.test.update_wpm_history();
             }
-            Screen::Post => draw_post(&mut terminal, &mut app, &mut test),
-            Screen::Settings => draw_settings(&mut terminal, &mut app, &mut test),
+            Screen::Post => draw_post(&mut terminal, &mut app),
+            Screen::Settings => draw_settings(&mut terminal, &mut app),
         }
 
         if poll(Duration::from_millis(250))? {
             let read = read()?;
             if let CEvent::Key(event) = read {
-                key_handle(event, &mut app, &mut test, &theme);
+                key_handle(event, &mut app, &theme);
             }
         } else {
             // sneak an afk?

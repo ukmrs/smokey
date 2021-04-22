@@ -2,7 +2,7 @@ use crate::application::{App, TestState};
 use crate::colorscheme::{Theme, ToForeground};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-fn set_next_char_beware_blanks<'a>(test: &mut TestState<'a>) {
+fn set_next_char_beware_blanks(test: &mut TestState) {
     if let Some(c) = test.get_next_char() {
         test.current_char = c;
     } else {
@@ -12,23 +12,23 @@ fn set_next_char_beware_blanks<'a>(test: &mut TestState<'a>) {
     }
 }
 
-fn set_next_char_or_end<'a>(app: &mut App, test: &mut TestState<'a>, _theme: &'a Theme) {
-    if test.done < test.test_length {
-        set_next_char_beware_blanks(test)
+fn set_next_char_or_end<'a>(app: &mut App, _theme: &'a Theme) {
+    if app.test.done < app.test.test_length {
+        set_next_char_beware_blanks(&mut app.test)
     } else {
-        debug!("{}", test.calculate_wpm());
+        debug!("{}", app.test.calculate_wpm());
         // test.reset(app, theme);
-        test.end(app);
+        app.end_test();
     }
 }
 
 /// handles keys during test
 pub fn handle<'a>(
     key: KeyEvent,
-    app: &mut App,
-    test: &mut TestState<'a>,
+    app: &mut App<'a>,
     theme: &'a Theme,
 ) {
+    let test = &mut app.test;
     // well doing this in terminal was a bad idea XD
     // Ctrl + Backspace registers as weird thing in terminals
     // I got ctrl(h) and ctrl(7) among others
@@ -85,7 +85,7 @@ pub fn handle<'a>(
             if c == test.current_char {
                 test.text[test.done].style = theme.done.fg();
                 test.done += 1;
-                set_next_char_or_end(app, test, theme);
+                set_next_char_or_end(app, theme);
 
             // wrong key
             } else {
@@ -105,7 +105,7 @@ pub fn handle<'a>(
                     test.mistakes += 1;
                     test.text[test.done].style = theme.wrong.fg();
                     test.done += 1;
-                    set_next_char_or_end(app, test, theme);
+                    set_next_char_or_end(app, theme);
                 }
             }
         }
@@ -140,7 +140,7 @@ pub fn handle<'a>(
         }
 
         KeyCode::Tab => {
-            test.reset(app, theme);
+            app.reset_test(theme);
         }
 
         KeyCode::Esc => app.should_quit = true,

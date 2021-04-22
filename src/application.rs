@@ -27,20 +27,22 @@ pub const APPLOGO: &'static str = " _._ _  _ |  _
 _>| | |(_)|<(/_\\/ 
                /  ";
 
-pub struct App {
+pub struct App<'t> {
+    pub settings: Settings,
+    pub test: TestState<'t>,
     pub screen: Screen,
     pub should_quit: bool,
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
-    pub settings: Settings,
 }
 
-impl App {
+impl<'t> App<'t> {
     pub fn new() -> Self {
         let config = Config::default();
         let settings = Settings::new(&PathBuf::from(config.source.clone()));
         Self {
+            test: TestState::default(),
             screen: Screen::Test,
             should_quit: false,
             cursor_x: 1,
@@ -48,6 +50,16 @@ impl App {
             config,
             settings,
         }
+    }
+
+    pub fn reset_test(&mut self, th: &Theme) {
+        self.cursor_x = 1;
+        self.test.reset(&self.config, th);
+    }
+
+    pub fn end_test(&mut self) {
+        self.screen = Screen::Post;
+        self.test.end();
     }
 }
 
@@ -219,11 +231,10 @@ impl<'a> TestState<'a> {
         numerator / elapsed
     }
 
-    pub fn reset(&mut self, app: &mut App, th: &'a Theme) {
-        app.cursor_x = 1;
+    pub fn reset(&mut self, config: &Config, th: &Theme) {
         self.blanks = 0;
         self.done = 0;
-        self.text = prepare_test(&app.config, th);
+        self.text = prepare_test(config, th);
         self.begining = Instant::now();
         self.mistakes = 0;
         self.current_char = self.text[self.done].content.chars().next().unwrap();
@@ -231,8 +242,8 @@ impl<'a> TestState<'a> {
         self.hoarder.reset();
     }
 
-    pub fn end(&mut self, app: &mut App) {
-        app.screen = Screen::Post;
+    pub fn end(&mut self) {
+        debug!("{}", self.calculate_wpm());
         self.hoarder.final_wpm = self.calculate_wpm();
     }
 
