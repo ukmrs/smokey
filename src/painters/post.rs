@@ -10,7 +10,6 @@ use tui::{
     Terminal,
 };
 
-/// draws post screen
 pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal
         .draw(|frame| {
