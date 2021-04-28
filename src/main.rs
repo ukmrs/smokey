@@ -1,6 +1,8 @@
-//!  _._ _  _ |  _    
-//! _>| | |(_)|<(/_\/
-//!                /  
+//! ```text
+//!   _._ _  _ |  _    
+//!  _>| | |(_)|<(/_\/
+//!                 /  
+//! ```
 //! by ukmrs https://github.com/ukmrs/smokey
 //! A simple typing test terminal UI app
 

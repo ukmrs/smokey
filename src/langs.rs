@@ -117,6 +117,5 @@ pub fn prepare_test<'a>(config: &Config, th: &Theme) -> Vec<Span<'a>> {
     test.pop();
 
     debug!("preparing test {:?}", now.elapsed().as_secs_f64());
-    debug!("{}", prep.len());
     test
 }
