@@ -1,5 +1,5 @@
 pub mod randorst;
-pub mod terminal_prep;
+pub mod termprep;
 use tui::widgets::ListState;
 
 pub struct StatefulList<T> {
