@@ -3,18 +3,16 @@ mod settings;
 mod test;
 
 use crate::application::{App, Screen};
-use crate::colorscheme::Theme;
 use crossterm::event::KeyEvent;
 
-pub fn key_handle<'a>(key: KeyEvent, app: &mut App<'a>) {
-    let theme = app.theme;
+pub fn key_handle(key: KeyEvent, app: &mut App) {
     match app.screen {
-        Screen::Test => test::handle(key, app, theme),
-        Screen::Post => post::handle(key, app, theme),
-        Screen::Settings => settings::handle(key, app, theme),
+        Screen::Test => test::handle(key, app),
+        Screen::Post => post::handle(key, app),
+        Screen::Settings => settings::handle(key, app),
     }
 }
 
 pub trait Handler {
-    fn handle<'a>(key: KeyEvent, app: &mut App<'a>, theme: &'a Theme);
+    fn handle(key: KeyEvent, app: &mut App);
 }

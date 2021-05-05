@@ -4,19 +4,16 @@
 
 use crate::colorscheme;
 use crate::langs;
+use crate::Term;
 use crate::painters::*;
 use crate::vec_of_strings;
 use std::path::{Path, PathBuf};
-use tui::{
-    backend::{Backend, CrosstermBackend},
-    Terminal,
-};
+use tui::{backend::Backend, Terminal};
 
 use colorscheme::Theme;
 use directories_next::ProjectDirs;
 use langs::{prepare_test, Punctuation};
 
-use std::io::Stdout;
 use std::time::Instant;
 use tui::text::Span;
 
@@ -42,7 +39,8 @@ pub struct App<'t> {
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
-    pub painter: Painter<CrosstermBackend<Stdout>>,
+
+    pub painter: Painter,
 }
 
 fn draw_and_update<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
@@ -66,6 +64,11 @@ impl<'t> App<'t> {
             settings,
             painter: draw_and_update,
         }
+    }
+
+    /// Paints to the screen using current painter
+    pub fn paint(&mut self, terminal: &mut Term) {
+        (self.painter)(terminal, self)
     }
 
     pub fn stop(&mut self) {

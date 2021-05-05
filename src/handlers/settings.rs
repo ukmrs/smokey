@@ -1,12 +1,7 @@
 use crate::application::App;
-use crate::colorscheme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-pub fn handle<'a>(
-    key: KeyEvent,
-    app: &mut App,
-    _theme: Theme,
-) {
+pub fn handle(key: KeyEvent, app: &mut App) {
     match key.code {
         KeyCode::Esc => app.stop(),
 
