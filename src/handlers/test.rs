@@ -12,7 +12,7 @@ fn set_next_char_beware_blanks(test: &mut TestState) {
     }
 }
 
-fn set_next_char_or_end<'a>(app: &mut App, _theme: &'a Theme) {
+fn set_next_char_or_end(app: &mut App, _theme: &Theme) {
     if app.test.done < app.test.test_length {
         set_next_char_beware_blanks(&mut app.test)
     } else {
@@ -26,7 +26,7 @@ fn set_next_char_or_end<'a>(app: &mut App, _theme: &'a Theme) {
 pub fn handle<'a>(
     key: KeyEvent,
     app: &mut App<'a>,
-    theme: &'a Theme,
+    theme: Theme,
 ) {
     let test = &mut app.test;
     // well doing this in terminal was a bad idea XD
@@ -39,7 +39,7 @@ pub fn handle<'a>(
     if let KeyModifiers::CONTROL = key.modifiers {
         if let KeyCode::Char(c) = key.code {
             if c == 'c' {
-                app.should_quit = true;
+                app.stop();
                 return;
             }
         }
@@ -53,7 +53,7 @@ pub fn handle<'a>(
             app.cursor_x -= test.fetch(test.done - 1).len() as u16 + 1;
             test.change(test.done - 1, String::new());
             test.done -= 2;
-            test.if_mistake_deduct(test.done, theme);
+            test.if_mistake_deduct(test.done, &theme);
             test.text[test.done].style = theme.todo.fg();
             test.blanks -= 1;
         } else if test.fetch(test.done - 1) == " " {
@@ -61,7 +61,7 @@ pub fn handle<'a>(
             app.cursor_x -= test.fetch(test.done - 2).len() as u16 + 2;
             test.change(test.done - 2, String::new());
             test.done -= 3;
-            test.if_mistake_deduct(test.done, theme);
+            test.if_mistake_deduct(test.done, &theme);
             test.text[test.done].style = theme.todo.fg();
             test.blanks -= 1;
         }
@@ -70,7 +70,7 @@ pub fn handle<'a>(
         while test.done != 0 && test.fetch(test.done - 1) != " " {
             app.cursor_x -= 1;
             test.done -= 1;
-            test.if_mistake_deduct(test.done, theme);
+            test.if_mistake_deduct(test.done, &theme);
             test.text[test.done].style = theme.todo.fg();
         }
         test.set_next_char();
@@ -85,7 +85,7 @@ pub fn handle<'a>(
             if c == test.current_char {
                 test.text[test.done].style = theme.done.fg();
                 test.done += 1;
-                set_next_char_or_end(app, theme);
+                set_next_char_or_end(app, &theme);
 
             // wrong key
             } else {
@@ -105,7 +105,7 @@ pub fn handle<'a>(
                     test.mistakes += 1;
                     test.text[test.done].style = theme.wrong.fg();
                     test.done += 1;
-                    set_next_char_or_end(app, theme);
+                    set_next_char_or_end(app, &theme);
                 }
             }
         }
@@ -118,7 +118,7 @@ pub fn handle<'a>(
 
                 if test.current_char == ' ' {
                     if test.text[test.done - 1].content.is_empty() {
-                        test.if_mistake_deduct(test.done - 2, theme);
+                        test.if_mistake_deduct(test.done - 2, &theme);
                         test.done -= 2;
                         test.blanks -= 1;
                         test.set_next_char();
@@ -132,7 +132,7 @@ pub fn handle<'a>(
                     }
                 } else {
                     test.done -= 1;
-                    test.if_mistake_deduct(test.done, theme);
+                    test.if_mistake_deduct(test.done, &theme);
                     test.set_next_char();
                     test.text[test.done].style = theme.todo.fg();
                 }
@@ -140,7 +140,7 @@ pub fn handle<'a>(
         }
 
         KeyCode::Tab => {
-            app.reset_test(theme);
+            app.reset_test();
         }
 
         KeyCode::Esc => app.switch_to_settings(),

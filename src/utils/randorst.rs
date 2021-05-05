@@ -29,10 +29,11 @@ impl StartEndRange for RangeInclusive<usize> {
 }
 
 /// Struct for generating sorted random numbers
-/// ```
+/// ```ignore
 /// // generate 100 sorted random numbers from 0 to 255
-/// Randorst::gen(100, 0..256)
-/// Randorst::gen(100, 0..=255)
+/// use smokey::utils::randorst::Randorst;
+/// Randorst::gen(100, 0..256);
+/// Randorst::gen(100, 0..=255);
 /// ```
 pub struct Randorst {
     n: usize,
@@ -64,10 +65,11 @@ impl Randorst {
     /// Panics if range is invalid e.g. 0..0
     ///
     /// # Examples
-    /// 
-    /// ```
+    ///
+    /// ```ignore
+    /// use smokey::utils::randorst::Randorst;
     /// let mut last: usize = 0;
-    /// let (a, b) = 0, 256;
+    /// let (a, b) = (0, 256);
     /// for i in Randorst::gen(100, a..b) {
     ///     assert!(last <= i);
     ///     assert!(i >= a && i < b);

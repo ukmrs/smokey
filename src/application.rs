@@ -36,8 +36,9 @@ _>| | |(_)|<(/_\\/
 pub struct App<'t> {
     pub settings: Settings,
     pub test: TestState<'t>,
+    pub theme: Theme,
     pub screen: Screen,
-    pub should_quit: bool,
+    pub is_alive: bool,
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
@@ -57,7 +58,8 @@ impl<'t> App<'t> {
         Self {
             test: TestState::default(),
             screen: Screen::Test,
-            should_quit: false,
+            theme: Theme::new(),
+            is_alive: true,
             cursor_x: 1,
             margin: 2,
             config,
@@ -66,9 +68,13 @@ impl<'t> App<'t> {
         }
     }
 
-    pub fn reset_test(&mut self, th: &Theme) {
+    pub fn stop(&mut self) {
+        self.is_alive = false;
+    }
+
+    pub fn reset_test(&mut self) {
         self.cursor_x = 1;
-        self.test.reset(&self.config, th);
+        self.test.reset(&self.config, &self.theme);
     }
 
     pub fn switch_to_settings(&mut self) {
@@ -285,7 +291,7 @@ impl<'a> TestState<'a> {
 
     /// chekcs if char is a mistake and deducts it from
     /// the total count
-    pub fn if_mistake_deduct(&mut self, index: usize, th: &'a Theme) {
+    pub fn if_mistake_deduct(&mut self, index: usize, th: &Theme) {
         if th.wrong == self.text[index].style.fg.unwrap() {
             self.mistakes -= 1;
         }
