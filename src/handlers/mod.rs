@@ -6,7 +6,8 @@ use crate::application::{App, Screen};
 use crate::colorscheme::Theme;
 use crossterm::event::KeyEvent;
 
-pub fn key_handle<'a>(key: KeyEvent, app: &mut App<'a>, theme: &'a Theme) {
+pub fn key_handle<'a>(key: KeyEvent, app: &mut App<'a>) {
+    let theme = app.theme;
     match app.screen {
         Screen::Test => test::handle(key, app, theme),
         Screen::Post => post::handle(key, app, theme),

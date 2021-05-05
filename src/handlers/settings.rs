@@ -5,14 +5,14 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 pub fn handle<'a>(
     key: KeyEvent,
     app: &mut App,
-    theme: &'a Theme,
+    _theme: Theme,
 ) {
     match key.code {
         KeyCode::Esc => app.stop(),
 
         KeyCode::Tab => {
             app.switch_to_test();
-            app.reset_test(theme);
+            app.reset_test();
         }
 
         KeyCode::Char(c) => {
