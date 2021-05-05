@@ -5,10 +5,11 @@
 //! preventing messing up the terminal if the program were to panic!
 //!
 //! # Usage
-//! ```
-//! termprep::init()
+//! ```no_run
+//! use smokey::utils::termprep;
+//! termprep::init();
 //! // main tui app loop
-//! termprep::shutdown()
+//! termprep::shutdown();
 //! ```
 
 use std::io::stdout;

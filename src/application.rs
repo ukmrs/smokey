@@ -37,7 +37,7 @@ pub struct App<'t> {
     pub settings: Settings,
     pub test: TestState<'t>,
     pub screen: Screen,
-    pub should_quit: bool,
+    pub is_alive: bool,
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
@@ -57,13 +57,17 @@ impl<'t> App<'t> {
         Self {
             test: TestState::default(),
             screen: Screen::Test,
-            should_quit: false,
+            is_alive: true,
             cursor_x: 1,
             margin: 2,
             config,
             settings,
             painter: draw_and_update,
         }
+    }
+
+    pub fn stop(&mut self) {
+        self.is_alive = false;
     }
 
     pub fn reset_test(&mut self, th: &Theme) {

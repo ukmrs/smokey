@@ -39,7 +39,7 @@ pub fn handle<'a>(
     if let KeyModifiers::CONTROL = key.modifiers {
         if let KeyCode::Char(c) = key.code {
             if c == 'c' {
-                app.should_quit = true;
+                app.stop();
                 return;
             }
         }
