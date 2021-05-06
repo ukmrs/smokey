@@ -8,6 +8,12 @@ use tui::{
 };
 
 use crate::application::App;
+use crate::Term;
+
+pub fn draw_test_and_update(terminal: &mut Term, app: &mut App) {
+    draw_test(terminal, app);
+    app.test.update_wpm_history();
+}
 
 pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal

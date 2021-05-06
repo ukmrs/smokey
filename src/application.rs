@@ -3,31 +3,23 @@
 //! main structs App and TestState
 
 use crate::colorscheme;
+use crate::handlers::{KeyHandler, Squad};
 use crate::langs;
 use crate::painters::*;
 use crate::vec_of_strings;
+use crate::Term;
+use crossterm::event::KeyEvent;
 use std::path::{Path, PathBuf};
-use tui::{
-    backend::{Backend, CrosstermBackend},
-    Terminal,
-};
 
 use colorscheme::Theme;
 use directories_next::ProjectDirs;
 use langs::{prepare_test, Punctuation};
 
-use std::io::Stdout;
 use std::time::Instant;
 use tui::text::Span;
 
 use crate::utils::StatefulList;
 use std::borrow::Cow;
-
-pub enum Screen {
-    Test,
-    Post,
-    Settings,
-}
 
 pub const APPLOGO: &'static str = " _._ _  _ |  _    
 _>| | |(_)|<(/_\\/ 
@@ -37,34 +29,68 @@ pub struct App<'t> {
     pub settings: Settings,
     pub test: TestState<'t>,
     pub theme: Theme,
-    pub screen: Screen,
     pub is_alive: bool,
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
-    pub painter: Painter<CrosstermBackend<Stdout>>,
-}
 
-fn draw_and_update<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
-    draw_test(terminal, app);
-    app.test.update_wpm_history();
-    debug!("i work");
+    pub painter: Painter,
+    pub respondent: KeyHandler,
 }
 
 impl<'t> App<'t> {
     pub fn new() -> Self {
         let config = Config::default();
         let settings = Settings::new(&PathBuf::from(config.source.clone()));
+        let posse = Squad::default();
         Self {
             test: TestState::default(),
-            screen: Screen::Test,
             theme: Theme::new(),
             is_alive: true,
             cursor_x: 1,
             margin: 2,
             config,
             settings,
-            painter: draw_and_update,
+            /// unwrap wont painc because the Squad Default always returns Some
+            painter: posse.painter.unwrap(),
+            respondent: posse.key_handler,
+        }
+    }
+
+    /// Paints to the screen using current painter
+    pub fn paint(&mut self, terminal: &mut Term) {
+        (self.painter)(terminal, self)
+    }
+
+    /// Performs an action based on KeyEvent
+    /// Such action may call for changing keyhandler and painter
+    /// which is also performed in the scope of this function
+    /// ```
+    /// use crossterm::event::{KeyCode, KeyEvent};
+    /// use smokey::application::App;
+    /// // app starts on the test Screen
+    /// let mut app = App::new();
+    /// app.reset_test();
+    ///
+    /// // q in this context just counts toward the test
+    /// app.handle_key_event(KeyEvent::from(KeyCode::Char('q')));
+    /// assert_eq!(app.test.done, 1);
+    /// assert!(app.is_alive);
+    ///
+    /// // Esc should go back to the settings
+    /// app.handle_key_event(KeyEvent::from(KeyCode::Esc));
+    /// // now q char is handled differently -> (quit app)
+    /// app.handle_key_event(KeyEvent::from(KeyCode::Char('q')));
+    /// assert!(!app.is_alive);
+    /// ```
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(kh) = (self.respondent)(key_event, self) {
+            let squad = kh.to_squad();
+            self.respondent = squad.key_handler;
+
+            if let Some(painter) = squad.painter {
+                self.painter = painter;
+            }
         }
     }
 
@@ -75,27 +101,6 @@ impl<'t> App<'t> {
     pub fn reset_test(&mut self) {
         self.cursor_x = 1;
         self.test.reset(&self.config, &self.theme);
-    }
-
-    pub fn switch_to_settings(&mut self) {
-        self.screen = Screen::Settings;
-        self.painter = draw_settings;
-    }
-
-    pub fn switch_to_post(&mut self) {
-        self.screen = Screen::Post;
-        self.painter = draw_post;
-    }
-
-    //TODO should this reset test?
-    pub fn switch_to_test(&mut self) {
-        self.screen = Screen::Test;
-        self.painter = draw_and_update;
-    }
-
-    pub fn end_test(&mut self) {
-        self.switch_to_post();
-        self.test.end();
     }
 }
 

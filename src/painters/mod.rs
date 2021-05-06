@@ -1,9 +1,8 @@
 //! # painters
 //! contains **Painter** functions of the following signature
 //! ```
-//! use tui::Terminal;
-//! use smokey::application::App;
-//! pub type Painter<B> = fn(terminal: &mut Terminal<B>, app: &mut App);
+//! use smokey::{application::App, Term};
+//! pub type Painter = fn(&mut Term, &mut App);
 //! ```
 //! the idea is to assign the pointer to specific Painter function
 //! once in a while when it's appropriate instead of checking
@@ -15,11 +14,12 @@ mod post;
 mod settings;
 mod test;
 
+use crate::{application::App, Term};
+
+// re-exports
 pub use post::draw_post;
 pub use settings::draw_settings;
-pub use test::draw_test;
+pub use test::{draw_test, draw_test_and_update};
 
-use crate::application::App;
-use tui::Terminal;
-
-pub type Painter<B> = fn(terminal: &mut Terminal<B>, app: &mut App);
+/// Signature of a function responsible for drawing to the terminal
+pub type Painter = fn(&mut Term, &mut App);

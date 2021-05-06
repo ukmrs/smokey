@@ -1,5 +1,6 @@
+use super::SquadChange;
 use crate::application::{App, TestState};
-use crate::colorscheme::{Theme, ToForeground};
+use crate::colorscheme::ToForeground;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 fn set_next_char_beware_blanks(test: &mut TestState) {
@@ -12,40 +13,38 @@ fn set_next_char_beware_blanks(test: &mut TestState) {
     }
 }
 
-fn set_next_char_or_end(app: &mut App, _theme: &Theme) {
+fn set_next_char_or_end(app: &mut App) -> Option<SquadChange> {
     if app.test.done < app.test.test_length {
-        set_next_char_beware_blanks(&mut app.test)
+        set_next_char_beware_blanks(&mut app.test);
+        None
     } else {
-        debug!("{}", app.test.calculate_wpm());
-        // test.reset(app, theme);
-        app.end_test();
+        app.test.calculate_wpm();
+        app.test.end();
+        Some(SquadChange::Post)
     }
 }
 
 /// handles keys during test
-pub fn handle<'a>(
-    key: KeyEvent,
-    app: &mut App<'a>,
-    theme: Theme,
-) {
+pub fn handle<'a>(key: KeyEvent, app: &mut App<'a>) -> Option<SquadChange> {
     let test = &mut app.test;
+    let theme = app.theme;
     // well doing this in terminal was a bad idea XD
     // Ctrl + Backspace registers as weird thing in terminals
     // I got ctrl(h) and ctrl(7) among others
     // but the ctrl is always there
-    // so I just detect ctrl
-    // its iffy but works
-    // renders ctrl useless during test for other uses though
+    // The following code thus interprets everything with ctrl mod except ctrl+c
+    // as ctrl + backspace
+    // not pretty but it is what is for now
     if let KeyModifiers::CONTROL = key.modifiers {
         if let KeyCode::Char(c) = key.code {
             if c == 'c' {
                 app.stop();
-                return;
+                return None;
             }
         }
 
         if test.done == 0 {
-            return;
+            return None;
         }
 
         if test.current_char == ' ' {
@@ -74,7 +73,7 @@ pub fn handle<'a>(
             test.text[test.done].style = theme.todo.fg();
         }
         test.set_next_char();
-        return;
+        return None;
     }
 
     match key.code {
@@ -85,7 +84,7 @@ pub fn handle<'a>(
             if c == test.current_char {
                 test.text[test.done].style = theme.done.fg();
                 test.done += 1;
-                set_next_char_or_end(app, &theme);
+                return set_next_char_or_end(app);
 
             // wrong key
             } else {
@@ -105,7 +104,7 @@ pub fn handle<'a>(
                     test.mistakes += 1;
                     test.text[test.done].style = theme.wrong.fg();
                     test.done += 1;
-                    set_next_char_or_end(app, &theme);
+                    return set_next_char_or_end(app);
                 }
             }
         }
@@ -143,8 +142,12 @@ pub fn handle<'a>(
             app.reset_test();
         }
 
-        KeyCode::Esc => app.switch_to_settings(),
+        KeyCode::Esc => {
+            return Some(SquadChange::Settings);
+        }
 
         _ => (),
     }
+
+    None
 }

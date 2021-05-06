@@ -1,25 +1,21 @@
+use super::SquadChange;
 use crate::application::App;
-use crate::colorscheme::Theme;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-pub fn handle<'a>(
-    key: KeyEvent,
-    app: &mut App,
-    _theme: Theme,
-) {
+pub fn handle(key: KeyEvent, app: &mut App) -> Option<SquadChange> {
     match key.code {
         KeyCode::Esc => app.stop(),
 
         KeyCode::Tab => {
-            app.switch_to_test();
             app.reset_test();
+            return Some(SquadChange::StandardTest);
         }
 
         KeyCode::Char(c) => {
             if let KeyModifiers::CONTROL = key.modifiers {
                 if c == 'c' {
                     app.stop();
-                    return;
+                    return None;
                 }
             }
 
@@ -40,4 +36,5 @@ pub fn handle<'a>(
 
         _ => (),
     }
+    None
 }
