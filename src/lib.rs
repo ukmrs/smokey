@@ -11,9 +11,6 @@ use simplelog::*;
 
 use application::{App, Screen};
 use crossterm::event::{poll, read, Event as CEvent};
-use handlers::key_handle;
-use handlers::Respondent;
-use painters::Painter;
 use std::fs::File;
 use std::io::Stdout;
 use std::time::Duration;
@@ -28,7 +25,6 @@ pub fn run(mut app: App, terminal: Term) -> crossterm::Result<()> {
     init_logger();
 
     app.reset_test();
-    app.screen = Screen::Test;
 
     termprep::init();
     main_loop(app, terminal)?;

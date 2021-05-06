@@ -3,14 +3,13 @@
 //! main structs App and TestState
 
 use crate::colorscheme;
-use crate::handlers::{Respondent, Squad};
+use crate::handlers::{KeyHandler, Squad};
 use crate::langs;
 use crate::painters::*;
 use crate::vec_of_strings;
 use crate::Term;
 use crossterm::event::KeyEvent;
 use std::path::{Path, PathBuf};
-use tui::{backend::Backend, Terminal};
 
 use colorscheme::Theme;
 use directories_next::ProjectDirs;
@@ -43,7 +42,7 @@ pub struct App<'t> {
     pub config: Config,
 
     pub painter: Painter,
-    pub respondent: Respondent,
+    pub respondent: KeyHandler,
 }
 
 impl<'t> App<'t> {
@@ -62,7 +61,7 @@ impl<'t> App<'t> {
             settings,
             /// unwrap wont painc because the Squad Default always returns Some
             painter: posse.painter.unwrap(),
-            respondent: posse.respondent,
+            respondent: posse.key_handler,
         }
     }
 
@@ -71,12 +70,32 @@ impl<'t> App<'t> {
         (self.painter)(terminal, self)
     }
 
-    /// Performs action based on current respondent
-    /// changes painters and respondents if need be
+
+    /// Performs an action based on KeyEvent
+    /// Such action may call for changing keyhandler and painter
+    /// which is also performed in the scope of this function
+    /// ```
+    /// use crossterm::event::{KeyCode, KeyEvent};
+    /// use smokey::application::App;
+    /// // app starts on the test Screen
+    /// let mut app = App::new();
+    /// app.reset_test();
+    ///
+    /// // q in this context just counts toward the test
+    /// app.handle_key_event(KeyEvent::from(KeyCode::Char('q')));
+    /// assert_eq!(app.test.done, 1);
+    /// assert!(app.is_alive);
+    ///
+    /// // Esc should go back to the settings
+    /// app.handle_key_event(KeyEvent::from(KeyCode::Esc));
+    /// // now q char is handled differently -> (quit app)
+    /// app.handle_key_event(KeyEvent::from(KeyCode::Char('q')));
+    /// assert!(!app.is_alive);
+    /// ```
     pub fn handle_key_event(&mut self, key_event: KeyEvent) {
         if let Some(kh) = (self.respondent)(key_event, self) {
             let squad = kh.to_squad();
-            self.respondent = squad.respondent;
+            self.respondent = squad.key_handler;
 
             if let Some(painter) = squad.painter {
                 self.painter = painter;
@@ -91,27 +110,6 @@ impl<'t> App<'t> {
     pub fn reset_test(&mut self) {
         self.cursor_x = 1;
         self.test.reset(&self.config, &self.theme);
-    }
-
-    pub fn switch_to_settings(&mut self) {
-        self.screen = Screen::Settings;
-        self.painter = draw_settings;
-    }
-
-    pub fn switch_to_post(&mut self) {
-        self.screen = Screen::Post;
-        self.painter = draw_post;
-    }
-
-    //TODO should this reset test?
-    pub fn switch_to_test(&mut self) {
-        self.screen = Screen::Test;
-        self.painter = draw_test_and_update;
-    }
-
-    pub fn end_test(&mut self) {
-        self.switch_to_post();
-        self.test.end();
     }
 }
 
