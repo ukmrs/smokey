@@ -3,10 +3,12 @@
 //! main structs App and TestState
 
 use crate::colorscheme;
+use crate::handlers::{Respondent, Squad};
 use crate::langs;
-use crate::Term;
 use crate::painters::*;
 use crate::vec_of_strings;
+use crate::Term;
+use crossterm::event::KeyEvent;
 use std::path::{Path, PathBuf};
 use tui::{backend::Backend, Terminal};
 
@@ -41,18 +43,14 @@ pub struct App<'t> {
     pub config: Config,
 
     pub painter: Painter,
-}
-
-fn draw_and_update<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
-    draw_test(terminal, app);
-    app.test.update_wpm_history();
-    debug!("i work");
+    pub respondent: Respondent,
 }
 
 impl<'t> App<'t> {
     pub fn new() -> Self {
         let config = Config::default();
         let settings = Settings::new(&PathBuf::from(config.source.clone()));
+        let posse = Squad::default();
         Self {
             test: TestState::default(),
             screen: Screen::Test,
@@ -62,13 +60,28 @@ impl<'t> App<'t> {
             margin: 2,
             config,
             settings,
-            painter: draw_and_update,
+            /// unwrap wont painc because the Squad Default always returns Some
+            painter: posse.painter.unwrap(),
+            respondent: posse.respondent,
         }
     }
 
     /// Paints to the screen using current painter
     pub fn paint(&mut self, terminal: &mut Term) {
         (self.painter)(terminal, self)
+    }
+
+    /// Performs action based on current respondent
+    /// changes painters and respondents if need be
+    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(kh) = (self.respondent)(key_event, self) {
+            let squad = kh.to_squad();
+            self.respondent = squad.respondent;
+
+            if let Some(painter) = squad.painter {
+                self.painter = painter;
+            }
+        }
     }
 
     pub fn stop(&mut self) {
@@ -93,7 +106,7 @@ impl<'t> App<'t> {
     //TODO should this reset test?
     pub fn switch_to_test(&mut self) {
         self.screen = Screen::Test;
-        self.painter = draw_and_update;
+        self.painter = draw_test_and_update;
     }
 
     pub fn end_test(&mut self) {

@@ -1,3 +1,4 @@
+use super::KeyHandler;
 use crate::application::{App, TestState};
 use crate::colorscheme::ToForeground;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -23,10 +24,7 @@ fn set_next_char_or_end(app: &mut App) {
 }
 
 /// handles keys during test
-pub fn handle<'a>(
-    key: KeyEvent,
-    app: &mut App<'a>,
-) {
+pub fn handle<'a>(key: KeyEvent, app: &mut App<'a>) -> Option<KeyHandler> {
     let test = &mut app.test;
     let theme = app.theme;
     // well doing this in terminal was a bad idea XD
@@ -40,12 +38,12 @@ pub fn handle<'a>(
         if let KeyCode::Char(c) = key.code {
             if c == 'c' {
                 app.stop();
-                return;
+                return None;
             }
         }
 
         if test.done == 0 {
-            return;
+            return None;
         }
 
         if test.current_char == ' ' {
@@ -74,7 +72,7 @@ pub fn handle<'a>(
             test.text[test.done].style = theme.todo.fg();
         }
         test.set_next_char();
-        return;
+        return None;
     }
 
     match key.code {
@@ -143,8 +141,13 @@ pub fn handle<'a>(
             app.reset_test();
         }
 
-        KeyCode::Esc => app.switch_to_settings(),
+        KeyCode::Esc => {
+            app.switch_to_settings();
+            return Some(KeyHandler::Settings);
+        }
 
         _ => (),
     }
+
+    None
 }

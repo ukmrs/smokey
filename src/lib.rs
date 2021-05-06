@@ -12,6 +12,8 @@ use simplelog::*;
 use application::{App, Screen};
 use crossterm::event::{poll, read, Event as CEvent};
 use handlers::key_handle;
+use handlers::Respondent;
+use painters::Painter;
 use std::fs::File;
 use std::io::Stdout;
 use std::time::Duration;
@@ -43,7 +45,7 @@ fn main_loop<'a>(mut app: App<'a>, mut terminal: Term) -> crossterm::Result<()> 
         if poll(Duration::from_millis(250))? {
             let read = read()?;
             if let CEvent::Key(event) = read {
-                key_handle(event, &mut app);
+                app.handle_key_event(event)
             }
         }
     }
@@ -58,3 +60,4 @@ fn init_logger() {
     )
     .expect("logger init went oof");
 }
+
