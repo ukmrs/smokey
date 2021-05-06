@@ -151,3 +151,84 @@ pub fn handle<'a>(key: KeyEvent, app: &mut App<'a>) -> Option<SquadChange> {
 
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::application::App;
+    use crossterm::event::{KeyCode, KeyEvent};
+    use std::thread;
+    use std::time::Duration;
+
+    fn generate_key_events_passing_standart_test(app: &App) -> Vec<KeyEvent> {
+        app.test
+            .text
+            .iter()
+            .map(|x| x.content.chars().nth(0))
+            .filter(|c| c.is_some())
+            .map(|c| KeyEvent::from(KeyCode::Char(c.unwrap())))
+            .collect()
+    }
+
+    fn go_thorugh_test_n_times(n: usize) {
+        let mut app = App::setup();
+        for _ in 0..n {
+            let key_events = generate_key_events_passing_standart_test(&app);
+
+            // go
+            // but stay there
+            for kv in key_events {
+                app.handle_key_event(kv);
+            }
+            app.handle_key_event(KeyEvent::from(KeyCode::Tab))
+        }
+    }
+
+    #[test]
+    fn go_thorugh_test_five_times() {
+        go_thorugh_test_n_times(5)
+    }
+
+    #[test]
+    #[ignore]
+    fn go_thorugh_test_100_times() {
+        go_thorugh_test_n_times(100)
+    }
+
+    fn wpm_to_char_delay<T: Into<f64>>(wpm: T) -> Duration
+    where
+        f64: From<T>,
+    {
+        Duration::from_secs_f64(12. / f64::from(wpm))
+    }
+
+    // this tests are hardware/os dependent
+    // which make them potentially bad
+    fn wpm_test_setup(wpm: f64) {
+        let delay = wpm_to_char_delay(wpm);
+
+        let mut app = App::setup();
+        let key_events = generate_key_events_passing_standart_test(&app);
+
+        for kv in key_events {
+            thread::sleep(delay);
+            app.handle_key_event(kv);
+        }
+
+        let final_wpm = app.test.hoarder.final_wpm;
+        // final_wmp can be lower by a thin margin given in the toleranca variable
+        // than the requested wpm
+        // but it can never be higher as std::thread::sleep is guaranteed to sleep at
+        // least for the specified duration
+        let tolerated = 0.99 * wpm;
+        assert!(final_wpm < wpm);
+        assert!(final_wpm > tolerated);
+    }
+
+    #[test]
+    #[ignore]
+    fn test_wpm_counting() {
+        wpm_test_setup(60.);
+        wpm_test_setup(140.);
+        wpm_test_setup(220.);
+    }
+}

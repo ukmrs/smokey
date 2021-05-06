@@ -3,7 +3,7 @@
 //! main structs App and TestState
 
 use crate::colorscheme;
-use crate::handlers::{KeyHandler, Squad};
+use crate::handlers::{KeyHandler, SquadChange};
 use crate::langs;
 use crate::painters::*;
 use crate::vec_of_strings;
@@ -29,20 +29,25 @@ pub struct App<'t> {
     pub settings: Settings,
     pub test: TestState<'t>,
     pub theme: Theme,
-    pub is_alive: bool,
     pub cursor_x: u16,
     pub margin: u16,
     pub config: Config,
 
     pub painter: Painter,
     pub respondent: KeyHandler,
+
+    pub is_alive: bool,
 }
 
 impl<'t> App<'t> {
+    /// Creates App instance
+    /// the test isnt initialized though
     pub fn new() -> Self {
         let config = Config::default();
         let settings = Settings::new(&PathBuf::from(config.source.clone()));
-        let posse = Squad::default();
+
+        let posse = SquadChange::StandardTest.to_squad();
+
         Self {
             test: TestState::default(),
             theme: Theme::new(),
@@ -55,6 +60,15 @@ impl<'t> App<'t> {
             painter: posse.painter.unwrap(),
             respondent: posse.key_handler,
         }
+    }
+
+    /// returns App instance with initialized test
+    /// basically ready to use
+    /// perhaps this will become the new function
+    pub fn setup() -> Self {
+        let mut app = Self::new();
+        app.reset_test();
+        app
     }
 
     /// Paints to the screen using current painter
@@ -268,7 +282,7 @@ impl<'a> Default for TestState<'a> {
 impl<'a> TestState<'a> {
     pub fn calculate_wpm(&self) -> f64 {
         let numerator: f64 = 12. * (self.done - self.blanks - self.mistakes as usize) as f64;
-        let elapsed = Instant::now().duration_since(self.begining).as_secs() as f64;
+        let elapsed = Instant::now().duration_since(self.begining).as_secs_f64();
         numerator / elapsed
     }
 
