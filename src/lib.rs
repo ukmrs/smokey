@@ -9,7 +9,7 @@ pub mod utils;
 extern crate log;
 use simplelog::*;
 
-use application::{App, Screen};
+use application::App;
 use crossterm::event::{poll, read, Event as CEvent};
 use std::fs::File;
 use std::io::Stdout;

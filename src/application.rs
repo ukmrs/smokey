@@ -21,12 +21,6 @@ use tui::text::Span;
 use crate::utils::StatefulList;
 use std::borrow::Cow;
 
-pub enum Screen {
-    Test,
-    Post,
-    Settings,
-}
-
 pub const APPLOGO: &'static str = " _._ _  _ |  _    
 _>| | |(_)|<(/_\\/ 
                /  ";
@@ -35,7 +29,6 @@ pub struct App<'t> {
     pub settings: Settings,
     pub test: TestState<'t>,
     pub theme: Theme,
-    pub screen: Screen,
     pub is_alive: bool,
     pub cursor_x: u16,
     pub margin: u16,
@@ -52,7 +45,6 @@ impl<'t> App<'t> {
         let posse = Squad::default();
         Self {
             test: TestState::default(),
-            screen: Screen::Test,
             theme: Theme::new(),
             is_alive: true,
             cursor_x: 1,
@@ -69,7 +61,6 @@ impl<'t> App<'t> {
     pub fn paint(&mut self, terminal: &mut Term) {
         (self.painter)(terminal, self)
     }
-
 
     /// Performs an action based on KeyEvent
     /// Such action may call for changing keyhandler and painter
