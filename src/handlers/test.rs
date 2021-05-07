@@ -174,11 +174,16 @@ mod tests {
         for _ in 0..n {
             let key_events = generate_key_events_passing_standart_test(&app);
 
-            // go
-            // but stay there
+            let klucznik_ptr = app.klucznik as usize;
+
             for kv in key_events {
                 app.handle_key_event(kv);
             }
+
+            // key_handler should be changed by now
+            // as after the completed test the app should land itself in the post screen
+            assert_ne!(klucznik_ptr, app.klucznik as usize);
+
             app.handle_key_event(KeyEvent::from(KeyCode::Tab))
         }
     }
@@ -193,6 +198,9 @@ mod tests {
     fn go_thorugh_test_100_times() {
         go_thorugh_test_n_times(100)
     }
+
+    // Testing results of typing test
+    // TODO: Accuracy and such
 
     fn wpm_to_char_delay<T: Into<f64>>(wpm: T) -> Duration
     where
@@ -216,9 +224,8 @@ mod tests {
 
         let final_wpm = app.test.hoarder.final_wpm;
         // final_wmp can be lower by a thin margin given in the toleranca variable
-        // than the requested wpm
-        // but it can never be higher as std::thread::sleep is guaranteed to sleep at
-        // least for the specified duration
+        // than the requested wpm, but it can never be higher
+        // as std::thread::sleep is guaranteed to sleep for at least the specified duration
         let tolerated = 0.99 * wpm;
         assert!(final_wpm < wpm);
         assert!(final_wpm > tolerated);
@@ -231,4 +238,13 @@ mod tests {
         wpm_test_setup(140.);
         wpm_test_setup(220.);
     }
+
+    // Testing Backspace
+    //
+
+    // #[test]
+    // fn test_backspace() {
+    //     let mut app = App::setup();
+    //     let key_events = generate_key_events_passing_standart_test(&app);
+    // }
 }

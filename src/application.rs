@@ -33,8 +33,8 @@ pub struct App<'t> {
     pub margin: u16,
     pub config: Config,
 
+    pub klucznik: KeyHandler,
     pub painter: Painter,
-    pub respondent: KeyHandler,
 
     pub is_alive: bool,
 }
@@ -58,7 +58,7 @@ impl<'t> App<'t> {
             settings,
             /// unwrap wont painc because the Squad Default always returns Some
             painter: posse.painter.unwrap(),
-            respondent: posse.key_handler,
+            klucznik: posse.key_handler,
         }
     }
 
@@ -98,9 +98,9 @@ impl<'t> App<'t> {
     /// assert!(!app.is_alive);
     /// ```
     pub fn handle_key_event(&mut self, key_event: KeyEvent) {
-        if let Some(kh) = (self.respondent)(key_event, self) {
+        if let Some(kh) = (self.klucznik)(key_event, self) {
             let squad = kh.to_squad();
-            self.respondent = squad.key_handler;
+            self.klucznik = squad.key_handler;
 
             if let Some(painter) = squad.painter {
                 self.painter = painter;
