@@ -18,6 +18,7 @@ pub fn handle(key: KeyEvent, app: &mut App) -> Option<SquadChange> {
                 }
             }
         }
+
         _ => (),
     }
     None
