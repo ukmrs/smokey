@@ -298,7 +298,6 @@ impl<'a> TestState<'a> {
     }
 
     pub fn end(&mut self) {
-        debug!("{}", self.calculate_wpm());
         self.hoarder.final_wpm = self.calculate_wpm();
     }
 

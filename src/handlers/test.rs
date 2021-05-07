@@ -158,7 +158,7 @@ mod tests {
     use crossterm::event::{KeyCode, KeyEvent};
     use std::thread;
     use std::time::Duration;
-
+    
     fn generate_key_events_passing_standart_test(app: &App) -> Vec<KeyEvent> {
         app.test
             .text
@@ -240,11 +240,24 @@ mod tests {
     }
 
     // Testing Backspace
-    //
 
-    // #[test]
-    // fn test_backspace() {
-    //     let mut app = App::setup();
-    //     let key_events = generate_key_events_passing_standart_test(&app);
-    // }
+    #[test]
+    fn test_backspace_at_the_test_begining() {
+        let mut app = App::setup();
+        for _ in 0..20 {
+            app.handle_key_event(KeyEvent::from(KeyCode::Backspace))
+        }
+        assert_eq!(app.test.done, 0);
+
+        app.handle_key_event(KeyEvent::from(KeyCode::Char('ź')));
+        assert_eq!(app.test.done, 1);
+        app.handle_key_event(KeyEvent::from(KeyCode::Backspace));
+        assert_eq!(app.test.done, 0);
+
+        for _ in 0..20 {
+            app.handle_key_event(KeyEvent::from(KeyCode::Char('ź')));
+            app.handle_key_event(KeyEvent::from(KeyCode::Backspace));
+        }
+        assert_eq!(app.test.done, 0);
+    }
 }
