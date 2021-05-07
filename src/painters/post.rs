@@ -105,5 +105,5 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             frame.render_widget(chart, chunks[1]);
         })
-        .expect("drawing post went fine")
+        .expect("drawing post went fine");
 }
