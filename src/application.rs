@@ -3,7 +3,8 @@
 //! main structs App and TestState
 
 use crate::colorscheme;
-use crate::handlers::{KeyHandler, SquadChange};
+use crate::handlers;
+use crate::handlers::KeyHandler;
 use crate::langs;
 use crate::painters::*;
 use crate::vec_of_strings;
@@ -75,14 +76,22 @@ impl<'t> App<'t> {
     /// assert!(!app.is_alive);
     /// ```
     pub fn handle_key_event(&mut self, key_event: KeyEvent) {
-        if let Some(kh) = (self.klucznik)(key_event, self) {
-            let squad = kh.to_squad();
-            self.klucznik = squad.key_handler;
+        (self.klucznik)(key_event, self)
+    }
 
-            if let Some(painter) = squad.painter {
-                self.painter = painter;
-            }
-        }
+    pub fn change_to_post(&mut self) {
+        self.painter = draw_post;
+        self.klucznik = handlers::post::handle;
+    }
+
+    pub fn change_to_settings(&mut self) {
+        self.painter = draw_settings;
+        self.klucznik = handlers::settings::handle;
+    }
+
+    pub fn change_to_test(&mut self) {
+        self.painter = draw_test_and_update;
+        self.klucznik = handlers::test::handle;
     }
 
     pub fn stop(&mut self) {
@@ -102,8 +111,6 @@ impl<'t> Default for App<'t> {
         let config = Config::default();
         let settings = Settings::new(&PathBuf::from(config.source.clone()));
 
-        let posse = SquadChange::StandardTest.to_squad();
-
         Self {
             test: TestState::default(),
             theme: Theme::default(),
@@ -113,8 +120,8 @@ impl<'t> Default for App<'t> {
             config,
             settings,
             /// unwrap wont painc because the Squad Default always returns Some
-            painter: posse.painter.unwrap(),
-            klucznik: posse.key_handler,
+            painter: draw_test_and_update,
+            klucznik: handlers::test::handle,
         }
     }
 }
@@ -226,6 +233,7 @@ impl WpmHoarder {
     }
 
     // delet this
+    // TODO really delet this
     pub fn get_min_and_max(&self) -> (f64, f64) {
         let mut min: f64 = self.wpms[0];
         let mut max: f64 = min;

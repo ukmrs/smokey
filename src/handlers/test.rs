@@ -1,4 +1,3 @@
-use super::SquadChange;
 use crate::application::{App, TestState};
 use crate::colorscheme::ToForeground;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -13,19 +12,17 @@ fn set_next_char_beware_blanks(test: &mut TestState) {
     }
 }
 
-fn set_next_char_or_end(app: &mut App) -> Option<SquadChange> {
+fn set_next_char_or_end(app: &mut App) {
     if app.test.done < app.test.test_length {
-        set_next_char_beware_blanks(&mut app.test);
-        None
-    } else {
-        app.test.calculate_wpm();
-        app.test.end();
-        Some(SquadChange::Post)
+        return set_next_char_beware_blanks(&mut app.test);
     }
+    app.test.calculate_wpm();
+    app.test.end();
+    app.change_to_post();
 }
 
 /// handles keys during test
-pub fn handle(key: KeyEvent, app: &mut App) -> Option<SquadChange> {
+pub fn handle(key: KeyEvent, app: &mut App) {
     let test = &mut app.test;
     let theme = app.theme;
     // well doing this in terminal was a bad idea XD
@@ -39,12 +36,12 @@ pub fn handle(key: KeyEvent, app: &mut App) -> Option<SquadChange> {
         if let KeyCode::Char(c) = key.code {
             if c == 'c' {
                 app.stop();
-                return None;
+                return;
             }
         }
 
         if test.done == 0 {
-            return None;
+            return;
         }
 
         if test.current_char == ' ' {
@@ -73,7 +70,7 @@ pub fn handle(key: KeyEvent, app: &mut App) -> Option<SquadChange> {
             test.text[test.done].style = theme.todo.fg();
         }
         test.set_next_char();
-        return None;
+        return;
     }
 
     match key.code {
@@ -143,13 +140,11 @@ pub fn handle(key: KeyEvent, app: &mut App) -> Option<SquadChange> {
         }
 
         KeyCode::Esc => {
-            return Some(SquadChange::Settings);
+            app.change_to_settings();
         }
 
         _ => (),
     }
-
-    None
 }
 
 #[cfg(test)]
