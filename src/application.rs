@@ -61,8 +61,7 @@ impl<'t> App<'t> {
     /// use crossterm::event::{KeyCode, KeyEvent};
     /// use smokey::application::App;
     /// // app starts on the test Screen
-    /// let mut app = App::new();
-    /// app.reset_test();
+    /// let mut app = App::setup();
     ///
     /// // q in this context just counts toward the test
     /// app.handle_key_event(KeyEvent::from(KeyCode::Char('q')));

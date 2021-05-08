@@ -56,4 +56,3 @@ fn init_logger() {
     )
     .expect("logger init went oof");
 }
-

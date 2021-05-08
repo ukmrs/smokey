@@ -9,7 +9,6 @@ use std::{
 };
 
 fn main() {
-
     let source_storage = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("storage");
 
     let local_storage = ProjectDirs::from("pl", "ukmrs", "smokey")
@@ -20,13 +19,12 @@ fn main() {
     copy_dir_recursively(&source_storage, &local_storage).expect("couldnt install word packs");
 }
 
-// thanks doug 
+// thanks doug
 // https://stackoverflow.com/users/353820/doug
 pub fn copy_dir_recursively<U: AsRef<Path>, V: AsRef<Path>>(
     from: U,
     to: V,
 ) -> Result<(), std::io::Error> {
-
     let mut stack = vec![PathBuf::from(from.as_ref())];
 
     let output_root = PathBuf::from(to.as_ref());
@@ -49,8 +47,8 @@ pub fn copy_dir_recursively<U: AsRef<Path>, V: AsRef<Path>>(
             if path.is_dir() {
                 stack.push(path);
             } else if let Some(filename) = path.file_name() {
-                    let dest_path = dest.join(filename);
-                    fs::copy(&path, &dest_path)?;
+                let dest_path = dest.join(filename);
+                fs::copy(&path, &dest_path)?;
             }
         }
     }
