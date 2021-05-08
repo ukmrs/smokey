@@ -2,12 +2,12 @@ pub mod randorst;
 pub mod termprep;
 use tui::widgets::ListState;
 
+#[derive(Default)]
 pub struct StatefulList<T> {
     pub state: ListState,
     pub items: Vec<T>,
 }
 
-#[allow(dead_code)]
 impl<T> StatefulList<T> {
     pub fn new() -> StatefulList<T> {
         StatefulList {

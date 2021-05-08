@@ -13,7 +13,6 @@ impl ToForeground for Color {
     fn fg(self) -> Style {
         Style::default().fg(self)
     }
-
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -23,8 +22,8 @@ pub struct Theme {
     pub todo: Color,
 }
 
-impl Theme {
-    pub fn new() -> Self {
+impl Default for Theme {
+    fn default() -> Self {
         Theme {
             done: Color::White,
             wrong: Color::Red,

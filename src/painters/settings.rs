@@ -96,7 +96,7 @@ pub fn draw_row_with_words_and_mods<B: Backend>(f: &mut Frame<B>, app: &mut App,
 
 pub fn render_stateful_list<B: Backend>(
     f: &mut Frame<B>,
-    sl: &Vec<String>,
+    sl: &[String],
     ls: &mut ListState,
     title: &str,
     area: Rect,
@@ -105,7 +105,7 @@ pub fn render_stateful_list<B: Backend>(
     f.render_stateful_widget(items, area, ls)
 }
 
-pub fn create_item_list<'a>(sl: &Vec<String>, title: &'a str) -> List<'a> {
+pub fn create_item_list<'a>(sl: &[String], title: &'a str) -> List<'a> {
     let items: Vec<ListItem> = sl
         .iter()
         .map(|i| ListItem::new(Span::from(i.clone())).style(Style::default().fg(Color::Gray)))

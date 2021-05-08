@@ -32,7 +32,7 @@ pub fn run(mut app: App, terminal: Term) -> crossterm::Result<()> {
     Ok(())
 }
 
-fn main_loop<'a>(mut app: App<'a>, mut terminal: Term) -> crossterm::Result<()> {
+fn main_loop(mut app: App, mut terminal: Term) -> crossterm::Result<()> {
     while app.is_alive {
         // drawing to the screen
         app.paint(&mut terminal);

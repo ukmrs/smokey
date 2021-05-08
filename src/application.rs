@@ -21,7 +21,7 @@ use tui::text::Span;
 use crate::utils::StatefulList;
 use std::borrow::Cow;
 
-pub const APPLOGO: &'static str = " _._ _  _ |  _    
+pub const APPLOGO: &str = " _._ _  _ |  _    
 _>| | |(_)|<(/_\\/ 
                /  ";
 
@@ -40,33 +40,11 @@ pub struct App<'t> {
 }
 
 impl<'t> App<'t> {
-    /// Creates App instance
-    /// the test isnt initialized though
-    pub fn new() -> Self {
-        let config = Config::default();
-        let settings = Settings::new(&PathBuf::from(config.source.clone()));
-
-        let posse = SquadChange::StandardTest.to_squad();
-
-        Self {
-            test: TestState::default(),
-            theme: Theme::new(),
-            is_alive: true,
-            cursor_x: 1,
-            margin: 2,
-            config,
-            settings,
-            /// unwrap wont painc because the Squad Default always returns Some
-            painter: posse.painter.unwrap(),
-            klucznik: posse.key_handler,
-        }
-    }
-
     /// returns App instance with initialized test
     /// basically ready to use
     /// perhaps this will become the new function
     pub fn setup() -> Self {
-        let mut app = Self::new();
+        let mut app = Self::default();
         app.reset_test();
         app
     }
@@ -115,6 +93,30 @@ impl<'t> App<'t> {
     pub fn reset_test(&mut self) {
         self.cursor_x = 1;
         self.test.reset(&self.config, &self.theme);
+    }
+}
+
+impl<'t> Default for App<'t> {
+    /// Creates App instance
+    /// the test isnt initialized though
+    fn default() -> Self {
+        let config = Config::default();
+        let settings = Settings::new(&PathBuf::from(config.source.clone()));
+
+        let posse = SquadChange::StandardTest.to_squad();
+
+        Self {
+            test: TestState::default(),
+            theme: Theme::default(),
+            is_alive: true,
+            cursor_x: 1,
+            margin: 2,
+            config,
+            settings,
+            /// unwrap wont painc because the Squad Default always returns Some
+            painter: posse.painter.unwrap(),
+            klucznik: posse.key_handler,
+        }
     }
 }
 

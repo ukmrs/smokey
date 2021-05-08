@@ -26,8 +26,8 @@ pub fn copy_dir_recursively<U: AsRef<Path>, V: AsRef<Path>>(
     from: U,
     to: V,
 ) -> Result<(), std::io::Error> {
-    let mut stack = Vec::new();
-    stack.push(PathBuf::from(from.as_ref()));
+
+    let mut stack = vec![PathBuf::from(from.as_ref())];
 
     let output_root = PathBuf::from(to.as_ref());
     let input_root = PathBuf::from(from.as_ref()).components().count();
@@ -48,11 +48,9 @@ pub fn copy_dir_recursively<U: AsRef<Path>, V: AsRef<Path>>(
             let path = entry.path();
             if path.is_dir() {
                 stack.push(path);
-            } else {
-                if let Some(filename) = path.file_name() {
+            } else if let Some(filename) = path.file_name() {
                     let dest_path = dest.join(filename);
                     fs::copy(&path, &dest_path)?;
-                }
             }
         }
     }

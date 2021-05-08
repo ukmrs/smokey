@@ -25,7 +25,7 @@ fn set_next_char_or_end(app: &mut App) -> Option<SquadChange> {
 }
 
 /// handles keys during test
-pub fn handle<'a>(key: KeyEvent, app: &mut App<'a>) -> Option<SquadChange> {
+pub fn handle(key: KeyEvent, app: &mut App) -> Option<SquadChange> {
     let test = &mut app.test;
     let theme = app.theme;
     // well doing this in terminal was a bad idea XD
@@ -158,7 +158,7 @@ mod tests {
     use crossterm::event::{KeyCode, KeyEvent};
     use std::thread;
     use std::time::Duration;
-    
+
     fn generate_key_events_passing_standart_test(app: &App) -> Vec<KeyEvent> {
         app.test
             .text
