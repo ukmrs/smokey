@@ -4,7 +4,6 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 /// handles keys during test
 pub fn handle(key: KeyEvent, app: &mut App) {
     let test = &mut app.test;
-    let theme = app.theme;
     // well doing this in terminal was a bad idea XD
     // Ctrl + Backspace registers as weird thing in terminals
     // I got ctrl(h) and ctrl(7) among others
@@ -21,7 +20,7 @@ pub fn handle(key: KeyEvent, app: &mut App) {
         }
 
         if test.done > 0 {
-            test.undo_word(&theme);
+            test.undo_word();
             test.set_next_char();
             return;
         }
@@ -29,12 +28,12 @@ pub fn handle(key: KeyEvent, app: &mut App) {
 
     match key.code {
         KeyCode::Char(c) => {
-            if test.on_char(c, &theme) {
+            if test.on_char(c) {
                 app.change_to_post();
             }
         }
 
-        KeyCode::Backspace => test.undo_char(&theme),
+        KeyCode::Backspace => test.undo_char(),
         KeyCode::Tab => app.reset_test(),
         KeyCode::Esc => app.change_to_settings(),
         _ => (),

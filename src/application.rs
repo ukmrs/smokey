@@ -94,7 +94,7 @@ impl<'t> App<'t> {
 
     pub fn reset_test(&mut self) {
         self.test.cursor_x = 1;
-        self.test.reset(&self.config, &self.theme);
+        self.test.reset(&self.config);
     }
 }
 

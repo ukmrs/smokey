@@ -4,6 +4,7 @@ use crate::colorscheme::ToForeground;
 use crate::langs::prepare_test;
 use std::time::Instant;
 use tui::text::Span;
+use tui::style::Color;
 
 pub struct WpmHoarder {
     pub wpms: Vec<f64>,
@@ -80,10 +81,17 @@ pub struct TestState<'a> {
     pub text: Vec<Span<'a>>,
     pub test_length: usize,
     pub hoarder: WpmHoarder,
+
+    cwrong: Color,
+    ctodo: Color,
+    cdone: Color,
 }
 
 impl<'a> Default for TestState<'a> {
+
     fn default() -> Self {
+        let th = Theme::default();
+
         TestState {
             text: vec![],
             begining: Instant::now(),
@@ -96,6 +104,10 @@ impl<'a> Default for TestState<'a> {
             test_length: 0,
             current_char: ' ',
             hoarder: WpmHoarder::new(32),
+
+            cwrong: th.wrong,
+            ctodo: th.todo,
+            cdone: th.done,
         }
     }
 }
@@ -107,10 +119,10 @@ impl<'a> TestState<'a> {
         numerator / elapsed
     }
 
-    pub fn reset(&mut self, config: &Config, th: &Theme) {
+    pub fn reset(&mut self, config: &Config) {
         self.blanks = 0;
         self.done = 0;
-        self.text = prepare_test(config, th);
+        self.text = prepare_test(config, self.cwrong, self.ctodo);
         self.begining = Instant::now();
         self.mistakes = 0;
         self.current_char = self.text[self.done].content.chars().next().unwrap();
@@ -130,8 +142,8 @@ impl<'a> TestState<'a> {
 
     /// chekcs if char is a mistake and deducts it from
     /// the total count
-    pub fn if_mistake_deduct(&mut self, index: usize, th: &Theme) {
-        if th.wrong == self.text[index].style.fg.unwrap() {
+    pub fn if_mistake_deduct(&mut self, index: usize) {
+        if self.cwrong == self.text[index].style.fg.unwrap() {
             self.mistakes -= 1;
         }
     }
@@ -176,10 +188,10 @@ impl<'a> TestState<'a> {
         true
     }
 
-    pub fn on_char(&mut self, c: char, theme: &Theme) -> bool {
+    pub fn on_char(&mut self, c: char) -> bool {
         self.cursor_x += 1;
         if c == self.current_char {
-            self.text[self.done].style = theme.done.fg();
+            self.text[self.done].style = self.cdone.fg();
             self.done += 1;
             return self.set_next_char_or_end();
         }
@@ -199,7 +211,7 @@ impl<'a> TestState<'a> {
         // just changes to wrong and moves on
         } else {
             self.mistakes += 1;
-            self.text[self.done].style = theme.wrong.fg();
+            self.text[self.done].style = self.cwrong.fg();
             self.done += 1;
             return self.set_next_char_or_end();
         }
@@ -210,48 +222,48 @@ impl<'a> TestState<'a> {
 
     // undo word
 
-    fn undo_space_char_and_extras(&mut self, theme: &Theme) {
+    fn undo_space_char_and_extras(&mut self) {
         self.cursor_x -= self.fetch(self.done - 1).len() as u16 + 1;
         self.change(self.done - 1, String::new());
         self.done -= 2;
 
-        self.if_mistake_deduct(self.done, &theme);
-        self.text[self.done].style = theme.todo.fg();
+        self.if_mistake_deduct(self.done);
+        self.text[self.done].style = self.ctodo.fg();
         self.blanks -= 1;
     }
 
-    pub fn undo_word(&mut self, theme: &Theme) {
+    pub fn undo_word(&mut self) {
         if self.current_char == ' ' {
-            self.undo_space_char_and_extras(theme);
+            self.undo_space_char_and_extras();
         } else if self.fetch(self.done - 1) == " " {
             self.done -= 1;
             self.cursor_x -= 1;
-            self.text[self.done].style = theme.todo.fg();
+            self.text[self.done].style = self.ctodo.fg();
 
-            self.undo_space_char_and_extras(theme);
+            self.undo_space_char_and_extras();
         }
 
         while self.done != 0 && self.fetch(self.done - 1) != " " {
             self.cursor_x -= 1;
             self.done -= 1;
-            self.if_mistake_deduct(self.done, &theme);
-            self.text[self.done].style = theme.todo.fg();
+            self.if_mistake_deduct(self.done);
+            self.text[self.done].style = self.ctodo.fg();
         }
     }
 
     // undo char
     //
-    pub fn undo_char(&mut self, theme: &Theme) {
+    pub fn undo_char(&mut self) {
         if self.done > 0 {
             self.cursor_x -= 1;
 
             if self.current_char == ' ' {
                 if self.text[self.done - 1].content.is_empty() {
-                    self.if_mistake_deduct(self.done - 2, &theme);
+                    self.if_mistake_deduct(self.done - 2);
                     self.done -= 2;
                     self.blanks -= 1;
                     self.set_next_char();
-                    self.text[self.done].style = theme.todo.fg();
+                    self.text[self.done].style = self.ctodo.fg();
                 } else {
                     // shaves off one from extras
                     self.text[self.done - 1]
@@ -262,9 +274,9 @@ impl<'a> TestState<'a> {
                 }
             } else {
                 self.done -= 1;
-                self.if_mistake_deduct(self.done, &theme);
+                self.if_mistake_deduct(self.done);
                 self.set_next_char();
-                self.text[self.done].style = theme.todo.fg();
+                self.text[self.done].style = self.ctodo.fg();
             }
         }
     }
@@ -280,7 +292,7 @@ mod tests {
         let config = Config::default();
         let theme = Theme::default();
         let mut test = TestState::default();
-        test.reset(&config, &theme);
+        test.reset(&config);
         test
     }
 
