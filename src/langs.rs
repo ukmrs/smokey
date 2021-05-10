@@ -1,6 +1,7 @@
 use crate::application::Config;
 use crate::colorscheme;
-use colorscheme::{Theme, ToForeground};
+use colorscheme::ToForeground;
+use tui::style::Color;
 
 use super::utils::randorst::Randorst;
 use fastrand::Rng as FastRng;
@@ -98,7 +99,7 @@ fn get_shuffled_words(config: &Config) -> Vec<String> {
     container
 }
 
-pub fn prepare_test<'a>(config: &Config, th: &Theme) -> Vec<Span<'a>> {
+pub fn prepare_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Span<'a>> {
     let now = Instant::now();
     let prep = get_shuffled_words(config);
 
@@ -106,10 +107,10 @@ pub fn prepare_test<'a>(config: &Config, th: &Theme) -> Vec<Span<'a>> {
 
     for word in &prep {
         for c in word.chars() {
-            test.push(Span::styled(c.to_string(), th.todo.fg()));
+            test.push(Span::styled(c.to_string(), todo.fg()));
         }
-        test.push(Span::styled("", th.wrong.fg()));
-        test.push(Span::styled(" ", th.todo.fg()));
+        test.push(Span::styled("", wrong.fg()));
+        test.push(Span::styled(" ", todo.fg()));
     }
 
     test.pop();

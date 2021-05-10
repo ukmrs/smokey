@@ -29,7 +29,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     Span::styled(final_wpm, Style::default().fg(Color::Blue)),
                 ]),
                 Spans::from(vec![
-                    Span::raw("mistakes: "),
+                    Span::raw("miss: "),
                     Span::styled(
                         format!("{}", test.mistakes),
                         Style::default().fg(Color::Red),
@@ -44,7 +44,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             let secs: f64 = test.hoarder.seconds as f64;
             let length: f64 = test.hoarder.wpms.len() as f64;
-            let (_, max_wpm): (f64, f64) = test.hoarder.get_min_and_max();
+            let max_wpm: f64 = test.hoarder.get_max_wpm();
 
             let data = test
                 .hoarder
@@ -88,10 +88,6 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     Axis::default()
                         .title("time (s)")
                         .style(Style::default().fg(Color::Gray))
-                        // TODO importance: meh
-                        // this has to panic if length is zero right
-                        // would happen in a bizarre scenario of 1 word test done under sec
-                        // so there needs to be a test invalid or something idk
                         .bounds([secs, length * secs])
                         .labels(x_labels),
                 )

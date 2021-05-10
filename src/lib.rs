@@ -3,6 +3,7 @@ pub mod colorscheme;
 mod handlers;
 mod langs;
 mod painters;
+pub mod typer;
 pub mod utils;
 
 #[macro_use]
@@ -23,7 +24,6 @@ pub type Term = Terminal<Backend>;
 
 pub fn run(mut app: App, terminal: Term) -> crossterm::Result<()> {
     init_logger();
-
     app.reset_test();
 
     termprep::init();

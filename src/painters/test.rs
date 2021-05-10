@@ -27,7 +27,10 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .horizontal_margin(app.margin)
                 .split(frame.size());
 
-            frame.set_cursor(app.cursor_x + app.margin, chunks[0].height + 1 + app.margin);
+            frame.set_cursor(
+                test.cursor_x + app.margin,
+                chunks[0].height + 1 + app.margin,
+            );
 
             let wpm: String = test.calculate_wpm().round().to_string();
 
