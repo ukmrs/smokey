@@ -11,7 +11,6 @@ use tui::text::Span;
 
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
-use std::time::Instant;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Punctuation {
@@ -125,7 +124,7 @@ pub fn prep_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Vec<Span
     let mut test: Vec<Vec<Span>> = vec![];
     let mut tmp: Vec<Vec<Span>> = vec![vec![]];
 
-    let limit = 20;
+    let limit = 60;
     let mut count = 0;
 
     for word in &prep {
@@ -148,8 +147,10 @@ pub fn prep_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Vec<Span
     tmp[last].pop();
 
     test.append(&mut tmp);
-    test
+    let last = test.len() - 1;
+    test.swap(0, last);
 
+    test
 }
 
 #[cfg(test)]

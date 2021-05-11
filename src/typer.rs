@@ -1,8 +1,8 @@
 use crate::application::Config;
 use crate::colorscheme::Theme;
 use crate::colorscheme::ToForeground;
-use crate::langs::prepare_test;
 use crate::langs;
+use crate::langs::prepare_test;
 use std::time::Instant;
 use tui::style::Color;
 use tui::text::Span;
@@ -67,9 +67,9 @@ pub struct TestState<'a> {
     pub down: Vec<Span<'a>>,
     pub backburner: Vec<Vec<Span<'a>>>,
 
-
     // letter inputs
     pub done: usize,
+    pub pdone: usize,
 
     // blanks are unfortuante consequence of appending mistakes
     // at the end of the word
@@ -110,6 +110,7 @@ impl<'a> Default for TestState<'a> {
             text: vec![],
             begining: Instant::now(),
             done: 0,
+            pdone: 0,
             blanks: 0,
             mistakes: 0,
             // persistent mistakes
@@ -130,15 +131,20 @@ impl<'a> Default for TestState<'a> {
 
 impl<'a> TestState<'a> {
     pub fn calculate_wpm(&self) -> f64 {
-        // let numerator: f64 = 12. * (self.done - self.blanks - self.mistakes as usize) as f64;
-        // let elapsed = Instant::now().duration_since(self.begining).as_secs_f64();
-        // numerator / elapsed
-        0.
+        let numerator: f64 = 12. * (self.pdone + self.done - self.blanks - self.mistakes) as f64;
+        let elapsed = Instant::now().duration_since(self.begining).as_secs_f64();
+        numerator / elapsed
     }
 
     pub fn reset(&mut self, config: &Config) {
         self.blanks = 0;
         self.done = 0;
+        self.pdone = 0;
+        self.up = vec![];
+        self.active = vec![];
+        self.down = vec![];
+        self.backburner = vec![vec![]];
+
         self.pmiss = 0;
         self.mistakes = 0;
 
@@ -148,19 +154,15 @@ impl<'a> TestState<'a> {
         self.length = self.text.len();
         self.hoarder.reset();
 
-
-        // migration 
+        // migration
 
         let mut cfg = Config::default();
-        cfg.length = 100;
+        cfg.length = 10;
         let mut wordy = langs::prep_test(&cfg, self.cwrong, self.ctodo);
-        
-        let last = wordy.len()-1;
-        wordy.swap(0, last);
 
         self.active = wordy.pop().unwrap();
         self.length = self.active.len();
-        self.down = wordy.pop().unwrap();
+        self.down = wordy.pop().unwrap_or_else(|| vec![]);
         self.backburner = wordy;
 
         self.current_char = self.active[self.done].content.chars().next().unwrap();
@@ -170,7 +172,7 @@ impl<'a> TestState<'a> {
     pub fn end(&mut self) {
         self.hoarder.final_wpm = self.calculate_wpm();
         self.hoarder.final_acc = {
-            let correct = (self.done - self.blanks - self.mistakes) as f64;
+            let correct = (self.pdone + self.done - self.blanks - self.mistakes) as f64;
             let key_presses = correct + self.pmiss as f64;
             correct / key_presses * 100.
         };
@@ -222,15 +224,27 @@ impl<'a> TestState<'a> {
         }
     }
 
-    fn progress_line(&mut self) {
+    fn progress_line(&mut self) -> bool {
         self.up.clear();
         self.up.append(&mut self.active);
+        if self.down.is_empty() {
+            self.end();
+            return true;
+        }
         self.active.append(&mut self.down);
-        self.down = self.backburner.pop().unwrap();
+        if let Some(line) = self.backburner.pop() {
+            self.down = line;
+        } else {
+            self.down = vec![];
+        }
+
+        self.pdone += self.done;
         self.done = 0;
+
         self.cursor_x = 1;
         self.length = self.active.len();
         self.set_next_char();
+        false
     }
 
     fn set_next_char_or_end(&mut self) -> bool {
@@ -239,9 +253,7 @@ impl<'a> TestState<'a> {
             return false;
         }
         self.calculate_wpm();
-        // self.end();
-        self.progress_line();
-        false
+        self.progress_line()
     }
 
     pub fn on_char(&mut self, c: char) -> bool {

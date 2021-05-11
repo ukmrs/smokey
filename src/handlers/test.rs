@@ -48,14 +48,36 @@ mod tests {
     use std::thread;
     use std::time::Duration;
 
-    fn generate_key_events_passing_standart_test(app: &App) -> Vec<KeyEvent> {
-        app.test
-            .text
-            .iter()
-            .map(|x| x.content.chars().nth(0))
-            .filter(|c| c.is_some())
-            .map(|c| KeyEvent::from(KeyCode::Char(c.unwrap())))
-            .collect()
+    fn generate_key_events_passing_standart_test<'a>(app: &App) -> Vec<KeyEvent> {
+        let mut kv = vec![];
+
+        for a in &app.test.active {
+            if let Some(c) = a.content.chars().last() {
+                kv.push(KeyEvent::from(KeyCode::Char(c)))
+            }
+        }
+
+        for a in &app.test.down {
+            if let Some(c) = a.content.chars().last() {
+                kv.push(KeyEvent::from(KeyCode::Char(c)))
+            }
+        }
+
+        for d in app.test.backburner.iter().rev() {
+            for a in d {
+                if let Some(c) = a.content.chars().last() {
+                    kv.push(KeyEvent::from(KeyCode::Char(c)))
+                }
+            }
+        }
+
+        for k in &kv {
+            if let KeyCode::Char(c) = k.code {
+                print!("{}", c);
+            }
+        }
+        println!("");
+        kv
     }
 
     fn go_thorugh_test_n_times(n: usize) {
@@ -85,7 +107,7 @@ mod tests {
     #[test]
     #[ignore]
     fn go_thorugh_test_100_times() {
-        go_thorugh_test_n_times(100)
+        go_thorugh_test_n_times(1)
     }
 
     // Testing results of typing test
@@ -127,8 +149,6 @@ mod tests {
         wpm_test_setup(140.);
         wpm_test_setup(220.);
     }
-
-    // Test_accuraccy
 
     #[test]
     fn test_accuracy() {
