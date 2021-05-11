@@ -3,14 +3,15 @@ use crate::colorscheme::Theme;
 use crate::colorscheme::ToForeground;
 use crate::langs::prepare_test;
 use std::time::Instant;
-use tui::text::Span;
 use tui::style::Color;
+use tui::text::Span;
 
 pub struct WpmHoarder {
     pub wpms: Vec<f64>,
     pub capacity: usize,
     pub seconds: u64,
     pub final_wpm: f64,
+    pub final_acc: f64,
 }
 
 impl WpmHoarder {
@@ -20,6 +21,7 @@ impl WpmHoarder {
             wpms: Vec::with_capacity(capacity),
             seconds: 1,
             final_wpm: 0.,
+            final_acc: 0.,
         }
     }
 
@@ -68,7 +70,8 @@ pub struct TestState<'a> {
     // TODO implement a better system than this
     pub blanks: usize,
 
-    pub mistakes: u32,
+    pub mistakes: usize,
+    pub pmiss: usize,
 
     pub cursor_x: u16,
     pub current_char: char,
@@ -88,7 +91,6 @@ pub struct TestState<'a> {
 }
 
 impl<'a> Default for TestState<'a> {
-
     fn default() -> Self {
         let th = Theme::default();
 
@@ -98,6 +100,8 @@ impl<'a> Default for TestState<'a> {
             done: 0,
             blanks: 0,
             mistakes: 0,
+            // persistent mistakes
+            pmiss: 0,
             cursor_x: 0,
 
             source: "storage/words/english".to_string(),
@@ -122,9 +126,11 @@ impl<'a> TestState<'a> {
     pub fn reset(&mut self, config: &Config) {
         self.blanks = 0;
         self.done = 0;
+        self.pmiss = 0;
+        self.mistakes = 0;
+
         self.text = prepare_test(config, self.cwrong, self.ctodo);
         self.begining = Instant::now();
-        self.mistakes = 0;
         self.current_char = self.text[self.done].content.chars().next().unwrap();
         self.test_length = self.text.len();
         self.hoarder.reset();
@@ -132,6 +138,13 @@ impl<'a> TestState<'a> {
 
     pub fn end(&mut self) {
         self.hoarder.final_wpm = self.calculate_wpm();
+        self.hoarder.final_acc = {
+            let correct = (self.done - self.blanks - self.mistakes) as f64;
+            let key_presses = correct + self.pmiss as f64;
+            correct / key_presses * 100.
+        };
+
+        debug!("{}", self.hoarder.final_acc);
     }
 
     pub fn update_wpm_history(&mut self) {
@@ -201,6 +214,7 @@ impl<'a> TestState<'a> {
         if self.current_char == ' ' {
             // doesnt count as mistake
             // but maybe as some sort of extra
+            self.pmiss += 1;
             if self.fetch(self.done - 1).len() < 4 {
                 self.text[self.done - 1].content.to_mut().push(c);
             } else {
@@ -211,6 +225,7 @@ impl<'a> TestState<'a> {
         // just changes to wrong and moves on
         } else {
             self.mistakes += 1;
+            self.pmiss += 1;
             self.text[self.done].style = self.cwrong.fg();
             self.done += 1;
             return self.set_next_char_or_end();
@@ -286,18 +301,46 @@ impl<'a> TestState<'a> {
 mod tests {
     use super::*;
     use crate::application::Config;
-    use crate::colorscheme::Theme;
 
-    fn create_new_test() -> TestState<'static> {
+    fn get_wrong_char(c: char) -> char {
+        if c == 'ź' {
+            return 'a';
+        }
+        'ź'
+    }
+
+    fn setup_new_test() -> TestState<'static> {
         let config = Config::default();
-        let theme = Theme::default();
         let mut test = TestState::default();
         test.reset(&config);
         test
     }
 
     #[test]
-    fn test_undo_word() {
-        let typer = create_new_test();
+    fn test_undo_char() {
+        let mut test = setup_new_test();
+
+        // test deletes a single mistake
+        test.on_char(get_wrong_char(test.current_char));
+        assert_eq!(test.done, 1);
+        assert_eq!(test.mistakes, 1);
+        test.undo_char();
+        assert_eq!(test.done, 0);
+        assert_eq!(test.mistakes, 0);
+
+        // test doesn't do anything at the beginning
+        test.undo_char();
+        assert_eq!(test.done, 0);
+        assert_eq!(test.mistakes, 0);
+
+        // test deletes extras
+        while test.current_char != ' ' {
+            test.on_char(test.current_char);
+        }
+        let done = test.done;
+        test.on_char(get_wrong_char(test.current_char));
+        assert!(!test.fetch(done - 1).is_empty());
+        test.undo_char();
+        assert!(test.fetch(done - 1).is_empty());
     }
 }

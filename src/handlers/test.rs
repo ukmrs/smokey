@@ -22,8 +22,9 @@ pub fn handle(key: KeyEvent, app: &mut App) {
         if test.done > 0 {
             test.undo_word();
             test.set_next_char();
-            return;
         }
+
+        return;
     }
 
     match key.code {
@@ -125,6 +126,41 @@ mod tests {
         wpm_test_setup(60.);
         wpm_test_setup(140.);
         wpm_test_setup(220.);
+    }
+
+    // Test_accuraccy
+
+    #[test]
+    fn test_accuracy() {
+        let mut app = App::setup();
+        let key_events = generate_key_events_passing_standart_test(&app);
+        let key_events_len = key_events.len();
+        let amount_of_mistakes = 10;
+
+        for kv in &key_events[..amount_of_mistakes] {
+            if let KeyCode::Char(c) = kv.code {
+                match c {
+                    'ź' => app.handle_key_event(KeyEvent::from(KeyCode::Char('a'))),
+                    _ => app.handle_key_event(KeyEvent::from(KeyCode::Char('ź'))),
+                }
+            } else {
+                unreachable!();
+            }
+            app.handle_key_event(KeyEvent::from(KeyCode::Backspace));
+        }
+
+        for kv in key_events {
+            app.handle_key_event(kv);
+        }
+
+        let final_acc = app.test.hoarder.final_acc;
+        let acc = {
+            let denom = (key_events_len + amount_of_mistakes) as f64;
+            key_events_len as f64 / denom * 100.
+        };
+
+        assert!(acc - f64::EPSILON <= final_acc);
+        assert!(acc + f64::EPSILON >= final_acc);
     }
 
     // Testing Backspace

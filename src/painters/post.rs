@@ -22,11 +22,16 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .split(frame.size());
 
             let final_wpm = format!("{}", test.hoarder.final_wpm.round());
+            let final_acc = format!("{}", test.hoarder.final_acc.round());
 
             let up_txt = vec![
                 Spans::from(vec![
                     Span::raw("wpm: "),
                     Span::styled(final_wpm, Style::default().fg(Color::Blue)),
+                ]),
+                Spans::from(vec![
+                    Span::raw("acc: "),
+                    Span::styled(final_acc, Style::default().fg(Color::Green)),
                 ]),
                 Spans::from(vec![
                     Span::raw("miss: "),
