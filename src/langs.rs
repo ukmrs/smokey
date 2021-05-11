@@ -100,7 +100,6 @@ fn get_shuffled_words(config: &Config) -> Vec<String> {
 }
 
 pub fn prepare_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Span<'a>> {
-    let now = Instant::now();
     let prep = get_shuffled_words(config);
 
     let mut test: Vec<Span> = vec![];
@@ -116,6 +115,60 @@ pub fn prepare_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Span<
     test.pop();
     test.pop();
 
-    debug!("preparing test {:?}", now.elapsed().as_secs_f64());
     test
+}
+
+#[allow(dead_code)]
+pub fn prep_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Vec<Span<'a>>> {
+    let prep = get_shuffled_words(config);
+
+    let mut test: Vec<Vec<Span>> = vec![];
+    let mut tmp: Vec<Vec<Span>> = vec![vec![]];
+
+    let limit = 20;
+    let mut count = 0;
+
+    for word in &prep {
+        count += word.len();
+        if count > limit {
+            test.append(&mut tmp);
+            count = word.len();
+            tmp.push(vec![]);
+        }
+
+        for c in word.chars() {
+            tmp[0].push(Span::styled(c.to_string(), todo.fg()));
+        }
+        tmp[0].push(Span::styled("", wrong.fg()));
+        tmp[0].push(Span::styled(" ", todo.fg()));
+    }
+
+    let last = tmp.len() - 1;
+    tmp[last].pop();
+    tmp[last].pop();
+
+    test.append(&mut tmp);
+    test
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::application::Config;
+    use tui::style::Color;
+
+    #[test]
+    fn test_prep() {
+        let mut cfg = Config::default();
+        cfg.length = 100;
+        let result = prep_test(&cfg, Color::Red, Color::Blue);
+        // println!("result {:?}", result);
+        for line in &result {
+            for span in line {
+                print!("{}", span.content);
+            }
+            println!("");
+        }
+    }
 }

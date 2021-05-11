@@ -29,7 +29,7 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             frame.set_cursor(
                 test.cursor_x + app.margin,
-                chunks[0].height + 1 + app.margin,
+                chunks[0].height + 2 + app.margin,
             );
 
             let wpm: String = test.calculate_wpm().round().to_string();
@@ -50,7 +50,11 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             frame.render_widget(block, chunks[0]);
 
-            let txt = vec![Spans::from(app.test.text.clone())];
+            let txt = vec![
+                Spans::from(app.test.up.clone()),
+                Spans::from(app.test.active.clone()),
+                Spans::from(app.test.down.clone()),
+            ];
 
             let paragraph = Paragraph::new(txt)
                 .block(Block::default().title("Text box").borders(Borders::ALL))

@@ -2,6 +2,7 @@ use crate::application::Config;
 use crate::colorscheme::Theme;
 use crate::colorscheme::ToForeground;
 use crate::langs::prepare_test;
+use crate::langs;
 use std::time::Instant;
 use tui::style::Color;
 use tui::text::Span;
@@ -61,6 +62,12 @@ impl WpmHoarder {
 }
 
 pub struct TestState<'a> {
+    pub up: Vec<Span<'a>>,
+    pub active: Vec<Span<'a>>,
+    pub down: Vec<Span<'a>>,
+    pub backburner: Vec<Vec<Span<'a>>>,
+
+
     // letter inputs
     pub done: usize,
 
@@ -82,7 +89,7 @@ pub struct TestState<'a> {
     pub source: String,
 
     pub text: Vec<Span<'a>>,
-    pub test_length: usize,
+    pub length: usize,
     pub hoarder: WpmHoarder,
 
     cwrong: Color,
@@ -95,6 +102,11 @@ impl<'a> Default for TestState<'a> {
         let th = Theme::default();
 
         TestState {
+            up: vec![],
+            active: vec![],
+            down: vec![],
+            backburner: vec![vec![]],
+
             text: vec![],
             begining: Instant::now(),
             done: 0,
@@ -105,7 +117,7 @@ impl<'a> Default for TestState<'a> {
             cursor_x: 0,
 
             source: "storage/words/english".to_string(),
-            test_length: 0,
+            length: 0,
             current_char: ' ',
             hoarder: WpmHoarder::new(32),
 
@@ -118,9 +130,10 @@ impl<'a> Default for TestState<'a> {
 
 impl<'a> TestState<'a> {
     pub fn calculate_wpm(&self) -> f64 {
-        let numerator: f64 = 12. * (self.done - self.blanks - self.mistakes as usize) as f64;
-        let elapsed = Instant::now().duration_since(self.begining).as_secs_f64();
-        numerator / elapsed
+        // let numerator: f64 = 12. * (self.done - self.blanks - self.mistakes as usize) as f64;
+        // let elapsed = Instant::now().duration_since(self.begining).as_secs_f64();
+        // numerator / elapsed
+        0.
     }
 
     pub fn reset(&mut self, config: &Config) {
@@ -132,8 +145,26 @@ impl<'a> TestState<'a> {
         self.text = prepare_test(config, self.cwrong, self.ctodo);
         self.begining = Instant::now();
         self.current_char = self.text[self.done].content.chars().next().unwrap();
-        self.test_length = self.text.len();
+        self.length = self.text.len();
         self.hoarder.reset();
+
+
+        // migration 
+
+        let mut cfg = Config::default();
+        cfg.length = 100;
+        let mut wordy = langs::prep_test(&cfg, self.cwrong, self.ctodo);
+        
+        let last = wordy.len()-1;
+        wordy.swap(0, last);
+
+        self.active = wordy.pop().unwrap();
+        self.length = self.active.len();
+        self.down = wordy.pop().unwrap();
+        self.backburner = wordy;
+
+        self.current_char = self.active[self.done].content.chars().next().unwrap();
+        self.length = self.active.len();
     }
 
     pub fn end(&mut self) {
@@ -156,7 +187,7 @@ impl<'a> TestState<'a> {
     /// chekcs if char is a mistake and deducts it from
     /// the total count
     pub fn if_mistake_deduct(&mut self, index: usize) {
-        if self.cwrong == self.text[index].style.fg.unwrap() {
+        if self.cwrong == self.active[index].style.fg.unwrap() {
             self.mistakes -= 1;
         }
     }
@@ -164,19 +195,19 @@ impl<'a> TestState<'a> {
     // this section feels awful
     // aaaaaah
     pub fn set_next_char(&mut self) {
-        self.current_char = self.text[self.done].content.chars().next().expect("oof");
+        self.current_char = self.active[self.done].content.chars().next().expect("oof");
     }
 
     pub fn get_next_char(&mut self) -> Option<char> {
-        self.text[self.done].content.chars().next()
+        self.active[self.done].content.chars().next()
     }
 
     pub fn fetch(&self, index: usize) -> &str {
-        self.text[index].content.as_ref()
+        self.active[index].content.as_ref()
     }
 
     pub fn change(&mut self, index: usize, item: String) {
-        *self.text[index].content.to_mut() = item;
+        *self.active[index].content.to_mut() = item;
     }
 
     // character response
@@ -191,20 +222,32 @@ impl<'a> TestState<'a> {
         }
     }
 
+    fn progress_line(&mut self) {
+        self.up.clear();
+        self.up.append(&mut self.active);
+        self.active.append(&mut self.down);
+        self.down = self.backburner.pop().unwrap();
+        self.done = 0;
+        self.cursor_x = 1;
+        self.length = self.active.len();
+        self.set_next_char();
+    }
+
     fn set_next_char_or_end(&mut self) -> bool {
-        if self.done < self.test_length {
+        if self.done < self.length {
             self.set_next_char_beware_blanks();
             return false;
         }
         self.calculate_wpm();
-        self.end();
-        true
+        // self.end();
+        self.progress_line();
+        false
     }
 
     pub fn on_char(&mut self, c: char) -> bool {
         self.cursor_x += 1;
         if c == self.current_char {
-            self.text[self.done].style = self.cdone.fg();
+            self.active[self.done].style = self.cdone.fg();
             self.done += 1;
             return self.set_next_char_or_end();
         }
@@ -216,7 +259,7 @@ impl<'a> TestState<'a> {
             // but maybe as some sort of extra
             self.pmiss += 1;
             if self.fetch(self.done - 1).len() < 4 {
-                self.text[self.done - 1].content.to_mut().push(c);
+                self.active[self.done - 1].content.to_mut().push(c);
             } else {
                 // cursor is pushed +1 when KeyCode::Char is matched
                 // well in this rare case nothing happens so it needs to revert
@@ -226,7 +269,7 @@ impl<'a> TestState<'a> {
         } else {
             self.mistakes += 1;
             self.pmiss += 1;
-            self.text[self.done].style = self.cwrong.fg();
+            self.active[self.done].style = self.cwrong.fg();
             self.done += 1;
             return self.set_next_char_or_end();
         }
@@ -243,7 +286,7 @@ impl<'a> TestState<'a> {
         self.done -= 2;
 
         self.if_mistake_deduct(self.done);
-        self.text[self.done].style = self.ctodo.fg();
+        self.active[self.done].style = self.ctodo.fg();
         self.blanks -= 1;
     }
 
@@ -253,7 +296,7 @@ impl<'a> TestState<'a> {
         } else if self.fetch(self.done - 1) == " " {
             self.done -= 1;
             self.cursor_x -= 1;
-            self.text[self.done].style = self.ctodo.fg();
+            self.active[self.done].style = self.ctodo.fg();
 
             self.undo_space_char_and_extras();
         }
@@ -262,7 +305,7 @@ impl<'a> TestState<'a> {
             self.cursor_x -= 1;
             self.done -= 1;
             self.if_mistake_deduct(self.done);
-            self.text[self.done].style = self.ctodo.fg();
+            self.active[self.done].style = self.ctodo.fg();
         }
     }
 
@@ -273,15 +316,15 @@ impl<'a> TestState<'a> {
             self.cursor_x -= 1;
 
             if self.current_char == ' ' {
-                if self.text[self.done - 1].content.is_empty() {
+                if self.active[self.done - 1].content.is_empty() {
                     self.if_mistake_deduct(self.done - 2);
                     self.done -= 2;
                     self.blanks -= 1;
                     self.set_next_char();
-                    self.text[self.done].style = self.ctodo.fg();
+                    self.active[self.done].style = self.ctodo.fg();
                 } else {
                     // shaves off one from extras
-                    self.text[self.done - 1]
+                    self.active[self.done - 1]
                         .content
                         .to_mut()
                         .pop()
@@ -291,7 +334,7 @@ impl<'a> TestState<'a> {
                 self.done -= 1;
                 self.if_mistake_deduct(self.done);
                 self.set_next_char();
-                self.text[self.done].style = self.ctodo.fg();
+                self.active[self.done].style = self.ctodo.fg();
             }
         }
     }
