@@ -82,7 +82,8 @@ pub struct TestState<'a> {
     pub cursor_x: u16,
     pub current_char: char,
 
-    // TODO time of the first input
+    pub line_limit: usize,
+
     pub begining: Instant,
     // source for generating test
     pub source: String,
@@ -115,6 +116,7 @@ impl<'a> Default for TestState<'a> {
             // persistent mistakes
             pmiss: 0,
             cursor_x: 0,
+            line_limit: 65,
 
             source: "storage/words/english".to_string(),
             length: 0,
@@ -144,7 +146,7 @@ impl<'a> TestState<'a> {
         self.mistakes = 0;
         self.hoarder.reset();
 
-        let mut wordy = langs::prep_test(&config, self.cwrong, self.ctodo);
+        let mut wordy = langs::prep_test(&config, self.line_limit, self.cwrong, self.ctodo);
         self.active = wordy.pop().expect("prep_test output shouldn't be empty");
         self.length = self.active.len();
         self.down = wordy.pop().unwrap_or_else(|| vec![]);
@@ -253,7 +255,7 @@ impl<'a> TestState<'a> {
             // doesnt count as mistake
             // but maybe as some sort of extra
             self.pmiss += 1;
-            if self.fetch(self.done - 1).len() < 4 {
+            if self.fetch(self.done - 1).len() < 3 {
                 self.active[self.done - 1].content.to_mut().push(c);
             } else {
                 // cursor is pushed +1 when KeyCode::Char is matched

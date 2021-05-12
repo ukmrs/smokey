@@ -23,14 +23,7 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
-                .vertical_margin(app.margin)
-                .horizontal_margin(app.margin)
                 .split(frame.size());
-
-            frame.set_cursor(
-                test.cursor_x + app.margin,
-                chunks[0].height + 2 + app.margin,
-            );
 
             let wpm: String = test.calculate_wpm().round().to_string();
 
@@ -45,10 +38,22 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             let up_txt = vec![Spans::from(wpm), Spans::from(dbg_info)];
 
-            let block =
-                Paragraph::new(up_txt).block(Block::default().title("WPM").borders(Borders::ALL));
+            let block = Paragraph::new(up_txt).block(Block::default().borders(Borders::NONE));
 
             frame.render_widget(block, chunks[0]);
+
+            debug!("{:#?}", frame.size());
+
+            let ghost_rect_width = (frame.size().width - 65) / 2;
+            let down_chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Length(ghost_rect_width), Constraint::Min(60)].as_ref())
+                .split(chunks[1]);
+
+            frame.set_cursor(
+                down_chunks[0].width + test.cursor_x - 1,
+                chunks[0].height + 1,
+            );
 
             let txt = vec![
                 Spans::from(app.test.up.clone()),
@@ -57,11 +62,12 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             ];
 
             let paragraph = Paragraph::new(txt)
-                .block(Block::default().title("Text box").borders(Borders::ALL))
+                .block(Block::default().borders(Borders::NONE))
                 .style(Style::default().fg(Color::White))
+                // .alignment(Alignment::Center)
                 .wrap(Wrap { trim: false });
 
-            frame.render_widget(paragraph, chunks[1]);
+            frame.render_widget(paragraph, down_chunks[1]);
         })
         .expect("drawing test went fine");
 }

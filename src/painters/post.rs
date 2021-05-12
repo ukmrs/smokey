@@ -34,7 +34,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     Span::styled(final_acc, Style::default().fg(Color::Green)),
                 ]),
                 Spans::from(vec![
-                    Span::raw("miss: "),
+                    Span::raw("mis: "),
                     Span::styled(
                         format!("{}", test.mistakes),
                         Style::default().fg(Color::Red),

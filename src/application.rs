@@ -163,7 +163,7 @@ impl Default for Config {
         Config {
             words: base.join("words"),
             source: String::from("english"),
-            length: 10,
+            length: 30,
             freq_cut_off: 10_000,
         }
     }
