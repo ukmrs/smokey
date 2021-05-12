@@ -2,7 +2,6 @@ use crate::application::Config;
 use crate::colorscheme::Theme;
 use crate::colorscheme::ToForeground;
 use crate::langs;
-use crate::langs::prepare_test;
 use std::time::Instant;
 use tui::style::Color;
 use tui::text::Span;
@@ -141,32 +140,18 @@ impl<'a> TestState<'a> {
         self.done = 0;
         self.pdone = 0;
         self.up = vec![];
-        self.active = vec![];
-        self.down = vec![];
-        self.backburner = vec![vec![]];
-
         self.pmiss = 0;
         self.mistakes = 0;
-
-        self.text = prepare_test(config, self.cwrong, self.ctodo);
-        self.begining = Instant::now();
-        self.current_char = self.text[self.done].content.chars().next().unwrap();
-        self.length = self.text.len();
         self.hoarder.reset();
 
-        // migration
-
-        let mut cfg = Config::default();
-        cfg.length = 10;
-        let mut wordy = langs::prep_test(&cfg, self.cwrong, self.ctodo);
-
-        self.active = wordy.pop().unwrap();
+        let mut wordy = langs::prep_test(&config, self.cwrong, self.ctodo);
+        self.active = wordy.pop().expect("prep_test output shouldn't be empty");
         self.length = self.active.len();
         self.down = wordy.pop().unwrap_or_else(|| vec![]);
         self.backburner = wordy;
-
         self.current_char = self.active[self.done].content.chars().next().unwrap();
         self.length = self.active.len();
+        self.begining = Instant::now();
     }
 
     pub fn end(&mut self) {
@@ -176,8 +161,6 @@ impl<'a> TestState<'a> {
             let key_presses = correct + self.pmiss as f64;
             correct / key_presses * 100.
         };
-
-        debug!("{}", self.hoarder.final_acc);
     }
 
     pub fn update_wpm_history(&mut self) {

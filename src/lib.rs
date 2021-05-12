@@ -6,6 +6,7 @@ mod painters;
 pub mod typer;
 pub mod utils;
 
+#[allow(unused_imports)]
 #[macro_use]
 extern crate log;
 use simplelog::*;

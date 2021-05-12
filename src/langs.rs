@@ -98,26 +98,6 @@ fn get_shuffled_words(config: &Config) -> Vec<String> {
     container
 }
 
-pub fn prepare_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Span<'a>> {
-    let prep = get_shuffled_words(config);
-
-    let mut test: Vec<Span> = vec![];
-
-    for word in &prep {
-        for c in word.chars() {
-            test.push(Span::styled(c.to_string(), todo.fg()));
-        }
-        test.push(Span::styled("", wrong.fg()));
-        test.push(Span::styled(" ", todo.fg()));
-    }
-
-    test.pop();
-    test.pop();
-
-    test
-}
-
-#[allow(dead_code)]
 pub fn prep_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Vec<Span<'a>>> {
     let prep = get_shuffled_words(config);
 
