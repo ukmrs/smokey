@@ -98,17 +98,22 @@ fn get_shuffled_words(config: &Config) -> Vec<String> {
     container
 }
 
-pub fn prep_test<'a>(config: &Config, wrong: Color, todo: Color) -> Vec<Vec<Span<'a>>> {
+pub fn prep_test<'a>(
+    config: &Config,
+    limit: usize,
+    wrong: Color,
+    todo: Color,
+) -> Vec<Vec<Span<'a>>> {
     let prep = get_shuffled_words(config);
 
     let mut test: Vec<Vec<Span>> = vec![];
     let mut tmp: Vec<Vec<Span>> = vec![vec![]];
 
-    let limit = 60;
+    let limit = limit;
     let mut count = 0;
 
     for word in &prep {
-        count += word.len();
+        count += word.len() + 1;
         if count > limit {
             test.append(&mut tmp);
             count = word.len();
@@ -143,7 +148,7 @@ mod tests {
     fn test_prep() {
         let mut cfg = Config::default();
         cfg.length = 100;
-        let result = prep_test(&cfg, Color::Red, Color::Blue);
+        let result = prep_test(&cfg, 65, Color::Red, Color::Blue);
         // println!("result {:?}", result);
         for line in &result {
             for span in line {

@@ -10,7 +10,6 @@ use smokey::application::App;
 use std::io::stdout;
 use tui::{backend::CrosstermBackend, Terminal};
 
-
 fn main() -> crossterm::Result<()> {
     #[allow(unused_mut)]
     let mut sout = stdout();
