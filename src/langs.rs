@@ -98,6 +98,22 @@ fn get_shuffled_words(config: &Config) -> Vec<String> {
     container
 }
 
+fn add_space_with_blank(container: &mut Vec<Span>, wrong: Color, todo: Color) {
+    container.push(Span::styled("", wrong.fg()));
+    container.push(Span::styled(" ", todo.fg()));
+}
+
+fn punctuation_word_prep(
+    container: &mut Vec<Span>,
+    word: &str,
+    punctuation: Punctuation,
+    todo: Color,
+) {
+    for c in word.chars() {
+        container.push(Span::styled(c.to_string(), todo.fg()));
+    }
+}
+
 pub fn prep_test<'a>(
     config: &Config,
     limit: usize,
@@ -105,32 +121,116 @@ pub fn prep_test<'a>(
     todo: Color,
 ) -> Vec<Vec<Span<'a>>> {
     let prep = get_shuffled_words(config);
-
     let mut test: Vec<Vec<Span>> = vec![];
     let mut tmp: Vec<Vec<Span>> = vec![vec![]];
-
-    let limit = limit;
     let mut count = 0;
 
-    for word in &prep {
-        count += word.len() + 1;
-        if count > limit {
-            test.append(&mut tmp);
-            count = word.len();
-            tmp.push(vec![]);
-        }
+    let p = PFreq::default();
 
-        for c in word.chars() {
-            tmp[0].push(Span::styled(c.to_string(), todo.fg()));
-        }
-        tmp[0].push(Span::styled("", wrong.fg()));
-        tmp[0].push(Span::styled(" ", todo.fg()));
-    }
+    let flag = false;
 
+    match flag {
+        true => {
+            for word in &prep {
+                count += word.len() + 1;
+                if count > limit {
+                    test.append(&mut tmp);
+                    count = word.len();
+                    tmp.push(vec![]);
+                }
+
+                for c in word.chars() {
+                    tmp[0].push(Span::styled(c.to_string(), todo.fg()));
+                }
+
+                add_space_with_blank(&mut tmp[0], wrong, todo);
+            }
+        }
+        false => {
+            let mut rng = thread_rng();
+            let mut capitalize: bool = false;
+            let mut begin: Option<char> = None;
+            let mut end: Option<char> = None;
+
+            for word in &prep {
+                count += word.len() + 1;
+                if count > limit {
+                    test.append(&mut tmp);
+                    count = word.len();
+                    tmp.push(vec![]);
+                }
+
+                let punct = p.choose(&mut rng);
+                match punct {
+                    Punctuation::Null => {
+                        begin = None;
+                        end = None;
+                    }
+
+                    Punctuation::End(c) => {
+                        capitalize = true;
+                        begin = None;
+                        end = Some(c);
+                    }
+
+                    Punctuation::Normal(c) => {
+                        begin = None;
+                        end = Some(c);
+                    }
+
+                    Punctuation::Paired(a, z) => {
+                        begin = Some(a);
+                        end = Some(z);
+                    }
+
+                    // TODO implement this bullshit
+                    // i am kinda fed up with what this became
+                    // need to think it through
+                    Punctuation::DashLike(_) => {
+                        begin = None;
+                        end = None;
+                    }
+                }
+
+                let mut iter_chars = word.chars();
+
+                if let Some(c) = begin {
+                    tmp[0].push(Span::styled(c.to_string(), todo.fg()));
+                }
+
+                if capitalize {
+                    let upper = iter_chars
+                        .next()
+                        .expect("word should never be empty")
+                        .to_uppercase();
+                    for upper_char in upper {
+                        tmp[0].push(Span::styled(upper_char.to_string(), todo.fg()));
+                    }
+                }
+                capitalize = false;
+
+
+                for c in iter_chars {
+                    tmp[0].push(Span::styled(c.to_string(), todo.fg()));
+                }
+
+                if let Some(c) = end {
+                    tmp[0].push(Span::styled(c.to_string(), todo.fg()));
+                }
+
+                add_space_with_blank(&mut tmp[0], wrong, todo);
+            }
+        }
+    };
+
+    // get rid of the space and blank at the end
     let last = tmp.len() - 1;
     tmp[last].pop();
     tmp[last].pop();
 
+    // change order so the [0] element is the one with potentially fewer words
+    // and with no space at the end
+    // makes it more convienient to pop from the vec to get a new line
     test.append(&mut tmp);
     let last = test.len() - 1;
     test.swap(0, last);
@@ -147,14 +247,26 @@ mod tests {
     #[test]
     fn test_prep() {
         let mut cfg = Config::default();
-        cfg.length = 100;
-        let result = prep_test(&cfg, 65, Color::Red, Color::Blue);
-        // println!("result {:?}", result);
+        cfg.length = 200;
+        let mut words = 1;
+        let limit = 65;
+        let mut char_count = 0;
+
+        let result = prep_test(&cfg, limit, Color::Red, Color::Blue);
         for line in &result {
             for span in line {
-                print!("{}", span.content);
+                if span.content == " " {
+                    words += 1;
+                }
+                if !span.content.is_empty() {
+                    char_count += 1;
+                }
             }
-            println!("");
+            // there can be space at the end and I dont care for it
+            assert!(char_count <= limit + 1);
+            char_count = 0;
         }
+
+        assert_eq!(words, cfg.length);
     }
 }
