@@ -2,6 +2,7 @@ use crate::application::Config;
 use crate::colorscheme;
 use colorscheme::ToForeground;
 use tui::style::Color;
+use std::collections::VecDeque;
 
 use super::utils::randorst::Randorst;
 use fastrand::Rng as FastRng;
@@ -11,6 +12,41 @@ use tui::text::Span;
 
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
+
+pub struct Capitalize {
+    sync: [u8; 2],
+}
+
+impl Default for Capitalize {
+    fn default() -> Self {
+        Self {
+            sync: [0, 0],
+        }
+    }
+}
+
+impl Capitalize {
+    fn signal(&mut self) {
+        if self.sync[0] == 0 {
+            self.sync[0] = 2;
+            return
+        }
+        self.sync[1] = 2;
+    }
+
+    fn capitalize(&mut self) -> bool {
+        if self.sync[0] == 1 {
+            if self.sync[1] == 0 {
+                self.sync[0] = 0;
+            } else {
+                self.sync = [1, 0];
+            }
+            return true
+        }
+        self.sync[0] = self.sync[0].saturating_sub(1);
+        false
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum Punctuation {
@@ -22,7 +58,7 @@ pub enum Punctuation {
     Paired(char, char),
     // gonna use it like an em dash so in between words "word - word"
     DashLike(char),
-    Null,
+    Nil,
 }
 
 #[allow(dead_code)]
@@ -36,18 +72,18 @@ impl Default for PFreq {
         let we = vec![
             (Punctuation::End('.'), 65),
             (Punctuation::End('?'), 6),
-            (Punctuation::End('!'), 3),
+            (Punctuation::End('!'), 4),
             (Punctuation::Normal(','), 61),
             (Punctuation::Normal(';'), 3),
             (Punctuation::Normal(':'), 3),
             (Punctuation::Paired('<', '>'), 2),
-            (Punctuation::Paired('(', ')'), 3),
+            (Punctuation::Paired('(', ')'), 4),
             (Punctuation::Paired('{', '}'), 2),
             (Punctuation::Paired('[', ']'), 2),
             (Punctuation::Paired('"', '"'), 13),
             (Punctuation::Paired('\'', '\''), 10),
             (Punctuation::DashLike('-'), 10),
-            (Punctuation::Null, 800),
+            (Punctuation::Nil, 800),
         ];
 
         let mut weighted_index: Vec<u16> = Vec::with_capacity(we.len());
@@ -103,17 +139,6 @@ fn add_space_with_blank(container: &mut Vec<Span>, wrong: Color, todo: Color) {
     container.push(Span::styled(" ", todo.fg()));
 }
 
-fn punctuation_word_prep(
-    container: &mut Vec<Span>,
-    word: &str,
-    punctuation: Punctuation,
-    todo: Color,
-) {
-    for c in word.chars() {
-        container.push(Span::styled(c.to_string(), todo.fg()));
-    }
-}
-
 pub fn prep_test<'a>(
     config: &Config,
     limit: usize,
@@ -121,6 +146,10 @@ pub fn prep_test<'a>(
     todo: Color,
 ) -> Vec<Vec<Span<'a>>> {
     let prep = get_shuffled_words(config);
+    // change this to VecDeque
+    // the problem:
+    // punctuation cares about ordering so that little pretty thing
+    // i do at the end with swapping kinda messes things up
     let mut test: Vec<Vec<Span>> = vec![];
     let mut tmp: Vec<Vec<Span>> = vec![vec![]];
     let mut count = 0;
@@ -148,9 +177,11 @@ pub fn prep_test<'a>(
         }
         false => {
             let mut rng = thread_rng();
-            let mut capitalize: bool = false;
-            let mut begin: Option<char> = None;
-            let mut end: Option<char> = None;
+            let mut capitalize = Capitalize::default();
+            capitalize.signal(); // start off with a capital letter
+            capitalize.capitalize();
+            let mut begin: Option<char>;
+            let mut end: Option<char>;
 
             for word in &prep {
                 count += word.len() + 1;
@@ -162,13 +193,13 @@ pub fn prep_test<'a>(
 
                 let punct = p.choose(&mut rng);
                 match punct {
-                    Punctuation::Null => {
+                    Punctuation::Nil => {
                         begin = None;
                         end = None;
                     }
 
                     Punctuation::End(c) => {
-                        capitalize = true;
+                        capitalize.signal();
                         begin = None;
                         end = Some(c);
                     }
@@ -198,7 +229,7 @@ pub fn prep_test<'a>(
                     tmp[0].push(Span::styled(c.to_string(), todo.fg()));
                 }
 
-                if capitalize {
+                if capitalize.capitalize() {
                     let upper = iter_chars
                         .next()
                         .expect("word should never be empty")
@@ -207,8 +238,6 @@ pub fn prep_test<'a>(
                         tmp[0].push(Span::styled(upper_char.to_string(), todo.fg()));
                     }
                 }
-                capitalize = false;
-
 
                 for c in iter_chars {
                     tmp[0].push(Span::styled(c.to_string(), todo.fg()));
