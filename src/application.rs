@@ -85,7 +85,7 @@ impl<'t> App<'t> {
 
     pub fn change_to_test(&mut self) {
         self.painter = draw_test_and_update;
-        self.klucznik = handlers::test::handle;
+        self.klucznik = handlers::typer::handle;
     }
 
     pub fn stop(&mut self) {
@@ -114,7 +114,7 @@ impl<'t> Default for App<'t> {
             settings,
             /// unwrap wont painc because the Squad Default always returns Some
             painter: draw_test_and_update,
-            klucznik: handlers::test::handle,
+            klucznik: handlers::typer::handle,
         }
     }
 }

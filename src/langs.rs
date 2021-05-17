@@ -2,7 +2,6 @@ use crate::application::Config;
 use crate::colorscheme;
 use colorscheme::ToForeground;
 use tui::style::Color;
-use std::collections::VecDeque;
 
 use super::utils::randorst::Randorst;
 use fastrand::Rng as FastRng;
@@ -15,37 +14,6 @@ use rand::prelude::*;
 
 pub struct Capitalize {
     sync: [u8; 2],
-}
-
-impl Default for Capitalize {
-    fn default() -> Self {
-        Self {
-            sync: [0, 0],
-        }
-    }
-}
-
-impl Capitalize {
-    fn signal(&mut self) {
-        if self.sync[0] == 0 {
-            self.sync[0] = 2;
-            return
-        }
-        self.sync[1] = 2;
-    }
-
-    fn capitalize(&mut self) -> bool {
-        if self.sync[0] == 1 {
-            if self.sync[1] == 0 {
-                self.sync[0] = 0;
-            } else {
-                self.sync = [1, 0];
-            }
-            return true
-        }
-        self.sync[0] = self.sync[0].saturating_sub(1);
-        false
-    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -146,18 +114,15 @@ pub fn prep_test<'a>(
     todo: Color,
 ) -> Vec<Vec<Span<'a>>> {
     let prep = get_shuffled_words(config);
-    // change this to VecDeque
-    // the problem:
-    // punctuation cares about ordering so that little pretty thing
-    // i do at the end with swapping kinda messes things up
+
     let mut test: Vec<Vec<Span>> = vec![];
     let mut tmp: Vec<Vec<Span>> = vec![vec![]];
     let mut count = 0;
 
     let p = PFreq::default();
 
-    let flag = false;
-
+    // TODO cleanup this in Config branch
+    let flag = true;
     match flag {
         true => {
             for word in &prep {
@@ -175,6 +140,7 @@ pub fn prep_test<'a>(
                 add_space_with_blank(&mut tmp[0], wrong, todo);
             }
         }
+
         false => {
             let mut rng = thread_rng();
             let mut capitalize = Capitalize::default();
@@ -252,19 +218,41 @@ pub fn prep_test<'a>(
         }
     };
 
-    // get rid of the space and blank at the end
     let last = tmp.len() - 1;
     tmp[last].pop();
     tmp[last].pop();
-
-    // change order so the [0] element is the one with potentially fewer words
-    // and with no space at the end
-    // makes it more convienient to pop from the vec to get a new line
     test.append(&mut tmp);
-    let last = test.len() - 1;
-    test.swap(0, last);
 
-    test
+    test.into_iter().rev().collect()
+}
+
+impl Default for Capitalize {
+    fn default() -> Self {
+        Self { sync: [0, 0] }
+    }
+}
+
+impl Capitalize {
+    fn signal(&mut self) {
+        if self.sync[0] == 0 {
+            self.sync[0] = 2;
+            return;
+        }
+        self.sync[1] = 2;
+    }
+
+    fn capitalize(&mut self) -> bool {
+        if self.sync[0] == 1 {
+            if self.sync[1] == 0 {
+                self.sync[0] = 0;
+            } else {
+                self.sync = [1, 0];
+            }
+            return true;
+        }
+        self.sync[0] = self.sync[0].saturating_sub(1);
+        false
+    }
 }
 
 #[cfg(test)]
