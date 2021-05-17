@@ -126,6 +126,11 @@ mod tests {
         let delay = wpm_to_char_delay(wpm);
 
         let mut app = App::setup();
+
+        use crate::application::Config;
+        let mut cfg = Config::default();
+        cfg.length = 500;
+        app.test.reset(&cfg);
         let key_events = generate_key_events_passing_standart_test(&app);
 
         for kv in key_events {
@@ -145,8 +150,8 @@ mod tests {
     #[test]
     #[ignore]
     fn test_wpm_counting() {
-        wpm_test_setup(60.);
-        wpm_test_setup(140.);
+        // wpm_test_setup(60.);
+        // wpm_test_setup(140.);
         wpm_test_setup(220.);
     }
 

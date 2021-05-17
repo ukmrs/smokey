@@ -22,7 +22,7 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+                .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
                 .split(frame.size());
 
             let wpm: String = test.calculate_wpm().round().to_string();

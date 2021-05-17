@@ -27,7 +27,7 @@ impl Default for Theme {
         Theme {
             done: Color::White,
             wrong: Color::Red,
-            todo: Color::DarkGray,
+            todo: Color::Gray,
         }
     }
 }

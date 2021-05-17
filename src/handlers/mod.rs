@@ -1,6 +1,6 @@
 pub mod post;
 pub mod settings;
-pub mod test;
+pub mod typer;
 
 use crate::application::App;
 use crossterm::event::KeyEvent;
