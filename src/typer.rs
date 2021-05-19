@@ -339,14 +339,12 @@ impl<'a> TestState<'a> {
         // TODO load previous line
 
         if !self.up.is_empty() {
-
             let mut temp: Vec<Span> = vec![];
             temp.append(&mut self.down);
             self.backburner.push(temp);
 
             self.down.append(&mut self.active);
             self.active.append(&mut self.up);
-
 
             self.length = self.active.len();
 
@@ -358,8 +356,7 @@ impl<'a> TestState<'a> {
                 crs += sp.content.len();
             }
 
-            self.cursor_x = crs as u16;
-
+            self.cursor_x = 1 + crs as u16;
 
             self.undo_char();
         }
