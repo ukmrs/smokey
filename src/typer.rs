@@ -224,6 +224,7 @@ impl<'a> TestState<'a> {
         }
 
         self.pdone += self.done;
+
         self.done = 0;
 
         self.cursor_x = 1;
@@ -333,9 +334,35 @@ impl<'a> TestState<'a> {
                 self.set_next_char();
                 self.active[self.done].style = self.ctodo.fg();
             }
+            return;
         }
-        return;
         // TODO load previous line
+
+        if !self.up.is_empty() {
+
+            let mut temp: Vec<Span> = vec![];
+            temp.append(&mut self.down);
+            self.backburner.push(temp);
+
+            self.down.append(&mut self.active);
+            self.active.append(&mut self.up);
+
+
+            self.length = self.active.len();
+
+            self.pdone -= self.length;
+            self.done = self.length;
+
+            let mut crs = 0;
+            for sp in &self.active {
+                crs += sp.content.len();
+            }
+
+            self.cursor_x = crs as u16;
+
+
+            self.undo_char();
+        }
     }
 }
 
@@ -392,8 +419,8 @@ mod tests {
         let limit = App::default().paragraph;
 
         test.on_char(test.current_char);
-        let mut bail = 1;
-        
+        let mut bail = 0;
+
         while test.up.is_empty() {
             if bail > limit {
                 panic!("the line never progressed")
@@ -405,7 +432,6 @@ mod tests {
         // The test is at the beginning of the second line
         assert_eq!(test.done, 0);
 
-
         // del char should put test at the end of the first line
         test.undo_char();
         assert_ne!(test.done, 0);
@@ -414,7 +440,5 @@ mod tests {
         // the test goes back to second line gracefully
         test.on_char(test.current_char);
         assert_eq!(test.done, 0);
-
     }
-
 }
