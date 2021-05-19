@@ -334,13 +334,15 @@ impl<'a> TestState<'a> {
                 self.active[self.done].style = self.ctodo.fg();
             }
         }
+        return;
+        // TODO load previous line
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::application::Config;
+    use crate::application::{App, Config};
 
     fn get_wrong_char(c: char) -> char {
         if c == 'ź' {
@@ -383,4 +385,36 @@ mod tests {
         test.undo_char();
         assert!(test.fetch(done - 1).is_empty());
     }
+
+    #[test]
+    fn test_undo_previous_line() {
+        let mut test = setup_new_test();
+        let limit = App::default().paragraph;
+
+        test.on_char(test.current_char);
+        let mut bail = 1;
+        
+        while test.up.is_empty() {
+            if bail > limit {
+                panic!("the line never progressed")
+            }
+            bail += 1;
+            test.on_char(test.current_char);
+        }
+
+        // The test is at the beginning of the second line
+        assert_eq!(test.done, 0);
+
+
+        // del char should put test at the end of the first line
+        test.undo_char();
+        assert_ne!(test.done, 0);
+        assert!(test.up.is_empty());
+
+        // the test goes back to second line gracefully
+        test.on_char(test.current_char);
+        assert_eq!(test.done, 0);
+
+    }
+
 }

@@ -31,9 +31,9 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let mut dbg_info = String::new();
 
             // ---***---
-            dbg_info += &format!("mistakes: {}/ ", test.mistakes);
-            dbg_info += &format!("done: {}/ ", test.done);
-            dbg_info += &format!("cchar: {}/ ", test.current_char);
+            // dbg_info += &format!("mistakes: {}/ ", test.mistakes);
+            // dbg_info += &format!("done: {}/ ", test.done);
+            // dbg_info += &format!("cchar: {}/ ", test.current_char);
             // // ---***---
 
             let up_txt = vec![Spans::from(wpm), Spans::from(dbg_info)];
@@ -44,7 +44,7 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             debug!("{:#?}", frame.size());
 
-            let ghost_rect_width = (frame.size().width - 65) / 2;
+            let ghost_rect_width = (frame.size().width - app.paragraph) / 2;
             let down_chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Length(ghost_rect_width), Constraint::Min(60)].as_ref())
