@@ -233,6 +233,27 @@ impl<'a> TestState<'a> {
         false
     }
 
+    fn regress_line(&mut self) {
+        let mut temp: Vec<Span> = vec![];
+        temp.append(&mut self.down);
+        self.backburner.push(temp);
+
+        self.down.append(&mut self.active);
+        self.active.append(&mut self.up);
+
+        self.length = self.active.len();
+
+        self.pdone -= self.length;
+        self.done = self.length;
+
+        let mut crs = 0;
+        for sp in &self.active {
+            crs += sp.content.len();
+        }
+
+        self.cursor_x = 1 + crs as u16;
+    }
+
     fn set_next_char_or_end(&mut self) -> bool {
         if self.done < self.length {
             self.set_next_char_beware_blanks();
@@ -289,6 +310,14 @@ impl<'a> TestState<'a> {
     }
 
     pub fn undo_word(&mut self) {
+        if self.done == 0 {
+            if !self.up.is_empty() {
+                self.regress_line();
+            } else {
+                return;
+            }
+        }
+
         if self.current_char == ' ' {
             self.undo_space_char_and_extras();
         } else if self.fetch(self.done - 1) == " " {
@@ -339,25 +368,7 @@ impl<'a> TestState<'a> {
         // TODO load previous line
 
         if !self.up.is_empty() {
-            let mut temp: Vec<Span> = vec![];
-            temp.append(&mut self.down);
-            self.backburner.push(temp);
-
-            self.down.append(&mut self.active);
-            self.active.append(&mut self.up);
-
-            self.length = self.active.len();
-
-            self.pdone -= self.length;
-            self.done = self.length;
-
-            let mut crs = 0;
-            for sp in &self.active {
-                crs += sp.content.len();
-            }
-
-            self.cursor_x = 1 + crs as u16;
-
+            self.regress_line();
             self.undo_char();
         }
     }
@@ -428,6 +439,7 @@ mod tests {
 
         // The test is at the beginning of the second line
         assert_eq!(test.done, 0);
+        let stashed_pdone = test.pdone;
 
         // del char should put test at the end of the first line
         test.undo_char();
@@ -437,5 +449,6 @@ mod tests {
         // the test goes back to second line gracefully
         test.on_char(test.current_char);
         assert_eq!(test.done, 0);
+        assert_eq!(stashed_pdone, test.pdone);
     }
 }
