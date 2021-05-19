@@ -224,12 +224,34 @@ impl<'a> TestState<'a> {
         }
 
         self.pdone += self.done;
+
         self.done = 0;
 
         self.cursor_x = 1;
         self.length = self.active.len();
         self.set_next_char();
         false
+    }
+
+    fn regress_line(&mut self) {
+        let mut temp: Vec<Span> = vec![];
+        temp.append(&mut self.down);
+        self.backburner.push(temp);
+
+        self.down.append(&mut self.active);
+        self.active.append(&mut self.up);
+
+        self.length = self.active.len();
+
+        self.pdone -= self.length;
+        self.done = self.length;
+
+        let mut crs = 0;
+        for sp in &self.active {
+            crs += sp.content.len();
+        }
+
+        self.cursor_x = 1 + crs as u16;
     }
 
     fn set_next_char_or_end(&mut self) -> bool {
@@ -288,6 +310,14 @@ impl<'a> TestState<'a> {
     }
 
     pub fn undo_word(&mut self) {
+        if self.done == 0 {
+            if !self.up.is_empty() {
+                self.regress_line();
+            } else {
+                return;
+            }
+        }
+
         if self.current_char == ' ' {
             self.undo_space_char_and_extras();
         } else if self.fetch(self.done - 1) == " " {
@@ -333,6 +363,13 @@ impl<'a> TestState<'a> {
                 self.set_next_char();
                 self.active[self.done].style = self.ctodo.fg();
             }
+            return;
+        }
+        // TODO load previous line
+
+        if !self.up.is_empty() {
+            self.regress_line();
+            self.undo_char();
         }
     }
 }
@@ -340,7 +377,7 @@ impl<'a> TestState<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::application::Config;
+    use crate::application::{App, Config};
 
     fn get_wrong_char(c: char) -> char {
         if c == 'ź' {
@@ -382,5 +419,36 @@ mod tests {
         assert!(!test.fetch(done - 1).is_empty());
         test.undo_char();
         assert!(test.fetch(done - 1).is_empty());
+    }
+
+    #[test]
+    fn test_undo_previous_line() {
+        let mut test = setup_new_test();
+        let limit = App::default().paragraph;
+
+        test.on_char(test.current_char);
+        let mut bail = 0;
+
+        while test.up.is_empty() {
+            if bail > limit {
+                panic!("the line never progressed")
+            }
+            bail += 1;
+            test.on_char(test.current_char);
+        }
+
+        // The test is at the beginning of the second line
+        assert_eq!(test.done, 0);
+        let stashed_pdone = test.pdone;
+
+        // del char should put test at the end of the first line
+        test.undo_char();
+        assert_ne!(test.done, 0);
+        assert!(test.up.is_empty());
+
+        // the test goes back to second line gracefully
+        test.on_char(test.current_char);
+        assert_eq!(test.done, 0);
+        assert_eq!(stashed_pdone, test.pdone);
     }
 }

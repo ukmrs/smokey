@@ -26,6 +26,7 @@ pub struct App<'t> {
     pub test: TestState<'t>,
     pub theme: Theme,
     pub margin: u16,
+    pub paragraph: u16,
     pub config: Config,
 
     pub klucznik: KeyHandler,
@@ -110,6 +111,7 @@ impl<'t> Default for App<'t> {
             theme: Theme::default(),
             is_alive: true,
             margin: 2,
+            paragraph: 62,
             config,
             settings,
             /// unwrap wont painc because the Squad Default always returns Some

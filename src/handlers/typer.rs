@@ -19,10 +19,8 @@ pub fn handle(key: KeyEvent, app: &mut App) {
             }
         }
 
-        if test.done > 0 {
-            test.undo_word();
-            test.set_next_char();
-        }
+        test.undo_word();
+        test.set_next_char();
 
         return;
     }
