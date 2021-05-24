@@ -1,5 +1,6 @@
 pub mod application;
 pub mod colorscheme;
+pub mod settings;
 mod handlers;
 mod langs;
 mod painters;

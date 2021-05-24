@@ -6,16 +6,15 @@ use crate::colorscheme;
 use crate::handlers;
 use crate::handlers::KeyHandler;
 use crate::painters::*;
-use crate::vec_of_strings;
+use crate::settings::Settings;
 use crate::Term;
 use crossterm::event::KeyEvent;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use colorscheme::Theme;
 use directories_next::ProjectDirs;
 
 use crate::typer::TestState;
-use crate::utils::StatefulList;
 
 pub const APPLOGO: &str = " _._ _  _ |  _    
 _>| | |(_)|<(/_\\/ 
@@ -117,33 +116,6 @@ impl<'t> Default for App<'t> {
             /// unwrap wont painc because the Squad Default always returns Some
             painter: draw_test_and_update,
             klucznik: handlers::typer::handle,
-        }
-    }
-}
-
-pub struct Settings {
-    pub length_list: StatefulList<String>,
-    pub frequency_list: StatefulList<String>,
-    pub words_list: StatefulList<String>,
-    pub mods_list: StatefulList<String>,
-}
-
-impl Settings {
-    fn new(path: &Path) -> Self {
-        let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
-        let frequency_list =
-            StatefulList::with_items(vec_of_strings!["100", "1k", "5k", "10k", "max"]);
-        let words_list: Vec<String> = path
-            .iter()
-            .map(|i| i.to_string_lossy().to_string())
-            .collect();
-        let mod_list = vec_of_strings!["Punctuation"];
-
-        Self {
-            length_list,
-            frequency_list,
-            words_list: StatefulList::with_items(words_list),
-            mods_list: StatefulList::with_items(mod_list),
         }
     }
 }

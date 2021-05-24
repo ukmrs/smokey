@@ -28,11 +28,12 @@ pub fn handle(key: KeyEvent, app: &mut App) {
             }
         }
 
-        KeyCode::Left => {}
-        KeyCode::Down => {}
-        KeyCode::Up => {}
-        KeyCode::Right => {}
+        KeyCode::Left => {},
+        KeyCode::Down => {},
+        KeyCode::Up => {},
+        KeyCode::Right => {},
 
+        KeyCode::Enter => {},
         _ => (),
     }
 }

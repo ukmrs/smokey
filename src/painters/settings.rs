@@ -15,12 +15,14 @@ pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints(
+
                     [
                         Constraint::Percentage(20),
                         Constraint::Percentage(40),
                         Constraint::Percentage(40),
                     ]
                     .as_ref(),
+
                 )
                 .vertical_margin(app.margin)
                 .horizontal_margin(app.margin)
@@ -40,12 +42,11 @@ pub fn draw_title<B: Backend>(f: &mut Frame<B>, area: Rect) {
         .split(area);
 
     let block = Paragraph::new(APPLOGO).block(Block::default().borders(Borders::NONE));
-
     f.render_widget(block, chunks[0]);
 
     let block = Paragraph::new(APPLOGO).block(Block::default().borders(Borders::NONE));
-
     f.render_widget(block, chunks[1]);
+
 }
 
 pub fn draw_row_with_freq_and_len<B: Backend>(f: &mut Frame<B>, app: &mut App, rect: Rect) {
