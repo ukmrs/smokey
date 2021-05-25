@@ -22,7 +22,7 @@ enum TestVariant {
 
 #[allow(dead_code)]
 pub struct TypingTestConfig {
-    source: String,
+    name: String,
     variant: TestVariant,
     length: usize,
     frequency: usize,
@@ -32,12 +32,10 @@ pub struct TypingTestConfig {
 impl fmt::Display for TypingTestConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.variant {
-            TestVariant::Standard => write!(
-                f,
-                "{}: {} from {}",
-                self.source, self.length, self.frequency
-            ),
-            _ => write!(f, "{}", self.source),
+            TestVariant::Standard => {
+                write!(f, "{}: {} from {}", self.name, self.length, self.frequency)
+            }
+            _ => write!(f, "{}", self.name),
         }
     }
 }
@@ -46,7 +44,7 @@ pub struct Settings {
     pub hovered: SetList,
     pub active: SetList,
 
-    pub type_test_config: TypingTestConfig,
+    pub test_cfg: TypingTestConfig,
 
     pub length_list: StatefulList<String>,
     pub frequency_list: StatefulList<String>,
@@ -59,7 +57,7 @@ impl Settings {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
 
         let frequency_list =
-            StatefulList::with_items(vec_of_strings!["100", "1k", "5k", "10k", "max"]);
+            StatefulList::with_items(vec_of_strings!["100", "1000", "5000", "10000", "max"]);
 
         let words_list: Vec<String> = path
             .read_dir()
@@ -70,7 +68,7 @@ impl Settings {
         let mod_list = vec_of_strings!["Punctuation"];
 
         let type_test_config = TypingTestConfig {
-            source: String::from("english"),
+            name: String::from("english"),
             variant: TestVariant::Standard,
             length: 20,
             frequency: 1000,
@@ -85,7 +83,7 @@ impl Settings {
             frequency_list,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
-            type_test_config,
+            test_cfg: type_test_config,
         }
     }
 
@@ -133,6 +131,23 @@ impl Settings {
             if active_list.state.selected().is_none() {
                 active_list.state.select(Some(0))
             }
+            return;
+        }
+
+        match self.active {
+            SetList::Length => {
+                self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap()
+            }
+            SetList::Test => self.test_cfg.name = self.tests_list.get_item().clone(),
+            SetList::Frequency => {
+                self.test_cfg.frequency = self
+                    .frequency_list
+                    .get_item()
+                    .parse::<usize>()
+                    .unwrap_or(69);
+            }
+            SetList::Mods => (),
+            SetList::Nil => unreachable!(),
         }
     }
 

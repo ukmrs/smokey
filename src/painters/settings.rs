@@ -1,5 +1,5 @@
 use crate::application::{App, APPLOGO};
-use crate::settings::SetList;
+use crate::settings::{SetList, TypingTestConfig};
 use std::collections::HashMap;
 
 use tui::{
@@ -28,7 +28,7 @@ pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .horizontal_margin(app.margin)
                 .split(f.size());
 
-            draw_title(f, chunks[0]);
+            draw_title(f, chunks[0], &app.settings.test_cfg);
 
             let color_code = app
                 .settings
@@ -40,7 +40,7 @@ pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
         .expect("drawing settings");
 }
 
-pub fn draw_title<B: Backend>(f: &mut Frame<B>, area: Rect) {
+pub fn draw_title<B: Backend>(f: &mut Frame<B>, area: Rect, tcfg: &TypingTestConfig) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -49,8 +49,7 @@ pub fn draw_title<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let block = Paragraph::new(APPLOGO).block(Block::default().borders(Borders::NONE));
     f.render_widget(block, chunks[0]);
 
-    let block =
-        Paragraph::new("english: 10000 words").block(Block::default().borders(Borders::NONE));
+    let block = Paragraph::new(format!("{}", tcfg)).block(Block::default().borders(Borders::NONE));
     f.render_widget(block, chunks[1]);
 }
 
