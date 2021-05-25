@@ -1,9 +1,10 @@
 [package]
 name = "smokey"
-license = "MIT"
 version = "0.1.0"
 authors = ["ukmrs <murias.wstork@gmail.com>"]
 edition = "2018"
+description = "Handsome TUI typing test"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
