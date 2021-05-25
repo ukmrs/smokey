@@ -3,7 +3,11 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub fn handle(key: KeyEvent, app: &mut App) {
     match key.code {
-        KeyCode::Esc => app.stop(),
+        KeyCode::Esc => {
+            if app.settings.escape() {
+                app.stop();
+            }
+        }
 
         KeyCode::Tab => {
             app.reset_test();
@@ -19,21 +23,21 @@ pub fn handle(key: KeyEvent, app: &mut App) {
             }
 
             match c {
-                'h' => {}
-                'j' => {}
-                'k' => {}
-                'l' => {}
+                'h' => app.settings.left(),
+                'j' => app.settings.down(),
+                'k' => app.settings.up(),
+                'l' => app.settings.right(),
                 'q' => app.stop(),
                 _ => {}
             }
         }
 
-        KeyCode::Left => {},
-        KeyCode::Down => {},
-        KeyCode::Up => {},
-        KeyCode::Right => {},
+        KeyCode::Left => app.settings.left(),
+        KeyCode::Down => app.settings.down(),
+        KeyCode::Up => app.settings.up(),
+        KeyCode::Right => app.settings.right(),
 
-        KeyCode::Enter => {},
+        KeyCode::Enter => app.settings.enter(),
         _ => (),
     }
 }

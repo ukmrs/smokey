@@ -30,8 +30,8 @@ impl Default for Theme {
             done: Color::White,
             wrong: Color::Red,
             todo: Color::Gray,
-            hover: Color::LightMagenta,
-            active: Color::Magenta,
+            hover: Color::Magenta,
+            active: Color::Green,
         }
     }
 }
