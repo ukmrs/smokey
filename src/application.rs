@@ -103,7 +103,7 @@ impl<'t> Default for App<'t> {
     /// the test isnt initialized though
     fn default() -> Self {
         let config = Config::default();
-        let settings = Settings::new(&PathBuf::from(config.source.clone()));
+        let settings = Settings::new(&PathBuf::from(config.words.clone()));
 
         Self {
             test: TestState::default(),

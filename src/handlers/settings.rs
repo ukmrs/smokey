@@ -27,6 +27,12 @@ pub fn handle(key: KeyEvent, app: &mut App) {
                 'j' => app.settings.down(),
                 'k' => app.settings.up(),
                 'l' => app.settings.right(),
+
+                's' => app.settings.enter(),
+                'd' => {
+                    app.settings.escape();
+                }
+
                 'q' => app.stop(),
                 _ => {}
             }

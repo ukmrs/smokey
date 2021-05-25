@@ -49,7 +49,8 @@ pub fn draw_title<B: Backend>(f: &mut Frame<B>, area: Rect) {
     let block = Paragraph::new(APPLOGO).block(Block::default().borders(Borders::NONE));
     f.render_widget(block, chunks[0]);
 
-    let block = Paragraph::new(APPLOGO).block(Block::default().borders(Borders::NONE));
+    let block =
+        Paragraph::new("english: 10000 words").block(Block::default().borders(Borders::NONE));
     f.render_widget(block, chunks[1]);
 }
 
@@ -96,11 +97,11 @@ pub fn draw_row_with_words_and_mods<B: Backend>(
 
     render_stateful_list(
         f,
-        &app.settings.words_list.items,
-        &mut app.settings.words_list.state,
-        "language",
+        &app.settings.tests_list.items,
+        &mut app.settings.tests_list.state,
+        "test",
         chunks[0],
-        clrcode[&SetList::Words],
+        clrcode[&SetList::Test],
     );
 
     render_stateful_list(
@@ -122,9 +123,7 @@ pub fn render_stateful_list<B: Backend>(
     clr: Option<Color>,
 ) {
     let border_style: Style = match clr {
-        Some(c) => Style::default()
-            .fg(c)
-            .add_modifier(Modifier::BOLD),
+        Some(c) => Style::default().fg(c).add_modifier(Modifier::BOLD),
         None => Style::default().fg(Color::Gray),
     };
 
@@ -150,5 +149,5 @@ pub fn create_item_list<'a>(sl: &[String], title: &'a str, border_style: Style) 
                 .fg(border_style.fg.unwrap())
                 .add_modifier(Modifier::BOLD),
         )
-        // .highlight_symbol("> ")
+    // .highlight_symbol("> ")
 }
