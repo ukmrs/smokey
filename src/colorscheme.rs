@@ -20,6 +20,8 @@ pub struct Theme {
     pub done: Color,
     pub wrong: Color,
     pub todo: Color,
+    pub hover: Color,
+    pub active: Color,
 }
 
 impl Default for Theme {
@@ -28,6 +30,8 @@ impl Default for Theme {
             done: Color::White,
             wrong: Color::Red,
             todo: Color::Gray,
+            hover: Color::Magenta,
+            active: Color::Green,
         }
     }
 }

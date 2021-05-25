@@ -3,6 +3,7 @@ pub mod colorscheme;
 mod handlers;
 mod langs;
 mod painters;
+pub mod settings;
 pub mod typer;
 pub mod utils;
 

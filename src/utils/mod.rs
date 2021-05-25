@@ -23,6 +23,13 @@ impl<T> StatefulList<T> {
         }
     }
 
+    pub fn get_item(&mut self) -> &mut T {
+        &mut self.items[self
+            .state
+            .selected()
+            .expect("should be impossible to call this function without selected item")]
+    }
+
     pub fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {

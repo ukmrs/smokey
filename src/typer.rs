@@ -149,7 +149,7 @@ impl<'a> TestState<'a> {
         let mut wordy = langs::prep_test(&config, self.line_limit, self.cwrong, self.ctodo);
         self.active = wordy.pop().expect("prep_test output shouldn't be empty");
         self.length = self.active.len();
-        self.down = wordy.pop().unwrap_or_else(|| vec![]);
+        self.down = wordy.pop().unwrap_or_default();
         self.backburner = wordy;
         self.current_char = self.active[self.done].content.chars().next().unwrap();
         self.length = self.active.len();

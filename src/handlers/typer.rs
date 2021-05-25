@@ -74,7 +74,6 @@ mod tests {
                 print!("{}", c);
             }
         }
-        println!("");
         kv
     }
 
