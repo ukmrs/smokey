@@ -4,6 +4,7 @@ mod handlers;
 mod langs;
 mod painters;
 pub mod settings;
+pub mod storage;
 pub mod typer;
 pub mod utils;
 

@@ -94,7 +94,7 @@ impl<'t> App<'t> {
 
     pub fn reset_test(&mut self) {
         self.test.cursor_x = 1;
-        self.test.reset(&self.config);
+        self.test.reset(&self.settings.test_cfg);
     }
 }
 
@@ -103,7 +103,7 @@ impl<'t> Default for App<'t> {
     /// the test isnt initialized though
     fn default() -> Self {
         let config = Config::default();
-        let settings = Settings::new(&config.words);
+        let settings = Settings::default();
 
         Self {
             test: TestState::default(),

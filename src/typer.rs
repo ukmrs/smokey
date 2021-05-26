@@ -1,7 +1,7 @@
-use crate::application::Config;
 use crate::colorscheme::Theme;
 use crate::colorscheme::ToForeground;
 use crate::langs;
+use crate::settings::TypingTestConfig;
 use std::time::Instant;
 use tui::style::Color;
 use tui::text::Span;
@@ -137,7 +137,7 @@ impl<'a> TestState<'a> {
         numerator / elapsed
     }
 
-    pub fn reset(&mut self, config: &Config) {
+    pub fn reset(&mut self, config: &TypingTestConfig) {
         self.blanks = 0;
         self.done = 0;
         self.pdone = 0;
@@ -146,7 +146,7 @@ impl<'a> TestState<'a> {
         self.mistakes = 0;
         self.hoarder.reset();
 
-        let mut wordy = langs::prep_test(&config, self.line_limit, self.cwrong, self.ctodo);
+        let mut wordy = langs::prep_test(config, self.line_limit, self.cwrong, self.ctodo);
         self.active = wordy.pop().expect("prep_test output shouldn't be empty");
         self.length = self.active.len();
         self.down = wordy.pop().unwrap_or_default();
@@ -377,7 +377,8 @@ impl<'a> TestState<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::application::{App, Config};
+    use crate::application::App;
+    use crate::settings::TypingTestConfig;
 
     fn get_wrong_char(c: char) -> char {
         if c == 'ź' {
@@ -387,7 +388,7 @@ mod tests {
     }
 
     fn setup_new_test() -> TestState<'static> {
-        let config = Config::default();
+        let config = TypingTestConfig::default();
         let mut test = TestState::default();
         test.reset(&config);
         test

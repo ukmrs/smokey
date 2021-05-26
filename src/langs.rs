@@ -1,5 +1,6 @@
-use crate::application::Config;
 use crate::colorscheme;
+use crate::settings::TypingTestConfig;
+use crate::storage;
 use colorscheme::ToForeground;
 use tui::style::Color;
 
@@ -29,7 +30,6 @@ pub enum Punctuation {
     Nil,
 }
 
-#[allow(dead_code)]
 struct PFreq {
     weighted_index: WeightedIndex<u16>,
     symbols: Vec<Punctuation>,
@@ -76,13 +76,17 @@ impl PFreq {
     }
 }
 
-fn get_shuffled_words(config: &Config) -> Vec<String> {
-    let file = File::open(&config.get_source()).expect("couldn't open file");
+fn get_shuffled_words(config: &TypingTestConfig) -> Vec<String> {
+    // This is quick and bad
+    // TODO impl more robust system
+    let words_file = storage::get_storage_dir().join("words").join(&config.name);
+
+    let file = File::open(words_file).expect("couldn't open file");
     let reader = BufReader::new(file);
     let mut line_iter = reader.lines();
     let mut container: Vec<String> = Vec::new();
 
-    let mut prng = Randorst::gen(config.length, 0..config.freq_cut_off);
+    let mut prng = Randorst::gen(config.length, 0..config.frequency);
     let mut last = prng.next().unwrap();
     let out = line_iter.nth(last).unwrap().unwrap();
     container.push(out);
@@ -108,7 +112,7 @@ fn add_space_with_blank(container: &mut Vec<Span>, wrong: Color, todo: Color) {
 }
 
 pub fn prep_test<'a>(
-    config: &Config,
+    config: &TypingTestConfig,
     limit: usize,
     wrong: Color,
     todo: Color,
@@ -258,12 +262,12 @@ impl Capitalize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::application::Config;
+    use crate::settings::TypingTestConfig;
     use tui::style::Color;
 
     #[test]
     fn test_prep() {
-        let mut cfg = Config::default();
+        let mut cfg = TypingTestConfig::default();
         cfg.length = 200;
         let mut words = 1;
         let limit = 65;
