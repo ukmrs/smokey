@@ -124,8 +124,8 @@ mod tests {
 
         let mut app = App::setup();
 
-        use crate::application::Config;
-        let mut cfg = Config::default();
+        use crate::settings::TypingTestConfig;
+        let mut cfg = TypingTestConfig::default();
         cfg.length = 500;
         app.test.reset(&cfg);
         let key_events = generate_key_events_passing_standart_test(&app);

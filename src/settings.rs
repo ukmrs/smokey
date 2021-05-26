@@ -1,8 +1,8 @@
+use crate::storage::get_storage_dir;
 use crate::utils::StatefulList;
 use crate::vec_of_strings;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
-use std::path::Path;
 use tui::style::Color;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -20,22 +20,47 @@ enum TestVariant {
     Script,
 }
 
+#[derive(PartialEq, Eq, Hash)]
+pub enum TestMod {
+    Punctuation,
+}
+
 #[allow(dead_code)]
 pub struct TypingTestConfig {
-    name: String,
+    pub name: String,
     variant: TestVariant,
-    length: usize,
-    frequency: usize,
-    mods: usize,
+    pub length: usize,
+    pub frequency: usize,
+    pub mods: HashSet<TestMod>,
 }
 
 impl fmt::Display for TypingTestConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.variant {
             TestVariant::Standard => {
-                write!(f, "{}: {} from {}", self.name, self.length, self.frequency)
+                let mut mods = String::new();
+                if self.mods.contains(&TestMod::Punctuation) {
+                    mods.push_str("+ punctuation")
+                }
+                write!(
+                    f,
+                    "{}: {} from {} {}",
+                    self.name, self.length, self.frequency, mods
+                )
             }
             _ => write!(f, "{}", self.name),
+        }
+    }
+}
+
+impl Default for TypingTestConfig {
+    fn default() -> Self {
+        Self {
+            name: String::from("english"),
+            variant: TestVariant::Standard,
+            length: 25,
+            frequency: 5000,
+            mods: HashSet::default(),
         }
     }
 }
@@ -52,28 +77,30 @@ pub struct Settings {
     pub mods_list: StatefulList<String>,
 }
 
-impl Settings {
-    pub fn new(path: &Path) -> Self {
+impl Default for Settings {
+    fn default() -> Self {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
 
         let frequency_list =
-            StatefulList::with_items(vec_of_strings!["100", "1000", "5000", "10000", "max"]);
+            StatefulList::with_items(vec_of_strings!["100", "1000", "5000", "10000", "50000"]);
 
-        let words_list: Vec<String> = path
+        // TODO haphazardly implemented cleanup neeeded :broom:
+        let words_list: Vec<String> = get_storage_dir()
+            .join("words")
             .read_dir()
             .unwrap()
-            .map(|i| i.unwrap().path().to_string_lossy().to_string())
+            .map(|i| {
+                i.unwrap()
+                    .path()
+                    .iter()
+                    .last()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string()
+            })
             .collect();
 
         let mod_list = vec_of_strings!["Punctuation"];
-
-        let type_test_config = TypingTestConfig {
-            name: String::from("english"),
-            variant: TestVariant::Standard,
-            length: 20,
-            frequency: 1000,
-            mods: 0,
-        };
 
         Self {
             hovered: SetList::Length,
@@ -83,10 +110,12 @@ impl Settings {
             frequency_list,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
-            test_cfg: type_test_config,
+            test_cfg: TypingTestConfig::default(),
         }
     }
+}
 
+impl Settings {
     // length freq
     // words mods
 
@@ -146,7 +175,15 @@ impl Settings {
                     .parse::<usize>()
                     .unwrap_or(69);
             }
-            SetList::Mods => (),
+            // TODO this isnt robust implementation
+            // It doesnt allow for adding more mods in the future
+            // its one of the haphazard changes to make smokey semi-functional before
+            // I prob won't be able to work on this for some time
+            SetList::Mods => {
+                if !self.test_cfg.mods.remove(&TestMod::Punctuation) {
+                    self.test_cfg.mods.insert(TestMod::Punctuation);
+                }
+            }
             SetList::Nil => unreachable!(),
         }
     }
