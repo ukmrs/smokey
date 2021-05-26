@@ -388,7 +388,8 @@ mod tests {
     }
 
     fn setup_new_test() -> TestState<'static> {
-        let config = TypingTestConfig::default();
+        let mut config = TypingTestConfig::default();
+        config.length = 100;
         let mut test = TestState::default();
         test.reset(&config);
         test
@@ -431,7 +432,7 @@ mod tests {
         let mut bail = 0;
 
         while test.up.is_empty() {
-            if bail > limit {
+            if bail > limit + 10 {
                 panic!("the line never progressed")
             }
             bail += 1;

@@ -16,6 +16,12 @@ pub fn handle(key: KeyEvent, app: &mut App) {
                     app.stop();
                 }
             }
+
+            match c {
+                'q' => app.stop(),
+                's' => app.change_to_settings(),
+                _ => (),
+            }
         }
 
         _ => (),
