@@ -21,7 +21,7 @@ enum TestVariant {
 }
 
 #[derive(PartialEq, Eq, Hash)]
-enum TestMod {
+pub enum TestMod {
     Punctuation,
 }
 
@@ -31,7 +31,7 @@ pub struct TypingTestConfig {
     variant: TestVariant,
     pub length: usize,
     pub frequency: usize,
-    mods: HashSet<TestMod>,
+    pub mods: HashSet<TestMod>,
 }
 
 impl fmt::Display for TypingTestConfig {

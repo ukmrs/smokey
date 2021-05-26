@@ -1,5 +1,5 @@
 use crate::colorscheme;
-use crate::settings::TypingTestConfig;
+use crate::settings::{TestMod, TypingTestConfig};
 use crate::storage;
 use colorscheme::ToForeground;
 use tui::style::Color;
@@ -39,19 +39,19 @@ impl Default for PFreq {
     fn default() -> Self {
         let we = vec![
             (Punctuation::End('.'), 65),
-            (Punctuation::End('?'), 6),
-            (Punctuation::End('!'), 4),
+            (Punctuation::End('?'), 8),
+            (Punctuation::End('!'), 6),
             (Punctuation::Normal(','), 61),
             (Punctuation::Normal(';'), 3),
             (Punctuation::Normal(':'), 3),
             (Punctuation::Paired('<', '>'), 2),
-            (Punctuation::Paired('(', ')'), 4),
+            (Punctuation::Paired('(', ')'), 5),
             (Punctuation::Paired('{', '}'), 2),
             (Punctuation::Paired('[', ']'), 2),
             (Punctuation::Paired('"', '"'), 13),
             (Punctuation::Paired('\'', '\''), 10),
             (Punctuation::DashLike('-'), 10),
-            (Punctuation::Nil, 800),
+            (Punctuation::Nil, 750),
         ];
 
         let mut weighted_index: Vec<u16> = Vec::with_capacity(we.len());
@@ -126,9 +126,8 @@ pub fn prep_test<'a>(
     let p = PFreq::default();
 
     // TODO cleanup this in Config branch
-    let flag = true;
-    match flag {
-        true => {
+    match config.mods.contains(&TestMod::Punctuation) {
+        false => {
             for word in &prep {
                 count += word.len() + 1;
                 if count > limit {
@@ -145,7 +144,7 @@ pub fn prep_test<'a>(
             }
         }
 
-        false => {
+        true => {
             let mut rng = thread_rng();
             let mut capitalize = Capitalize::default();
             capitalize.signal(); // start off with a capital letter
