@@ -20,7 +20,7 @@ enum TestVariant {
     Script,
 }
 
-#[allow(dead_code)]
+#[derive(PartialEq, Eq, Hash)]
 enum TestMod {
     Punctuation,
 }
@@ -38,7 +38,15 @@ impl fmt::Display for TypingTestConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.variant {
             TestVariant::Standard => {
-                write!(f, "{}: {} from {}", self.name, self.length, self.frequency)
+                let mut mods = String::new();
+                if self.mods.contains(&TestMod::Punctuation) {
+                    mods.push_str("+ punctuation")
+                }
+                write!(
+                    f,
+                    "{}: {} from {} {}",
+                    self.name, self.length, self.frequency, mods
+                )
             }
             _ => write!(f, "{}", self.name),
         }
@@ -74,7 +82,7 @@ impl Default for Settings {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
 
         let frequency_list =
-            StatefulList::with_items(vec_of_strings!["100", "1000", "5000", "10000", "max"]);
+            StatefulList::with_items(vec_of_strings!["100", "1000", "5000", "10000", "50000"]);
 
         // TODO haphazardly implemented cleanup neeeded :broom:
         let words_list: Vec<String> = get_storage_dir()
@@ -167,7 +175,15 @@ impl Settings {
                     .parse::<usize>()
                     .unwrap_or(69);
             }
-            SetList::Mods => (),
+            // TODO this isnt robust implementation
+            // It doesnt allow for adding more mods in the future
+            // its one of the haphazard changes to make smokey semi-functional before
+            // I prob won't be able to work on this for some time
+            SetList::Mods => {
+                if !self.test_cfg.mods.remove(&TestMod::Punctuation) {
+                    self.test_cfg.mods.insert(TestMod::Punctuation);
+                }
+            }
             SetList::Nil => unreachable!(),
         }
     }
