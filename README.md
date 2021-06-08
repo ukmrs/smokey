@@ -2,6 +2,7 @@
 
 Program that allows training wpm from the comfort of a terminal.
 
+[![asciicast](https://asciinema.org/a/419067.svg)](https://asciinema.org/a/419067)
 
 ## Program State
 
