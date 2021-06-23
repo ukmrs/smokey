@@ -26,9 +26,10 @@ pub type Backend = CrosstermBackend<Stdout>;
 pub type Term = Terminal<Backend>;
 
 pub fn run(mut app: App, terminal: Term) -> crossterm::Result<()> {
+    #[cfg(debug_assertions)]
     init_logger();
-    app.reset_test();
 
+    app.reset_test();
     termprep::init();
     main_loop(app, terminal)?;
     termprep::shutdown();
@@ -51,6 +52,7 @@ fn main_loop(mut app: App, mut terminal: Term) -> crossterm::Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn init_logger() {
     WriteLogger::init(
         LevelFilter::Debug,
