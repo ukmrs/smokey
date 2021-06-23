@@ -1,13 +1,13 @@
 [package]
 name = "smokey"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["ukmrs <murias.wstork@gmail.com>"]
 edition = "2018"
 description = "Handsome TUI typing test"
 license = "MIT"
 repository = "https://github.com/ukmrs/smokey.git"
 homepage = "https://github.com/ukmrs/smokey"
-categories = ["tui", "typing"]
+keywords = ["tui", "typing", "wpm"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
