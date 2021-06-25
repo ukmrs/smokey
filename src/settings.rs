@@ -90,6 +90,8 @@ impl Default for Settings {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
 
         // TODO haphazardly implemented cleanup neeeded :broom:
+        // lets not kid myself everything is
+        // but this especially<question mark>
         let words_list: Vec<String> = storage::get_storage_dir()
             .join("words")
             .read_dir()
@@ -188,9 +190,18 @@ impl Settings {
             SetList::Length => {
                 self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap()
             }
+
             SetList::Test => {
-                self.test_cfg.name = self.tests_list.get_item().clone();
+                let chosen_test_name = self.tests_list.get_item().clone();
+                let word_count = self.get_word_count(&chosen_test_name);
+                self.frequency_list = create_frequency_list(word_count);
+                self.test_cfg.name = chosen_test_name;
+
+                if self.test_cfg.frequency > word_count {
+                    self.test_cfg.frequency = word_count;
+                }
             }
+
             SetList::Frequency => {
                 self.test_cfg.frequency = self
                     .frequency_list
