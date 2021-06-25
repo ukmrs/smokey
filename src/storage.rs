@@ -8,3 +8,7 @@ pub fn get_storage_dir() -> PathBuf {
         .data_dir()
         .to_path_buf()
 }
+
+pub fn get_word_list_path(word_list_name: &str) -> PathBuf {
+    get_storage_dir().join("words").join(word_list_name)
+}
