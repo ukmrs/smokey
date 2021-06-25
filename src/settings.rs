@@ -1,8 +1,9 @@
-use crate::storage::get_storage_dir;
-use crate::utils::StatefulList;
+use crate::storage;
+use crate::utils::{count_lines_from_path, StatefulList};
 use crate::vec_of_strings;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
+use std::path::PathBuf;
 use tui::style::Color;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -65,6 +66,12 @@ impl Default for TypingTestConfig {
     }
 }
 
+impl TypingTestConfig {
+    pub fn get_words_file_path(&self) -> PathBuf {
+        storage::get_word_list_path(&self.name)
+    }
+}
+
 pub struct Settings {
     pub hovered: SetList,
     pub active: SetList,
@@ -75,17 +82,17 @@ pub struct Settings {
     pub frequency_list: StatefulList<String>,
     pub tests_list: StatefulList<String>,
     pub mods_list: StatefulList<String>,
+    pub word_amount_cache: HashMap<String, usize>,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
 
-        let frequency_list =
-            StatefulList::with_items(vec_of_strings!["100", "1000", "5000", "10000", "50000"]);
-
         // TODO haphazardly implemented cleanup neeeded :broom:
-        let words_list: Vec<String> = get_storage_dir()
+        // lets not kid myself everything is
+        // but this especially<question mark>
+        let words_list: Vec<String> = storage::get_storage_dir()
             .join("words")
             .read_dir()
             .unwrap()
@@ -102,15 +109,23 @@ impl Default for Settings {
 
         let mod_list = vec_of_strings!["Punctuation"];
 
+        let test_cfg = TypingTestConfig::default();
+        let mut word_amount_cache = HashMap::new();
+
+        let word_count = count_lines_from_path(&test_cfg.get_words_file_path());
+        word_amount_cache.insert(test_cfg.name.clone(), word_count);
+        let frequency_list = create_frequency_list(word_count);
+
         Self {
             hovered: SetList::Length,
             active: SetList::Nil,
 
             length_list,
             frequency_list,
+            word_amount_cache,
+            test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
-            test_cfg: TypingTestConfig::default(),
         }
     }
 }
@@ -152,6 +167,16 @@ impl Settings {
         }
     }
 
+    fn get_word_count(&mut self, key: &str) -> usize {
+        if let Some(word_count) = self.word_amount_cache.get(key) {
+            *word_count
+        } else {
+            let word_count = count_lines_from_path(storage::get_word_list_path(key));
+            self.word_amount_cache.insert(key.to_string(), word_count);
+            word_count
+        }
+    }
+
     pub fn enter(&mut self) {
         if self.hovered != SetList::Nil {
             self.active = self.hovered;
@@ -167,7 +192,18 @@ impl Settings {
             SetList::Length => {
                 self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap()
             }
-            SetList::Test => self.test_cfg.name = self.tests_list.get_item().clone(),
+
+            SetList::Test => {
+                let chosen_test_name = self.tests_list.get_item().clone();
+                let word_count = self.get_word_count(&chosen_test_name);
+                self.frequency_list = create_frequency_list(word_count);
+                self.test_cfg.name = chosen_test_name;
+
+                if self.test_cfg.frequency > word_count {
+                    self.test_cfg.frequency = word_count;
+                }
+            }
+
             SetList::Frequency => {
                 self.test_cfg.frequency = self
                     .frequency_list
@@ -244,5 +280,37 @@ impl Settings {
             SetList::Test => Some(&mut self.tests_list),
             SetList::Nil => None,
         }
+    }
+}
+
+fn create_frequency_list(word_count: usize) -> StatefulList<String> {
+    let mut initial: Vec<String> = [100, 1000, 5000, 10000, 20000, 50000]
+        .iter()
+        .filter(|&x| *x < word_count)
+        .map(|x| x.to_string())
+        .collect();
+    initial.push(word_count.to_string());
+
+    StatefulList::with_items(initial)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_frequency_list() {
+        let large = create_frequency_list(69000);
+        let medium = create_frequency_list(15889);
+        let small = create_frequency_list(1000);
+        let tiny = create_frequency_list(20);
+
+        assert_eq!(
+            large.items,
+            vec!["100", "1000", "5000", "10000", "20000", "50000", "69000"]
+        );
+        assert_eq!(medium.items, vec!["100", "1000", "5000", "10000", "15889"]);
+        assert_eq!(small.items, vec!["100", "1000"]);
+        assert_eq!(tiny.items, vec!["20"]);
     }
 }
