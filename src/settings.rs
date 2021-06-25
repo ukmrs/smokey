@@ -171,7 +171,9 @@ impl Settings {
         if let Some(word_count) = self.word_amount_cache.get(key) {
             *word_count
         } else {
-            count_lines_from_path(storage::get_word_list_path(key))
+            let word_count = count_lines_from_path(storage::get_word_list_path(key));
+            self.word_amount_cache.insert(key.to_string(), word_count);
+            word_count
         }
     }
 
