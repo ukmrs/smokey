@@ -1,8 +1,9 @@
 use crate::storage::get_storage_dir;
-use crate::utils::StatefulList;
+use crate::utils::{count_lines_from_path, StatefulList};
 use crate::vec_of_strings;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
+use std::path::PathBuf;
 use tui::style::Color;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -65,6 +66,12 @@ impl Default for TypingTestConfig {
     }
 }
 
+impl TypingTestConfig {
+    pub fn get_words_file_path(&self) -> PathBuf {
+        get_storage_dir().join("words").join(&self.name)
+    }
+}
+
 pub struct Settings {
     pub hovered: SetList,
     pub active: SetList,
@@ -75,6 +82,7 @@ pub struct Settings {
     pub frequency_list: StatefulList<String>,
     pub tests_list: StatefulList<String>,
     pub mods_list: StatefulList<String>,
+    pub word_amount_cache: HashMap<String, usize>,
 }
 
 impl Default for Settings {
@@ -102,15 +110,23 @@ impl Default for Settings {
 
         let mod_list = vec_of_strings!["Punctuation"];
 
+        let test_cfg = TypingTestConfig::default();
+        let mut word_amount_cache = HashMap::new();
+        word_amount_cache.insert(
+            test_cfg.name.clone(),
+            count_lines_from_path(&test_cfg.get_words_file_path()),
+        );
+
         Self {
             hovered: SetList::Length,
             active: SetList::Nil,
 
             length_list,
             frequency_list,
+            word_amount_cache,
+            test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
-            test_cfg: TypingTestConfig::default(),
         }
     }
 }

@@ -1,5 +1,9 @@
 pub mod randorst;
 pub mod termprep;
+use bytecount;
+use std::fs::File;
+use std::io::{self, BufRead};
+use std::path::Path;
 use tui::widgets::ListState;
 
 #[derive(Default)]
@@ -66,4 +70,38 @@ impl<T> StatefulList<T> {
 #[macro_export]
 macro_rules! vec_of_strings {
     ($($x:expr),*) => (vec![$($x.to_string()),*]);
+}
+
+pub fn count_lines_from_path(filepath: impl AsRef<Path>) -> usize {
+    let file = File::open(filepath).unwrap();
+    count_lines(file).unwrap()
+}
+
+/// Expects a file and returns number of lines
+///
+/// ```
+/// use smokey::utils::count_lines;
+/// let file: &[u8] = b"one line\nanother line\nand even more lines\n";
+/// assert_eq!(count_lines(file).unwrap(), 3);
+///
+/// ```
+///
+/// based on cw -l functionality from
+/// https://github.com/Freaky/cw
+/// a fast wc clone in Rust
+/// great stuff I use it as well
+pub fn count_lines<R: io::Read>(file: R) -> Result<usize, io::Error> {
+    let mut reader = io::BufReader::new(file);
+    let mut count: usize = 0;
+
+    loop {
+        let buffer = reader.fill_buf()?;
+        if buffer.is_empty() {
+            break;
+        }
+        count += bytecount::count(&buffer, b'\n');
+        let buflen = buffer.len();
+        reader.consume(buflen);
+    }
+    Ok(count)
 }

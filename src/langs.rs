@@ -79,7 +79,7 @@ impl PFreq {
 fn get_shuffled_words(config: &TypingTestConfig) -> Vec<String> {
     // This is quick and bad
     // TODO impl more robust system
-    let words_file = storage::get_storage_dir().join("words").join(&config.name);
+    let words_file = config.get_words_file_path();
 
     let file = File::open(words_file).expect("couldn't open file");
     let reader = BufReader::new(file);
