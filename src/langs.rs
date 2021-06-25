@@ -1,6 +1,5 @@
 use crate::colorscheme;
 use crate::settings::{TestMod, TypingTestConfig};
-use crate::storage;
 use colorscheme::ToForeground;
 use tui::style::Color;
 
