@@ -26,6 +26,14 @@ pub enum TestMod {
     Punctuation,
 }
 
+impl fmt::Display for TestMod {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Punctuation => write!(f, "{}", "!?"),
+        }
+    }
+}
+
 #[allow(dead_code)]
 pub struct TypingTestConfig {
     pub name: String,
@@ -40,8 +48,11 @@ impl fmt::Display for TypingTestConfig {
         match self.variant {
             TestVariant::Standard => {
                 let mut mods = String::new();
-                if self.mods.contains(&TestMod::Punctuation) {
-                    mods.push_str("+ punctuation")
+                if !self.mods.is_empty() {
+                    mods.push_str("+ ")
+                }
+                for test_mod in &self.mods {
+                    mods.push_str(&format!("{}", test_mod));
                 }
                 write!(
                     f,
