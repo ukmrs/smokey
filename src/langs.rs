@@ -96,7 +96,7 @@ impl PFreq {
                 }
                 // TODO symbols may be better served with their own punctuation table
                 TestMod::Symbols => {
-                    protoplast.push((Punctuation::InBetweener(InnerWord::Symbol), 69));
+                    protoplast.push((Punctuation::InBetweener(InnerWord::Symbol), 71));
                 }
             }
         }
@@ -242,16 +242,19 @@ pub fn prep_test<'a>(
                         capitalize.signal();
                         begin = None;
                         end = Some(c);
+                        count += 1;
                     }
 
                     Punctuation::Normal(c) => {
                         begin = None;
                         end = Some(c);
+                        count += 1;
                     }
 
                     Punctuation::Paired(a, z) => {
                         begin = Some(a);
                         end = Some(z);
+                        count += 2;
                     }
 
                     // TODO implement this bullshit
@@ -297,16 +300,20 @@ pub fn prep_test<'a>(
                     match ib {
                         InnerWord::Dash => {
                             tmp[0].push(Span::styled("-".to_string(), todo.fg()));
+                            count += 1;
                         }
 
                         InnerWord::Number => {
-                            for c in rng.gen_range(0..=999).to_string().chars() {
+                            let number = rng.gen_range(0..=999).to_string();
+                            count += number.len();
+                            for c in number.chars() {
                                 tmp[0].push(Span::styled(c.to_string(), todo.fg()));
                             }
                         }
 
                         InnerWord::Symbol => {
                             let times = rng.gen_range(1..=3);
+                            count += times;
                             for _ in 0..times {
                                 let symbol = SYMBOLS
                                     .choose(&mut rng)
