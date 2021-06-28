@@ -41,19 +41,70 @@ pub enum Punctuation {
     End(char),
     // brackets of all kind, and dquotes
     Paired(char, char),
-    // gonna use it like an em dash so in between words "word - word"
+    // in between words duh,
     InBetweener(InnerWord),
     Nil,
 }
 
+/// Creates a WeightedIndex of punctuation whis allows
+/// to modify text in certain ways
 struct PFreq {
     weighted_index: WeightedIndex<u16>,
     symbols: Vec<Punctuation>,
 }
 
-impl Default for PFreq {
-    // TODO this feels a little bit hacky
+impl PFreq {
+    fn from_protoplast(protoplast: Vec<(Punctuation, u16)>) -> Self {
+        let mut weighted_index: Vec<u16> = Vec::with_capacity(protoplast.len());
+        let mut symbols: Vec<Punctuation> = Vec::with_capacity(protoplast.len());
+        for (p, w) in protoplast.into_iter() {
+            weighted_index.push(w);
+            symbols.push(p);
+        }
 
+        let weighted_index = WeightedIndex::new(weighted_index).unwrap();
+        Self {
+            weighted_index,
+            symbols,
+        }
+    }
+
+    pub fn from_test_mods(test_mods: &HashSet<TestMod>) -> Self {
+        let mut protoplast: Vec<(Punctuation, u16)> = vec![(Punctuation::Nil, 750)];
+        for test_mod in test_mods {
+            match test_mod {
+                TestMod::Punctuation => {
+                    let mut we: Vec<(Punctuation, u16)> = vec![
+                        (Punctuation::End('.'), 65),
+                        (Punctuation::End('?'), 8),
+                        (Punctuation::End('!'), 6),
+                        (Punctuation::Normal(','), 61),
+                        (Punctuation::Normal(';'), 3),
+                        (Punctuation::Normal(':'), 3),
+                        (Punctuation::Paired('<', '>'), 2),
+                        (Punctuation::Paired('(', ')'), 5),
+                        (Punctuation::Paired('{', '}'), 2),
+                        (Punctuation::Paired('[', ']'), 2),
+                        (Punctuation::Paired('"', '"'), 13),
+                        (Punctuation::Paired('\'', '\''), 10),
+                        (Punctuation::InBetweener(InnerWord::Dash), 10),
+                    ];
+                    protoplast.append(&mut we);
+                }
+                TestMod::Numbers => {
+                    protoplast.push((Punctuation::InBetweener(InnerWord::Number), 69));
+                }
+                // TODO symbols may be better served with their own punctuation table
+                TestMod::Symbols => {
+                    protoplast.push((Punctuation::InBetweener(InnerWord::Symbol), 69));
+                }
+            }
+        }
+        Self::from_protoplast(protoplast)
+    }
+}
+
+impl Default for PFreq {
     fn default() -> Self {
         let we = vec![
             (Punctuation::End('.'), 65),
@@ -69,8 +120,6 @@ impl Default for PFreq {
             (Punctuation::Paired('"', '"'), 13),
             (Punctuation::Paired('\'', '\''), 10),
             (Punctuation::InBetweener(InnerWord::Dash), 10),
-            // (Punctuation::InBetweener(InnerWord::Number), 200),
-            // (Punctuation::InBetweener(InnerWord::Symbol), 200),
             (Punctuation::Nil, 750),
         ];
 
@@ -142,11 +191,9 @@ pub fn prep_test<'a>(
     let mut tmp: Vec<Vec<Span>> = vec![vec![]];
     let mut count = 0;
 
-    let p = PFreq::default();
-
     // TODO cleanup this in Config branch
-    match config.mods.contains(&TestMod::Punctuation) {
-        false => {
+    match config.mods.is_empty() {
+        true => {
             for word in &prep {
                 count += word.len() + 1;
                 if count > limit {
@@ -163,7 +210,8 @@ pub fn prep_test<'a>(
             }
         }
 
-        true => {
+        false => {
+            let p = PFreq::from_test_mods(&config.mods);
             let mut rng = thread_rng();
             let mut capitalize = Capitalize::default();
             capitalize.signal(); // start off with a capital letter

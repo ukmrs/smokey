@@ -45,8 +45,6 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             frame.render_widget(block, chunks[0]);
 
-            debug!("{:#?}", frame.size());
-
             let ghost_rect_width = (frame.size().width - app.paragraph) / 2;
             let down_chunks = Layout::default()
                 .direction(Direction::Horizontal)
