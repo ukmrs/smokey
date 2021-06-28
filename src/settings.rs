@@ -282,7 +282,9 @@ impl Settings {
             SetList::Frequency => self.hovered = SetList::Length,
             SetList::Mods => self.hovered = SetList::Test,
             SetList::Nil => {
-                self.get_list(self.active);
+                self.hovered = self.active;
+                self.active = SetList::Nil;
+                self.left();
             }
         }
     }
@@ -294,7 +296,9 @@ impl Settings {
             SetList::Frequency => self.hovered = SetList::Length,
             SetList::Mods => self.hovered = SetList::Test,
             SetList::Nil => {
-                self.get_list(self.active);
+                self.hovered = self.active;
+                self.active = SetList::Nil;
+                self.right();
             }
         }
     }
