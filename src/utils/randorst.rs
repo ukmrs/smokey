@@ -10,8 +10,7 @@
 use fastrand::Rng;
 use std::ops::{Range, RangeInclusive};
 
-/// This allow randorst to accept both Range and RangeInclusive
-/// kinda wanky but in the end it makes for a nice API
+// there is also std::ops::RangeBounds;
 pub trait StartEndRange {
     fn get_bounds(self) -> (usize, usize);
 }
@@ -35,6 +34,7 @@ impl StartEndRange for RangeInclusive<usize> {
 /// Randorst::gen(100, 0..256);
 /// Randorst::gen(100, 0..=255);
 /// ```
+// TODO shouldn't I use f64?
 pub struct Randorst {
     n: usize,
     min: usize,

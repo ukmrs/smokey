@@ -1,6 +1,7 @@
 use crate::colorscheme;
 use crate::settings::{TestMod, TypingTestConfig};
 use colorscheme::ToForeground;
+use std::collections::HashSet;
 use tui::style::Color;
 
 use super::utils::randorst::Randorst;
@@ -12,8 +13,24 @@ use tui::text::Span;
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
 
+const SYMBOLS: [char; 14] = [
+    '@', '#', '$', '%', '^', '&', '*', '_', '=', '+', '-', '/', '|', '\\',
+];
+
 pub struct Capitalize {
     sync: [u8; 2],
+}
+
+/// InnerWord represent everything I can throw
+/// in between words like numbers symbols dashes
+/// and whatever you'd like fair lady / handsome stranger;
+// Dash should become character(char) later if I add more
+// stuff of that nature
+#[derive(Debug, Clone, Copy)]
+pub enum InnerWord {
+    Dash,
+    Number,
+    Symbol,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -24,14 +41,67 @@ pub enum Punctuation {
     End(char),
     // brackets of all kind, and dquotes
     Paired(char, char),
-    // gonna use it like an em dash so in between words "word - word"
-    DashLike(char),
+    // in between words duh,
+    InBetweener(InnerWord),
     Nil,
 }
 
+/// Creates a WeightedIndex of punctuation whis allows
+/// to modify text in certain ways
 struct PFreq {
     weighted_index: WeightedIndex<u16>,
     symbols: Vec<Punctuation>,
+}
+
+impl PFreq {
+    fn from_protoplast(protoplast: Vec<(Punctuation, u16)>) -> Self {
+        let mut weighted_index: Vec<u16> = Vec::with_capacity(protoplast.len());
+        let mut symbols: Vec<Punctuation> = Vec::with_capacity(protoplast.len());
+        for (p, w) in protoplast.into_iter() {
+            weighted_index.push(w);
+            symbols.push(p);
+        }
+
+        let weighted_index = WeightedIndex::new(weighted_index).unwrap();
+        Self {
+            weighted_index,
+            symbols,
+        }
+    }
+
+    pub fn from_test_mods(test_mods: &HashSet<TestMod>) -> Self {
+        let mut protoplast: Vec<(Punctuation, u16)> = vec![(Punctuation::Nil, 750)];
+        for test_mod in test_mods {
+            match test_mod {
+                TestMod::Punctuation => {
+                    let mut we: Vec<(Punctuation, u16)> = vec![
+                        (Punctuation::End('.'), 65),
+                        (Punctuation::End('?'), 8),
+                        (Punctuation::End('!'), 6),
+                        (Punctuation::Normal(','), 61),
+                        (Punctuation::Normal(';'), 3),
+                        (Punctuation::Normal(':'), 3),
+                        (Punctuation::Paired('<', '>'), 2),
+                        (Punctuation::Paired('(', ')'), 5),
+                        (Punctuation::Paired('{', '}'), 2),
+                        (Punctuation::Paired('[', ']'), 2),
+                        (Punctuation::Paired('"', '"'), 13),
+                        (Punctuation::Paired('\'', '\''), 10),
+                        (Punctuation::InBetweener(InnerWord::Dash), 10),
+                    ];
+                    protoplast.append(&mut we);
+                }
+                TestMod::Numbers => {
+                    protoplast.push((Punctuation::InBetweener(InnerWord::Number), 69));
+                }
+                // TODO symbols may be better served with their own punctuation table
+                TestMod::Symbols => {
+                    protoplast.push((Punctuation::InBetweener(InnerWord::Symbol), 69));
+                }
+            }
+        }
+        Self::from_protoplast(protoplast)
+    }
 }
 
 impl Default for PFreq {
@@ -49,7 +119,7 @@ impl Default for PFreq {
             (Punctuation::Paired('[', ']'), 2),
             (Punctuation::Paired('"', '"'), 13),
             (Punctuation::Paired('\'', '\''), 10),
-            (Punctuation::DashLike('-'), 10),
+            (Punctuation::InBetweener(InnerWord::Dash), 10),
             (Punctuation::Nil, 750),
         ];
 
@@ -68,7 +138,6 @@ impl Default for PFreq {
     }
 }
 
-#[allow(dead_code)]
 impl PFreq {
     fn choose(&self, rng: &mut ThreadRng) -> Punctuation {
         self.symbols[self.weighted_index.sample(rng)]
@@ -122,11 +191,9 @@ pub fn prep_test<'a>(
     let mut tmp: Vec<Vec<Span>> = vec![vec![]];
     let mut count = 0;
 
-    let p = PFreq::default();
-
     // TODO cleanup this in Config branch
-    match config.mods.contains(&TestMod::Punctuation) {
-        false => {
+    match config.mods.is_empty() {
+        true => {
             for word in &prep {
                 count += word.len() + 1;
                 if count > limit {
@@ -143,13 +210,16 @@ pub fn prep_test<'a>(
             }
         }
 
-        true => {
+        false => {
+            let p = PFreq::from_test_mods(&config.mods);
             let mut rng = thread_rng();
             let mut capitalize = Capitalize::default();
             capitalize.signal(); // start off with a capital letter
             capitalize.capitalize();
+
             let mut begin: Option<char>;
             let mut end: Option<char>;
+            let mut inner_word: Option<InnerWord>;
 
             for word in &prep {
                 count += word.len() + 1;
@@ -160,6 +230,8 @@ pub fn prep_test<'a>(
                 }
 
                 let punct = p.choose(&mut rng);
+
+                inner_word = None;
                 match punct {
                     Punctuation::Nil => {
                         begin = None;
@@ -185,9 +257,10 @@ pub fn prep_test<'a>(
                     // TODO implement this bullshit
                     // i am kinda fed up with what this became
                     // need to think it through
-                    Punctuation::DashLike(_) => {
+                    Punctuation::InBetweener(in_betweener) => {
                         begin = None;
                         end = None;
+                        inner_word = Some(in_betweener);
                     }
                 }
 
@@ -208,6 +281,7 @@ pub fn prep_test<'a>(
                 }
 
                 for c in iter_chars {
+                    // repetition btw
                     tmp[0].push(Span::styled(c.to_string(), todo.fg()));
                 }
 
@@ -216,6 +290,35 @@ pub fn prep_test<'a>(
                 }
 
                 add_space_with_blank(&mut tmp[0], wrong, todo);
+
+                if let Some(ib) = inner_word {
+                    // TODO: do I care for occasional dashes at the end?
+                    // propably not but they are kinda ugly not gonna lie
+                    match ib {
+                        InnerWord::Dash => {
+                            tmp[0].push(Span::styled("-".to_string(), todo.fg()));
+                        }
+
+                        InnerWord::Number => {
+                            for c in rng.gen_range(0..=999).to_string().chars() {
+                                tmp[0].push(Span::styled(c.to_string(), todo.fg()));
+                            }
+                        }
+
+                        InnerWord::Symbol => {
+                            let times = rng.gen_range(1..=3);
+                            for _ in 0..times {
+                                let symbol = SYMBOLS
+                                    .choose(&mut rng)
+                                    .expect("SYMBOlS shouldn't be empty");
+
+                                tmp[0].push(Span::styled(symbol.to_string(), todo.fg()));
+                            }
+                        }
+                    }
+
+                    add_space_with_blank(&mut tmp[0], wrong, todo);
+                }
             }
         }
     };
@@ -235,6 +338,7 @@ impl Default for Capitalize {
 }
 
 impl Capitalize {
+    /// signals that the next word should be capitalized
     fn signal(&mut self) {
         if self.sync[0] == 0 {
             self.sync[0] = 2;
@@ -243,6 +347,8 @@ impl Capitalize {
         self.sync[1] = 2;
     }
 
+    /// checks whether word should be capitalized
+    /// should be queried only once per word
     fn capitalize(&mut self) -> bool {
         if self.sync[0] == 1 {
             if self.sync[1] == 0 {

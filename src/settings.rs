@@ -1,6 +1,7 @@
 use crate::storage;
 use crate::utils::{count_lines_from_path, StatefulList};
 use crate::vec_of_strings;
+use phf;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::path::PathBuf;
@@ -21,9 +22,27 @@ enum TestVariant {
     Script,
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TestMod {
     Punctuation,
+    Numbers,
+    Symbols,
+}
+
+pub static TEST_MODS: phf::Map<&'static str, TestMod> = phf::phf_map! {
+    "Punctuation" => TestMod::Punctuation,
+    "Numbers" => TestMod::Numbers,
+    "Symbols" => TestMod::Symbols,
+};
+
+impl fmt::Display for TestMod {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Punctuation => write!(f, "{}", "!?"),
+            Self::Numbers => write!(f, "{}", "17"),
+            Self::Symbols => write!(f, "{}", "#$"),
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -40,8 +59,11 @@ impl fmt::Display for TypingTestConfig {
         match self.variant {
             TestVariant::Standard => {
                 let mut mods = String::new();
-                if self.mods.contains(&TestMod::Punctuation) {
-                    mods.push_str("+ punctuation")
+                if !self.mods.is_empty() {
+                    mods.push_str("+")
+                }
+                for test_mod in &self.mods {
+                    mods.push_str(&format!(" {}", test_mod));
                 }
                 write!(
                     f,
@@ -107,7 +129,8 @@ impl Default for Settings {
             })
             .collect();
 
-        let mod_list = vec_of_strings!["Punctuation"];
+        let mod_list: Vec<String> = TEST_MODS.keys().map(|&x| x.to_string()).collect();
+        // let mod_list = vec_of_strings!["Punctuation"];
 
         let test_cfg = TypingTestConfig::default();
         let mut word_amount_cache = HashMap::new();
@@ -216,8 +239,12 @@ impl Settings {
             // its one of the haphazard changes to make smokey semi-functional before
             // I prob won't be able to work on this for some time
             SetList::Mods => {
-                if !self.test_cfg.mods.remove(&TestMod::Punctuation) {
-                    self.test_cfg.mods.insert(TestMod::Punctuation);
+                let test_mod = TEST_MODS
+                    .get(&self.mods_list.get_item())
+                    .expect("UI doesn't match TEST_MODS");
+
+                if !self.test_cfg.mods.remove(test_mod) {
+                    self.test_cfg.mods.insert(*test_mod);
                 }
             }
             SetList::Nil => unreachable!(),
