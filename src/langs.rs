@@ -1,6 +1,5 @@
-use crate::colorscheme;
-use crate::settings::{TestMod, TypingTestConfig};
-use colorscheme::ToForeground;
+use crate::colorscheme::ToForeground;
+use crate::settings::{is_script, TestMod, TestVariant, TypingTestConfig};
 use std::collections::HashSet;
 use tui::style::Color;
 
@@ -16,10 +15,6 @@ use rand::prelude::*;
 const SYMBOLS: [char; 14] = [
     '@', '#', '$', '%', '^', '&', '*', '_', '=', '+', '-', '/', '|', '\\',
 ];
-
-pub struct Capitalize {
-    sync: [u8; 2],
-}
 
 /// InnerWord represent everything I can throw
 /// in between words like numbers symbols dashes
@@ -179,7 +174,19 @@ fn add_space_with_blank(container: &mut Vec<Span>, wrong: Color, todo: Color) {
     container.push(Span::styled(" ", todo.fg()));
 }
 
-pub fn prep_test<'a>(
+pub fn prepare_test<'a>(
+    config: &TypingTestConfig,
+    limit: usize,
+    wrong: Color,
+    todo: Color,
+) -> Vec<Vec<Span<'a>>> {
+    match config.variant {
+        TestVariant::Standard => prepare_standart_test(config, limit, wrong, todo),
+        _ => unimplemented!(),
+    }
+}
+
+pub fn prepare_standart_test<'a>(
     config: &TypingTestConfig,
     limit: usize,
     wrong: Color,
@@ -338,6 +345,10 @@ pub fn prep_test<'a>(
     test.into_iter().rev().collect()
 }
 
+pub struct Capitalize {
+    sync: [u8; 2],
+}
+
 impl Default for Capitalize {
     fn default() -> Self {
         Self { sync: [0, 0] }
@@ -384,7 +395,7 @@ mod tests {
         let limit = 65;
         let mut char_count = 0;
 
-        let result = prep_test(&cfg, limit, Color::Red, Color::Blue);
+        let result = prepare_test(&cfg, limit, Color::Red, Color::Blue);
         for line in &result {
             for span in line {
                 if span.content == " " {

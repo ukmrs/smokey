@@ -146,7 +146,7 @@ impl<'a> TestState<'a> {
         self.mistakes = 0;
         self.hoarder.reset();
 
-        let mut wordy = langs::prep_test(config, self.line_limit, self.cwrong, self.ctodo);
+        let mut wordy = langs::prepare_test(config, self.line_limit, self.cwrong, self.ctodo);
         self.active = wordy.pop().expect("prep_test output shouldn't be empty");
         self.length = self.active.len();
         self.down = wordy.pop().unwrap_or_default();
