@@ -1,9 +1,9 @@
-//! obviously underdeveloped theming department
-//! main struct: Theme
-//! for now there is nothing there
-//! but maybe in the future there will be some sort of colorschemes
-
+use lazy_static::lazy_static;
 use tui::style::{Color, Style};
+
+lazy_static! {
+    pub static ref THEME: Theme = Theme::default();
+}
 
 pub trait ToForeground {
     fn fg(self) -> Style;

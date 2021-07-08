@@ -2,16 +2,14 @@
 //! as well as current typing test
 //! main structs App and TestState
 
-use crate::colorscheme;
-use crate::handlers;
-use crate::handlers::KeyHandler;
+use crate::colorscheme::Theme;
+use crate::handlers::{self, KeyHandler};
 use crate::painters::*;
 use crate::settings::Settings;
 use crate::Term;
 use crossterm::event::KeyEvent;
 use std::path::PathBuf;
 
-use colorscheme::Theme;
 use directories_next::ProjectDirs;
 
 use crate::typer::TestState;

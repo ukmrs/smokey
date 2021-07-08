@@ -15,12 +15,9 @@ use simplelog::*;
 
 use application::App;
 use crossterm::event::{poll, read, Event as CEvent};
-use std::fs::File;
-use std::io::Stdout;
-use std::time::Duration;
-use utils::termprep;
-
+use std::{fs::File, io::Stdout, time::Duration};
 use tui::{backend::CrosstermBackend, Terminal};
+use utils::termprep;
 
 pub type Backend = CrosstermBackend<Stdout>;
 pub type Term = Terminal<Backend>;

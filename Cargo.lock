@@ -421,6 +421,7 @@ dependencies = [
  "crossterm",
  "directories-next",
  "fastrand",
+ "lazy_static",
  "log",
  "phf",
  "rand",
