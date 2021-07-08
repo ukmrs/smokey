@@ -7,6 +7,15 @@ use std::fmt;
 use std::path::PathBuf;
 use tui::style::Color;
 
+pub const SCRIPT_SIGN: &'static str = "#!";
+
+pub fn is_script(text: &str) -> bool {
+    if text.len() < 2 {
+        return false;
+    }
+    &text[..2] == SCRIPT_SIGN
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SetList {
     Length,
@@ -17,7 +26,7 @@ pub enum SetList {
 }
 
 #[allow(dead_code)]
-enum TestVariant {
+pub enum TestVariant {
     Standard,
     Script,
 }
@@ -48,7 +57,7 @@ impl fmt::Display for TestMod {
 #[allow(dead_code)]
 pub struct TypingTestConfig {
     pub name: String,
-    variant: TestVariant,
+    pub variant: TestVariant,
     pub length: usize,
     pub frequency: usize,
     pub mods: HashSet<TestMod>,
@@ -92,6 +101,12 @@ impl TypingTestConfig {
     pub fn get_words_file_path(&self) -> PathBuf {
         storage::get_word_list_path(&self.name)
     }
+
+    pub fn get_scripts_file_path(&self) -> PathBuf {
+        storage::get_storage_dir()
+            .join("scripts")
+            .join(&self.name[2..])
+    }
 }
 
 pub struct Settings {
@@ -114,7 +129,7 @@ impl Default for Settings {
         // TODO haphazardly implemented cleanup neeeded :broom:
         // lets not kid myself everything is
         // but this especially<question mark>
-        let words_list: Vec<String> = storage::get_storage_dir()
+        let mut words_list: Vec<String> = storage::get_storage_dir()
             .join("words")
             .read_dir()
             .unwrap()
@@ -129,8 +144,24 @@ impl Default for Settings {
             })
             .collect();
 
+        let scripts_iterator = storage::get_storage_dir()
+            .join("scripts")
+            .read_dir()
+            .unwrap()
+            .map(|i| {
+                i.unwrap()
+                    .path()
+                    .iter()
+                    .last()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string()
+            })
+            .map(|s| format!("{}{}", SCRIPT_SIGN, s));
+
+        words_list.extend(scripts_iterator);
+
         let mod_list: Vec<String> = TEST_MODS.keys().map(|&x| x.to_string()).collect();
-        // let mod_list = vec_of_strings!["Punctuation"];
 
         let test_cfg = TypingTestConfig::default();
         let mut word_amount_cache = HashMap::new();
@@ -218,13 +249,20 @@ impl Settings {
 
             SetList::Test => {
                 let chosen_test_name = self.tests_list.get_item().clone();
-                let word_count = self.get_word_count(&chosen_test_name);
-                self.frequency_list = create_frequency_list(word_count);
-                self.test_cfg.name = chosen_test_name;
 
-                if self.test_cfg.frequency > word_count {
-                    self.test_cfg.frequency = word_count;
+                if is_script(&chosen_test_name) {
+                    self.test_cfg.variant = TestVariant::Script;
+                } else {
+                    self.test_cfg.variant = TestVariant::Standard;
+                    let word_count = self.get_word_count(&chosen_test_name);
+
+                    self.frequency_list = create_frequency_list(word_count);
+                    if self.test_cfg.frequency > word_count {
+                        self.test_cfg.frequency = word_count;
+                    }
                 }
+
+                self.test_cfg.name = chosen_test_name;
             }
 
             SetList::Frequency => {

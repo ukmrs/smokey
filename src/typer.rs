@@ -1,9 +1,7 @@
-use crate::colorscheme::Theme;
-use crate::colorscheme::ToForeground;
+use crate::colorscheme::{ToForeground, THEME};
 use crate::langs;
 use crate::settings::TypingTestConfig;
 use std::time::Instant;
-use tui::style::Color;
 use tui::text::Span;
 
 pub struct WpmHoarder {
@@ -82,8 +80,6 @@ pub struct TestState<'a> {
     pub cursor_x: u16,
     pub current_char: char,
 
-    pub line_limit: usize,
-
     pub begining: Instant,
     // source for generating test
     pub source: String,
@@ -91,16 +87,10 @@ pub struct TestState<'a> {
     pub text: Vec<Span<'a>>,
     pub length: usize,
     pub hoarder: WpmHoarder,
-
-    cwrong: Color,
-    ctodo: Color,
-    cdone: Color,
 }
 
 impl<'a> Default for TestState<'a> {
     fn default() -> Self {
-        let th = Theme::default();
-
         TestState {
             up: vec![],
             active: vec![],
@@ -116,16 +106,11 @@ impl<'a> Default for TestState<'a> {
             // persistent mistakes
             pmiss: 0,
             cursor_x: 0,
-            line_limit: 65,
 
             source: "storage/words/english".to_string(),
             length: 0,
             current_char: ' ',
             hoarder: WpmHoarder::new(32),
-
-            cwrong: th.wrong,
-            ctodo: th.todo,
-            cdone: th.done,
         }
     }
 }
@@ -146,7 +131,7 @@ impl<'a> TestState<'a> {
         self.mistakes = 0;
         self.hoarder.reset();
 
-        let mut wordy = langs::prep_test(config, self.line_limit, self.cwrong, self.ctodo);
+        let mut wordy = langs::prepare_test(config);
         self.active = wordy.pop().expect("prep_test output shouldn't be empty");
         self.length = self.active.len();
         self.down = wordy.pop().unwrap_or_default();
@@ -174,7 +159,7 @@ impl<'a> TestState<'a> {
     /// chekcs if char is a mistake and deducts it from
     /// the total count
     pub fn if_mistake_deduct(&mut self, index: usize) {
-        if self.cwrong == self.active[index].style.fg.unwrap() {
+        if THEME.wrong == self.active[index].style.fg.unwrap() {
             self.mistakes -= 1;
         }
     }
@@ -266,7 +251,7 @@ impl<'a> TestState<'a> {
     pub fn on_char(&mut self, c: char) -> bool {
         self.cursor_x += 1;
         if c == self.current_char {
-            self.active[self.done].style = self.cdone.fg();
+            self.active[self.done].style = THEME.done.fg();
             self.done += 1;
             return self.set_next_char_or_end();
         }
@@ -288,7 +273,7 @@ impl<'a> TestState<'a> {
         } else {
             self.mistakes += 1;
             self.pmiss += 1;
-            self.active[self.done].style = self.cwrong.fg();
+            self.active[self.done].style = THEME.wrong.fg();
             self.done += 1;
             return self.set_next_char_or_end();
         }
@@ -305,7 +290,7 @@ impl<'a> TestState<'a> {
         self.done -= 2;
 
         self.if_mistake_deduct(self.done);
-        self.active[self.done].style = self.ctodo.fg();
+        self.active[self.done].style = THEME.todo.fg();
         self.blanks -= 1;
     }
 
@@ -323,7 +308,7 @@ impl<'a> TestState<'a> {
         } else if self.fetch(self.done - 1) == " " {
             self.done -= 1;
             self.cursor_x -= 1;
-            self.active[self.done].style = self.ctodo.fg();
+            self.active[self.done].style = THEME.todo.fg();
 
             self.undo_space_char_and_extras();
         }
@@ -332,7 +317,7 @@ impl<'a> TestState<'a> {
             self.cursor_x -= 1;
             self.done -= 1;
             self.if_mistake_deduct(self.done);
-            self.active[self.done].style = self.ctodo.fg();
+            self.active[self.done].style = THEME.todo.fg();
         }
     }
 
@@ -348,7 +333,7 @@ impl<'a> TestState<'a> {
                     self.done -= 2;
                     self.blanks -= 1;
                     self.set_next_char();
-                    self.active[self.done].style = self.ctodo.fg();
+                    self.active[self.done].style = THEME.todo.fg();
                 } else {
                     // shaves off one from extras
                     self.active[self.done - 1]
@@ -361,7 +346,7 @@ impl<'a> TestState<'a> {
                 self.done -= 1;
                 self.if_mistake_deduct(self.done);
                 self.set_next_char();
-                self.active[self.done].style = self.ctodo.fg();
+                self.active[self.done].style = THEME.todo.fg();
             }
             return;
         }
