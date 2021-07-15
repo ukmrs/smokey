@@ -6,7 +6,7 @@ Program that allows training wpm from the comfort of a terminal.
 
 ## Program State
 
-Project is in very early stages.
+Project is in the early stages.
 The basic functionality is there, but there are many missing features and rough edges.
 
 Works fine on linux and propably on mac.
@@ -17,7 +17,7 @@ Works ok on windows too, but the cursor might be buggy sometimes.
 standard rust stuff
 
 ```
-https://github.com/ukmrs/smokey && cd smokey
+git clone https://github.com/ukmrs/smokey && cd smokey
 cargo run --release
 ```
 ## Actually Installing
@@ -28,7 +28,7 @@ cargo install smokey
 
 ### Building from source
 ```
-https://github.com/ukmrs/smokey && cd smokey
+git clone https://github.com/ukmrs/smokey && cd smokey
 cargo build --release
 ```
 then copy target/release/smokey to a known location
@@ -70,10 +70,37 @@ Smokey ships with a sizeable english word list (~60_000 words) which on linux ca
 ~/.local/smokey/storage/words
 
 Other lists can be added to the folder. Smokey expects a list sorted by word frequency with each
-word separated by newline character. Other languages are not provided but most of the time can be easily DIYed.
-For example for polish, one could use [Otwarty słownik frekwencyjny leksemów](https://web.archive.org/web/20091116122442/http://www.open-dictionaries.com/slownikfrleks.pdf). It needs to be converted to text,
-perhaps by unix pdftotext utility, and then sorted and cleaned by a short script.
+word separated by a newline character.
+Other languages are not provided but most of the time can be easily DIYed.
 
+### Suggestions/Examples for word sources
+#### French
+Grab [Lexique382.zip](https://github.com/chrplr/openlexicon/blob/master/datasets-info/Lexique382/README-Lexique.md)
+and unzip it to find Lexique382.tsv.
+If you have [xsv](https://github.com/BurntSushi/xsv) installed,
+here is an **almost one liner** to convert it to smokey-friendly format:
+
+```bash
+xsv sort -s freqlivres -N -R Lexique383.tsv | xsv select ortho > french
+sed '1d' french > tmpfile && mv tmpfile french
+```
+The only purpose of the sed command is to delete the first line which will be "ortho" - the column name.
+That could be done manually but I included it for convenience.
+
+#### Polish
+
+Grab [Otwarty słownik frekwencyjny leksemów](https://web.archive.org/web/20091116122442/http://www.open-dictionaries.com/slownikfrleks.pdf)
+pdftotext it, sort it and clean it by a short script. Godspeed mój przyjacielu.
+
+#### Supported languages/scripts
+Smokey should handle all simple scripts like
+- latin derivatives
+- cyrylic
+- greek
+- etc
+
+Complex scripts that require mulitple inputs for one glyph like *Hangul* won't work.
+The same goes for right_to_left scripts.
 
 ### English word list
 The list contains around 60 000 words.
@@ -83,4 +110,5 @@ I filtred it using python bindings of [Enchant](https://abiword.github.io/enchan
 and checked against the [MauriceButler/badwords](https://github.com/MauriceButler/badwords)
 and  [LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words).
 I kept "sex" though. Otherwise it wouldn't be fair to plants who
-just cross-pollinate without causing too much of a ruckus. 
+just cross-pollinate without causing too much of a ruckus.
+Future me here, I forgot about accursed pollen allergies, I might reconsider my stance on this.
