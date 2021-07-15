@@ -54,13 +54,31 @@ impl fmt::Display for TestMod {
     }
 }
 
-#[allow(dead_code)]
+pub struct TestSummary {
+    pub correct_chars: usize,
+    pub mistakes: usize,
+    pub wpm: f64,
+    pub acc: f64,
+}
+
+impl Default for TestSummary {
+    fn default() -> Self {
+        Self {
+            correct_chars: 0,
+            mistakes: 0,
+            wpm: 0.,
+            acc: 0.,
+        }
+    }
+}
+
 pub struct TypingTestConfig {
     pub name: String,
     pub variant: TestVariant,
     pub length: usize,
-    pub frequency: usize,
+    pub word_pool: usize,
     pub mods: HashSet<TestMod>,
+    pub test_summary: TestSummary,
 }
 
 impl fmt::Display for TypingTestConfig {
@@ -77,7 +95,7 @@ impl fmt::Display for TypingTestConfig {
                 write!(
                     f,
                     "{}: {} from {} {}",
-                    self.name, self.length, self.frequency, mods
+                    self.name, self.length, self.word_pool, mods
                 )
             }
             _ => write!(f, "{}", self.name),
@@ -91,8 +109,9 @@ impl Default for TypingTestConfig {
             name: String::from("english"),
             variant: TestVariant::Standard,
             length: 25,
-            frequency: 5000,
+            word_pool: 5000,
             mods: HashSet::default(),
+            test_summary: TestSummary::default(),
         }
     }
 }
@@ -257,8 +276,8 @@ impl Settings {
                     let word_count = self.get_word_count(&chosen_test_name);
 
                     self.frequency_list = create_frequency_list(word_count);
-                    if self.test_cfg.frequency > word_count {
-                        self.test_cfg.frequency = word_count;
+                    if self.test_cfg.word_pool > word_count {
+                        self.test_cfg.word_pool = word_count;
                     }
                 }
 
@@ -266,7 +285,7 @@ impl Settings {
             }
 
             SetList::Frequency => {
-                self.test_cfg.frequency = self
+                self.test_cfg.word_pool = self
                     .frequency_list
                     .get_item()
                     .parse::<usize>()

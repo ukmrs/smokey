@@ -1,5 +1,6 @@
 use crate::colorscheme::{ToForeground, THEME};
 use crate::langs;
+use crate::settings::TestSummary;
 use crate::settings::TypingTestConfig;
 use std::time::Instant;
 use tui::text::Span;
@@ -99,12 +100,21 @@ impl<'a> Default for TestState<'a> {
 
             text: vec![],
             begining: Instant::now(),
+
+            // characters done on current line
+            // this variable is reset after each line
             done: 0,
+
+            // chars done on previous lines
+            // p stands for persistent I guess
             pdone: 0,
             blanks: 0,
             mistakes: 0,
-            // persistent mistakes
+
+            // persistent mistakes - these cant be backspaced away
+            // used to calculate accuracy
             pmiss: 0,
+
             cursor_x: 0,
 
             source: "storage/words/english".to_string(),
@@ -126,6 +136,15 @@ impl<'a> TestState<'a> {
         let correct = (self.pdone + self.done - self.blanks - self.mistakes) as f64;
         let key_presses = correct + self.pmiss as f64;
         correct / key_presses * 100.
+    }
+
+    pub fn summarize(&self) -> TestSummary {
+        TestSummary {
+            correct_chars: self.pdone + self.done - self.mistakes,
+            mistakes: self.mistakes,
+            wpm: self.calculate_wpm(),
+            acc: self.calculate_acc(),
+        }
     }
 
     pub fn reset(&mut self, config: &TypingTestConfig) {
@@ -250,6 +269,10 @@ impl<'a> TestState<'a> {
         self.progress_line()
     }
 
+    /// handles char event and returns
+    /// returns a boolean signaling status of the test
+    /// returns false when the test continues
+    /// returns true when the test is done
     pub fn on_char(&mut self, c: char) -> bool {
         self.cursor_x += 1;
         if c == self.current_char {

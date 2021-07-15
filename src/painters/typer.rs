@@ -31,9 +31,9 @@ pub fn draw_test<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let mut dbg_info = String::new();
 
             // ---***---
-            // dbg_info += &format!("mistakes: {}/ ", test.mistakes);
-            // dbg_info += &format!("done: {}/ ", test.done);
-            // dbg_info += &format!("pdone: {}/ ", test.pdone);
+            dbg_info += &format!("mistakes: {}/ ", test.mistakes);
+            dbg_info += &format!("done: {}/ ", test.done);
+            dbg_info += &format!("pdone: {}/ ", test.pdone);
             // dbg_info += &format!("blanks: {}/ ", test.blanks);
             // dbg_info += &format!("cchar: {}/ ", test.current_char);
             // dbg_info += &format!("cursor: {}/ ", test.cursor_x);

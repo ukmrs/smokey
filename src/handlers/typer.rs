@@ -28,6 +28,8 @@ pub fn handle(key: KeyEvent, app: &mut App) {
     match key.code {
         KeyCode::Char(c) => {
             if test.on_char(c) {
+                let summary = test.summarize();
+                app.settings.test_cfg.test_summary = summary;
                 app.change_to_post();
             }
         }
