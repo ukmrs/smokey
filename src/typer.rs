@@ -122,6 +122,12 @@ impl<'a> TestState<'a> {
         numerator / elapsed
     }
 
+    fn calculate_acc(&self) -> f64 {
+        let correct = (self.pdone + self.done - self.blanks - self.mistakes) as f64;
+        let key_presses = correct + self.pmiss as f64;
+        correct / key_presses * 100.
+    }
+
     pub fn reset(&mut self, config: &TypingTestConfig) {
         self.blanks = 0;
         self.done = 0;
@@ -143,11 +149,7 @@ impl<'a> TestState<'a> {
 
     pub fn end(&mut self) {
         self.hoarder.final_wpm = self.calculate_wpm();
-        self.hoarder.final_acc = {
-            let correct = (self.pdone + self.done - self.blanks - self.mistakes) as f64;
-            let key_presses = correct + self.pmiss as f64;
-            correct / key_presses * 100.
-        };
+        self.hoarder.final_acc = self.calculate_acc();
     }
 
     pub fn update_wpm_history(&mut self) {

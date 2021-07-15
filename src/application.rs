@@ -2,17 +2,14 @@
 //! as well as current typing test
 //! main structs App and TestState
 
+use crossterm::event::KeyEvent;
+
 use crate::colorscheme::Theme;
 use crate::handlers::{self, KeyHandler};
 use crate::painters::*;
 use crate::settings::Settings;
-use crate::Term;
-use crossterm::event::KeyEvent;
-use std::path::PathBuf;
-
-use directories_next::ProjectDirs;
-
 use crate::typer::TestState;
+use crate::Term;
 
 pub const APPLOGO: &str = " _._ _  _ |  _    
 _>| | |(_)|<(/_\\/ 
@@ -24,9 +21,7 @@ pub struct App<'t> {
     pub theme: Theme,
     pub margin: u16,
     pub paragraph: u16,
-    pub config: Config,
-
-    pub klucznik: KeyHandler,
+    pub key_handler: KeyHandler,
     pub painter: Painter,
 
     pub is_alive: bool,
@@ -68,22 +63,22 @@ impl<'t> App<'t> {
     /// assert!(!app.is_alive);
     /// ```
     pub fn handle_key_event(&mut self, key_event: KeyEvent) {
-        (self.klucznik)(key_event, self)
+        (self.key_handler)(key_event, self)
     }
 
     pub fn change_to_post(&mut self) {
         self.painter = draw_post;
-        self.klucznik = handlers::post::handle;
+        self.key_handler = handlers::post::handle;
     }
 
     pub fn change_to_settings(&mut self) {
         self.painter = draw_settings;
-        self.klucznik = handlers::settings::handle;
+        self.key_handler = handlers::settings::handle;
     }
 
     pub fn change_to_test(&mut self) {
         self.painter = draw_test_and_update;
-        self.klucznik = handlers::typer::handle;
+        self.key_handler = handlers::typer::handle;
     }
 
     pub fn stop(&mut self) {
@@ -100,7 +95,6 @@ impl<'t> Default for App<'t> {
     /// Creates App instance
     /// the test isnt initialized though
     fn default() -> Self {
-        let config = Config::default();
         let settings = Settings::default();
 
         Self {
@@ -109,40 +103,10 @@ impl<'t> Default for App<'t> {
             is_alive: true,
             margin: 2,
             paragraph: 62,
-            config,
             settings,
             /// unwrap wont painc because the Squad Default always returns Some
             painter: draw_test_and_update,
-            klucznik: handlers::typer::handle,
+            key_handler: handlers::typer::handle,
         }
-    }
-}
-
-pub struct Config {
-    words: PathBuf,
-    pub source: String,
-    pub length: usize,
-    pub freq_cut_off: usize,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        let base = ProjectDirs::from("pl", "ukmrs", "smokey")
-            .unwrap()
-            .data_dir()
-            .to_path_buf();
-
-        Config {
-            words: base.join("words"),
-            source: String::from("english"),
-            length: 30,
-            freq_cut_off: 10_000,
-        }
-    }
-}
-
-impl Config {
-    pub fn get_source(&self) -> PathBuf {
-        self.words.join(&self.source)
     }
 }
