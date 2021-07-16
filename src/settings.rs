@@ -94,7 +94,7 @@ impl fmt::Display for TypingTestConfig {
                 }
                 write!(
                     f,
-                    "{}: {} from {} {}",
+                    "{}: {}/{} {}",
                     self.name, self.length, self.word_pool, mods
                 )
             }

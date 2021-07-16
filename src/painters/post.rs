@@ -1,5 +1,4 @@
 use crate::application::App;
-use crate::settings::TestVariant;
 
 use tui::{
     backend::Backend,
@@ -47,15 +46,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             ];
 
             // TODO move this logic to TypingTestConfig???;
-            let graph_title = {
-                match test_cfg.variant {
-                    TestVariant::Standard => format!(
-                        "{} {}/{}",
-                        &test_cfg.name, test_cfg.length, test_cfg.word_pool
-                    ),
-                    TestVariant::Script => test_cfg.name.clone(),
-                }
-            };
+            let graph_title = format!("{}", test_cfg);
 
             let block = Paragraph::new(up_txt)
                 .block(Block::default().title("summary").borders(Borders::ALL));
