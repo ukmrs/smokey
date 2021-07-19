@@ -32,7 +32,7 @@ fn get_shuffled_words(config: &TypingTestConfig) -> Vec<String> {
     let mut line_iter = reader.lines();
     let mut container: Vec<String> = Vec::new();
 
-    let mut prng = Randorst::gen(config.length, 0..config.frequency);
+    let mut prng = Randorst::gen(config.length, 0..config.word_pool);
     let mut last = prng.next().unwrap();
     let out = line_iter.nth(last).unwrap().unwrap();
     container.push(out);

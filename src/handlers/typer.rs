@@ -28,6 +28,8 @@ pub fn handle(key: KeyEvent, app: &mut App) {
     match key.code {
         KeyCode::Char(c) => {
             if test.on_char(c) {
+                let summary = test.summarize();
+                app.settings.test_cfg.test_summary = summary;
                 app.change_to_post();
             }
         }
@@ -82,7 +84,7 @@ mod tests {
         for _ in 0..n {
             let key_events = generate_key_events_passing_standart_test(&app);
 
-            let klucznik_ptr = app.klucznik as usize;
+            let klucznik_ptr = app.key_handler as usize;
 
             for kv in key_events {
                 app.handle_key_event(kv);
@@ -90,7 +92,7 @@ mod tests {
 
             // key_handler should be changed by now
             // as after the completed test the app should land itself in the post screen
-            assert_ne!(klucznik_ptr, app.klucznik as usize);
+            assert_ne!(klucznik_ptr, app.key_handler as usize);
 
             app.handle_key_event(KeyEvent::from(KeyCode::Tab))
         }

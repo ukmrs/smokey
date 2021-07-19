@@ -13,7 +13,10 @@ use tui::{
 pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal
         .draw(|frame| {
-            let test = &mut app.test;
+            let summary = &app.settings.test_cfg.test_summary;
+            let test_cfg = &app.settings.test_cfg;
+            let test = &app.test;
+
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Percentage(15), Constraint::Percentage(85)].as_ref())
@@ -21,8 +24,8 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .horizontal_margin(app.margin)
                 .split(frame.size());
 
-            let final_wpm = format!("{}", test.hoarder.final_wpm.round());
-            let final_acc = format!("{}", test.hoarder.final_acc.round());
+            let final_wpm = format!("{}", summary.wpm.round());
+            let final_acc = format!("{}", summary.acc.round());
 
             let up_txt = vec![
                 Spans::from(vec![
@@ -36,14 +39,17 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 Spans::from(vec![
                     Span::raw("mis: "),
                     Span::styled(
-                        format!("{}", test.mistakes),
+                        format!("{}", summary.mistakes),
                         Style::default().fg(Color::Red),
                     ),
                 ]),
             ];
 
-            let block =
-                Paragraph::new(up_txt).block(Block::default().title("WPM").borders(Borders::ALL));
+            // TODO move this logic to TypingTestConfig???;
+            let graph_title = format!("{}", test_cfg);
+
+            let block = Paragraph::new(up_txt)
+                .block(Block::default().title("summary").borders(Borders::ALL));
 
             frame.render_widget(block, chunks[0]);
 
@@ -82,7 +88,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .block(
                     Block::default()
                         .title(Span::styled(
-                            "wpm chart",
+                            graph_title,
                             Style::default()
                                 .fg(Color::Cyan)
                                 .add_modifier(Modifier::BOLD),
