@@ -21,7 +21,7 @@ git clone https://github.com/ukmrs/smokey && cd smokey
 cargo run --release
 ```
 ## Actually Installing
-### through cargo
+### With cargo
 ```
 cargo install smokey
 ```
@@ -34,35 +34,36 @@ cargo build --release
 then copy target/release/smokey to a known location
 
 ## Navigation
-### Typing test screen
 
-TAB => reset test
+### Typing Test Screen
 
-ESC => settings
-
-ctrl-c => exit
-
-ctrl-BACKSPACE => del word
+<table>
+  <tr><th>Key</th><th>Function</th><tr>
+  <tr><td>TAB</td><td>Reset the current test</td></tr>
+  <tr><td>ESC</td><td>Open the settings</td></tr>
+  <tr><td>CTRL + C</td><td>Exit</td></tr>
+  <tr><td>CTRL + Backspace</td><td>Delete a word</td></tr>
+</table>
 
 ### Settings Screen
 
-TAB => start test
+<table>
+  <tr><th>Key</th><th>Function</th><tr>
+  <tr><td>TAB</td><td>Start a new test</td></tr>
+  <tr><td>h j k l / Arrow Keys</td><td>Movement</td></tr>
+  <tr><td>d / ESC</td><td>Deselect</td></tr>
+  <tr><td>s / ENTER</td><td>Select</td></tr>
+  <tr><td>q / ESC / CTRL + C</td><td>Exit</td></tr>
+</table>
 
-hjkl | :arrow_left: :arrow_down: :arrow_up: :arrow_right:  => movement
+### Results Screen
 
-d | ESC => deselect
-
-s | ENTER => select
-
-q | ESC | ctrl-c => exit
-
-### Resutls Screen
-
-TAB => new test
-
-s => settings
-
-q | ESC | ctrl-c => exit
+<table>
+  <tr><th>Key</th><th>Function</th><tr>
+  <tr><td>TAB</td><td>Start a new test</td></tr>
+  <tr><td>s</td><td>Open the settings</td></tr>
+  <tr><td>q / ESC / CTRL + C</td><td>Exit</td></tr>
+</table>
 
 ## word lists
 Smokey ships with a sizeable english word list (~60_000 words) which on linux can be found in
