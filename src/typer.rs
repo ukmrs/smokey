@@ -9,8 +9,6 @@ pub struct WpmHoarder {
     pub wpms: Vec<f64>,
     pub capacity: usize,
     pub seconds: u64,
-    pub final_wpm: f64,
-    pub final_acc: f64,
 }
 
 impl WpmHoarder {
@@ -19,8 +17,6 @@ impl WpmHoarder {
             capacity,
             wpms: Vec::with_capacity(capacity),
             seconds: 1,
-            final_wpm: 0.,
-            final_acc: 0.,
         }
     }
 
@@ -166,11 +162,6 @@ impl<'a> TestState<'a> {
         self.begining = Instant::now();
     }
 
-    pub fn end(&mut self) {
-        self.hoarder.final_wpm = self.calculate_wpm();
-        self.hoarder.final_acc = self.calculate_acc();
-    }
-
     pub fn update_wpm_history(&mut self) {
         if self.hoarder.is_due(self.begining) {
             self.hoarder.push(self.calculate_wpm());
@@ -219,7 +210,6 @@ impl<'a> TestState<'a> {
         self.up.clear();
         self.up.append(&mut self.active);
         if self.down.is_empty() {
-            self.end();
             return true;
         }
         self.active.append(&mut self.down);
