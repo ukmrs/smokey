@@ -1,4 +1,4 @@
-use crate::application::App;
+use crate::{application::App, colorscheme::THEME};
 
 use tui::{
     backend::Backend,
@@ -40,7 +40,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     Span::raw("mis: "),
                     Span::styled(
                         format!("{}", summary.mistakes),
-                        Style::default().fg(Color::Red),
+                        Style::default().fg(THEME.wrong),
                     ),
                 ]),
             ];
