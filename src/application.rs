@@ -2,6 +2,7 @@
 //! as well as current typing test
 //! main structs App and TestState
 
+use crate::config;
 use crossterm::event::KeyEvent;
 
 use crate::handlers::{self, KeyHandler};
@@ -85,6 +86,18 @@ impl<'t> App<'t> {
     pub fn reset_test(&mut self) {
         self.test.cursor_x = 1;
         self.test.reset(&self.settings.test_cfg);
+    }
+
+    pub fn from_config() -> Self {
+        let final_config = config::get_final_config();
+        let test = TestState::with_colors(final_config.theme.to_test_colors());
+        let settings = Settings::with_colors(final_config.theme.to_settings_colors());
+
+        Self {
+            test,
+            settings,
+            ..Self::default()
+        }
     }
 }
 

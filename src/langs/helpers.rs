@@ -1,13 +1,13 @@
-use crate::colorscheme::{ToForeground, THEME};
-use tui::text::Span;
+use crate::colorscheme::ToForeground;
+use tui::{style::Color, text::Span};
 
 pub trait SpanIntake {
-    fn push_styled_char(&mut self, c: char);
+    fn push_styled_char(&mut self, c: char, color: Color);
 }
 
 impl<'a> SpanIntake for Vec<Span<'a>> {
-    fn push_styled_char(&mut self, c: char) {
-        self.push(Span::styled(c.to_string(), THEME.todo.fg()));
+    fn push_styled_char(&mut self, c: char, color: Color) {
+        self.push(Span::styled(c.to_string(), color.fg()));
     }
 }
 

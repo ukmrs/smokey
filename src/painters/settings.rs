@@ -1,5 +1,4 @@
 use crate::application::{App, APPLOGO};
-use crate::colorscheme::THEME;
 use crate::settings::{SetList, TypingTestConfig};
 use std::collections::HashMap;
 
@@ -31,9 +30,7 @@ pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             draw_title(f, chunks[0], &app.settings.test_cfg);
 
-            let color_code = app
-                .settings
-                .color_hover_or_active(THEME.hover, THEME.active);
+            let color_code = app.settings.color_hover_or_active();
 
             draw_row_with_freq_and_len(f, app, chunks[1], &color_code);
             draw_row_with_words_and_mods(f, app, chunks[2], &color_code);
@@ -149,5 +146,4 @@ pub fn create_item_list<'a>(sl: &[String], title: &'a str, border_style: Style) 
                 .fg(border_style.fg.unwrap())
                 .add_modifier(Modifier::BOLD),
         )
-    // .highlight_symbol("> ")
 }

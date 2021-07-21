@@ -128,9 +128,24 @@ impl TypingTestConfig {
     }
 }
 
+pub struct SettingsColors {
+    pub hover: Color,
+    pub active: Color,
+}
+
+impl Default for SettingsColors {
+    fn default() -> Self {
+        Self {
+            hover: Color::Magenta,
+            active: Color::Green,
+        }
+    }
+}
+
 pub struct Settings {
     pub hovered: SetList,
     pub active: SetList,
+    pub colors: SettingsColors,
 
     pub test_cfg: TypingTestConfig,
 
@@ -199,22 +214,20 @@ impl Default for Settings {
             test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
+            colors: SettingsColors::default(),
         }
     }
 }
 
 impl Settings {
-    // length freq
-    // words mods
+    pub fn with_colors(colors: SettingsColors) -> Self {
+        Self {
+            colors,
+            ..Self::default()
+        }
+    }
 
-    // test length
-    // freq mods
-
-    pub fn color_hover_or_active(
-        &self,
-        hover_color: Color,
-        active_color: Color,
-    ) -> HashMap<SetList, Option<Color>> {
+    pub fn color_hover_or_active(&self) -> HashMap<SetList, Option<Color>> {
         let mut hm: HashMap<SetList, Option<Color>> = HashMap::with_capacity(4);
         hm.insert(SetList::Length, None);
         hm.insert(SetList::Test, None);
@@ -222,11 +235,11 @@ impl Settings {
         hm.insert(SetList::Mods, None);
 
         if self.hovered != SetList::Nil {
-            hm.insert(self.hovered, Some(hover_color));
+            hm.insert(self.hovered, Some(self.colors.hover));
             return hm;
         }
 
-        hm.insert(self.active, Some(active_color));
+        hm.insert(self.active, Some(self.colors.active));
         hm
     }
 

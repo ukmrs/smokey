@@ -1,9 +1,6 @@
-use lazy_static::lazy_static;
+use crate::settings::SettingsColors;
+use crate::typer::TestColors;
 use tui::style::{Color, Style};
-
-lazy_static! {
-    pub static ref THEME: Theme = Theme::default();
-}
 
 pub trait ToForeground {
     fn fg(self) -> Style;
@@ -32,6 +29,22 @@ impl Default for Theme {
             todo: Color::Gray,
             hover: Color::Magenta,
             active: Color::Green,
+        }
+    }
+}
+
+impl Theme {
+    pub fn to_settings_colors(&self) -> SettingsColors {
+        SettingsColors {
+            hover: self.hover,
+            active: self.active,
+        }
+    }
+    pub fn to_test_colors(&self) -> TestColors {
+        TestColors {
+            todo: self.todo,
+            done: self.done,
+            wrong: self.wrong,
         }
     }
 }

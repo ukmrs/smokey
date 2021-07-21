@@ -16,7 +16,7 @@ fn main() -> crossterm::Result<()> {
     let backend = CrosstermBackend::new(sout);
     let terminal = Terminal::new(backend)?;
 
-    let app = App::default();
+    let app = App::from_config();
 
     smokey::run(app, terminal)?;
     Ok(())

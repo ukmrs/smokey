@@ -1,8 +1,9 @@
 mod helpers;
 mod punctuation;
 
-use crate::colorscheme::{ToForeground, THEME};
+use crate::colorscheme::ToForeground;
 use crate::settings::{TestVariant, TypingTestConfig};
+use crate::typer::TestColors;
 use helpers::{Capitalize, SpanIntake};
 use punctuation::{InnerWord, Punctuation, PunctuationInsertFrequency};
 use std::ffi::OsStr;
@@ -21,6 +22,55 @@ const SYMBOLS: [char; 14] = [
 ];
 
 const LIMIT: usize = 65;
+
+pub fn prepare_test<'a>(config: &TypingTestConfig, colors: &TestColors) -> Vec<Vec<Span<'a>>> {
+    match config.variant {
+        TestVariant::Standard => prepare_standart_test(config, colors),
+        TestVariant::Script => prepare_script_test(config, colors),
+    }
+}
+
+fn prepare_script_test<'a>(config: &TypingTestConfig, colors: &TestColors) -> Vec<Vec<Span<'a>>> {
+    let script_output = call_script(config.get_scripts_file_path());
+    let testable = to_testable_span(&script_output, colors);
+    testable
+}
+
+fn prepare_standart_test<'a>(config: &TypingTestConfig, colors: &TestColors) -> Vec<Vec<Span<'a>>> {
+    let prep = get_shuffled_words(config);
+
+    let mut test: Vec<Vec<Span>> = vec![];
+    let mut tmp: Vec<Vec<Span>> = vec![vec![]];
+    let mut count = 0;
+
+    match config.mods.is_empty() {
+        true => {
+            for word in &prep {
+                count += word.len() + 1;
+                if count > LIMIT {
+                    test.append(&mut tmp);
+                    count = word.len();
+                    tmp.push(vec![]);
+                }
+
+                for c in word.chars() {
+                    tmp[0].push_styled_char(c, colors.todo);
+                }
+
+                add_space_with_blank(&mut tmp[0], colors);
+            }
+        }
+
+        false => return prepare_modded_test(config, &prep, colors),
+    };
+
+    let last = tmp.len() - 1;
+    tmp[last].pop();
+    tmp[last].pop();
+    test.append(&mut tmp);
+
+    test.into_iter().rev().collect()
+}
 
 fn get_shuffled_words(config: &TypingTestConfig) -> Vec<String> {
     // This is quick and bad
@@ -52,16 +102,9 @@ fn get_shuffled_words(config: &TypingTestConfig) -> Vec<String> {
     container
 }
 
-fn add_space_with_blank(container: &mut Vec<Span>) {
-    container.push(Span::styled("", THEME.wrong.fg()));
-    container.push(Span::styled(" ", THEME.todo.fg()));
-}
-
-pub fn prepare_test<'a>(config: &TypingTestConfig) -> Vec<Vec<Span<'a>>> {
-    match config.variant {
-        TestVariant::Standard => prepare_standart_test(config),
-        TestVariant::Script => prepare_script_test(config),
-    }
+fn add_space_with_blank(container: &mut Vec<Span>, colors: &TestColors) {
+    container.push(Span::styled("", colors.wrong.fg()));
+    container.push(Span::styled(" ", colors.todo.fg()));
 }
 
 // calls script
@@ -71,7 +114,7 @@ fn call_script(script_path: impl AsRef<OsStr>) -> String {
     stdout
 }
 
-pub fn to_testable_span<'a>(text: &str) -> Vec<Vec<Span<'a>>> {
+fn to_testable_span<'a>(text: &str, colors: &TestColors) -> Vec<Vec<Span<'a>>> {
     let mut word: Vec<Span> = vec![];
     let mut lines: Vec<Vec<Span>> = vec![];
     let mut tmp: Vec<Vec<Span>> = vec![vec![]];
@@ -82,13 +125,13 @@ pub fn to_testable_span<'a>(text: &str) -> Vec<Vec<Span<'a>>> {
         count += 1;
         if c.is_whitespace() {
             if !duplicate_whitespace_flag {
-                add_space_with_blank(&mut word);
+                add_space_with_blank(&mut word, colors);
                 tmp[0].append(&mut word);
                 duplicate_whitespace_flag = true;
             }
         } else {
             duplicate_whitespace_flag = false;
-            word.push_styled_char(c);
+            word.push_styled_char(c, colors.todo);
             if count > LIMIT {
                 lines.append(&mut tmp);
                 count = word.len();
@@ -104,49 +147,11 @@ pub fn to_testable_span<'a>(text: &str) -> Vec<Vec<Span<'a>>> {
     lines
 }
 
-pub fn prepare_script_test<'a>(config: &TypingTestConfig) -> Vec<Vec<Span<'a>>> {
-    let script_output = call_script(config.get_scripts_file_path());
-    let testable = to_testable_span(&script_output);
-    testable
-}
-
-pub fn prepare_standart_test<'a>(config: &TypingTestConfig) -> Vec<Vec<Span<'a>>> {
-    let prep = get_shuffled_words(config);
-
-    let mut test: Vec<Vec<Span>> = vec![];
-    let mut tmp: Vec<Vec<Span>> = vec![vec![]];
-    let mut count = 0;
-
-    match config.mods.is_empty() {
-        true => {
-            for word in &prep {
-                count += word.len() + 1;
-                if count > LIMIT {
-                    test.append(&mut tmp);
-                    count = word.len();
-                    tmp.push(vec![]);
-                }
-
-                for c in word.chars() {
-                    tmp[0].push_styled_char(c);
-                }
-
-                add_space_with_blank(&mut tmp[0]);
-            }
-        }
-
-        false => return prepare_modded_test(config, &prep),
-    };
-
-    let last = tmp.len() - 1;
-    tmp[last].pop();
-    tmp[last].pop();
-    test.append(&mut tmp);
-
-    test.into_iter().rev().collect()
-}
-
-fn prepare_modded_test<'a>(config: &TypingTestConfig, words: &Vec<String>) -> Vec<Vec<Span<'a>>> {
+fn prepare_modded_test<'a>(
+    config: &TypingTestConfig,
+    words: &Vec<String>,
+    colors: &TestColors,
+) -> Vec<Vec<Span<'a>>> {
     let p = PunctuationInsertFrequency::from_test_mods(&config.mods);
 
     let mut test: Vec<Vec<Span>> = vec![];
@@ -213,7 +218,7 @@ fn prepare_modded_test<'a>(config: &TypingTestConfig, words: &Vec<String>) -> Ve
         }
 
         if let Some(c) = begin {
-            tmp[0].push_styled_char(c);
+            tmp[0].push_styled_char(c, colors.todo);
         }
 
         // the part where actual word is inserted
@@ -225,28 +230,28 @@ fn prepare_modded_test<'a>(config: &TypingTestConfig, words: &Vec<String>) -> Ve
                 .expect("word should never be empty")
                 .to_uppercase();
             for upper_char in upper {
-                tmp[0].push_styled_char(upper_char);
+                tmp[0].push_styled_char(upper_char, colors.todo);
             }
         }
 
         // rest of the word
         for c in iter_chars {
             // repetition btw
-            tmp[0].push_styled_char(c);
+            tmp[0].push_styled_char(c, colors.todo);
         }
 
         if let Some(c) = end {
-            tmp[0].push_styled_char(c);
+            tmp[0].push_styled_char(c, colors.todo);
         }
 
-        add_space_with_blank(&mut tmp[0]);
+        add_space_with_blank(&mut tmp[0], colors);
 
         if let Some(ib) = inner_word {
             // TODO: do I care for occasional dashes at the end?
             // propably not but they are kinda ugly not gonna lie
             match ib {
                 InnerWord::Dash => {
-                    tmp[0].push_styled_char('-');
+                    tmp[0].push_styled_char('-', colors.todo);
                     count += 1;
                 }
 
@@ -254,7 +259,7 @@ fn prepare_modded_test<'a>(config: &TypingTestConfig, words: &Vec<String>) -> Ve
                     let number = rng.gen_range(0..=999).to_string();
                     count += number.len();
                     for c in number.chars() {
-                        tmp[0].push_styled_char(c);
+                        tmp[0].push_styled_char(c, colors.todo);
                     }
                 }
 
@@ -266,11 +271,11 @@ fn prepare_modded_test<'a>(config: &TypingTestConfig, words: &Vec<String>) -> Ve
                             .choose(&mut rng)
                             .expect("SYMBOlS shouldn't be empty");
 
-                        tmp[0].push_styled_char(*symbol);
+                        tmp[0].push_styled_char(*symbol, colors.todo);
                     }
                 }
             }
-            add_space_with_blank(&mut tmp[0]);
+            add_space_with_blank(&mut tmp[0], colors);
         }
     }
 
@@ -286,6 +291,7 @@ fn prepare_modded_test<'a>(config: &TypingTestConfig, words: &Vec<String>) -> Ve
 mod tests {
     use super::*;
     use crate::settings::TypingTestConfig;
+    use crate::typer::TestColors;
 
     #[test]
     fn test_prep() {
@@ -294,7 +300,7 @@ mod tests {
         let mut words = 1;
         let mut char_count = 0;
 
-        let result = prepare_test(&cfg);
+        let result = prepare_test(&cfg, &TestColors::default());
         for line in &result {
             for span in line {
                 if span.content == " " {
