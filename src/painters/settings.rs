@@ -1,4 +1,5 @@
 use crate::application::{App, APPLOGO};
+use crate::colorscheme::THEME;
 use crate::settings::{SetList, TypingTestConfig};
 use std::collections::HashMap;
 
@@ -32,7 +33,7 @@ pub fn draw_settings<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             let color_code = app
                 .settings
-                .color_hover_or_active(app.theme.hover, app.theme.active);
+                .color_hover_or_active(THEME.hover, THEME.active);
 
             draw_row_with_freq_and_len(f, app, chunks[1], &color_code);
             draw_row_with_words_and_mods(f, app, chunks[2], &color_code);
@@ -116,7 +117,7 @@ pub fn draw_row_with_words_and_mods<B: Backend>(
 pub fn render_stateful_list<B: Backend>(
     f: &mut Frame<B>,
     sl: &[String],
-    ls: &mut ListState,
+    list_state: &mut ListState,
     title: &str,
     area: Rect,
     clr: Option<Color>,
@@ -127,7 +128,7 @@ pub fn render_stateful_list<B: Backend>(
     };
 
     let items = create_item_list(sl, title, border_style);
-    f.render_stateful_widget(items, area, ls)
+    f.render_stateful_widget(items, area, list_state)
 }
 
 pub fn create_item_list<'a>(sl: &[String], title: &'a str, border_style: Style) -> List<'a> {

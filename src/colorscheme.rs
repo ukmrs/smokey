@@ -15,7 +15,7 @@ impl ToForeground for Color {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Theme {
     pub done: Color,
     pub wrong: Color,
