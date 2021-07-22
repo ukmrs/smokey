@@ -4,23 +4,7 @@ Program that allows training wpm from the comfort of a terminal.
 
 [![asciicast](https://asciinema.org/a/419067.svg)](https://asciinema.org/a/419067)
 
-## Program State
-
-Project is in the early stages.
-The basic functionality is there, but there are many missing features and rough edges.
-
-Works fine on linux and propably on mac.
-Works ok on windows too, but the cursor might be buggy sometimes.
-
-
-## Giving it a go
-standard rust stuff
-
-```
-git clone https://github.com/ukmrs/smokey && cd smokey
-cargo run --release
-```
-## Actually Installing
+## Installing
 ### With cargo
 ```
 cargo install smokey
