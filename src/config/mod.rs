@@ -44,7 +44,7 @@ impl UserConfig {
 }
 
 fn parse_user_config() -> anyhow::Result<UserConfig> {
-    let toml_string = fs::read_to_string(storage::get_config_dir())?;
+    let toml_string = fs::read_to_string(storage::get_config_file())?;
     let user_config: UserConfig = toml::from_str(&toml_string)?;
     Ok(user_config)
 }

@@ -27,6 +27,7 @@ serde_derive = "1.0.126"
 serde = "1.0.126"
 toml = "0.5.8"
 anyhow = "1.0.42"
+structopt = "0.3.22"
 
 
 [build-dependencies]

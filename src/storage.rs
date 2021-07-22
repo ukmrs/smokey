@@ -15,7 +15,7 @@ pub fn get_word_list_path(word_list_name: &str) -> PathBuf {
 }
 
 // this may be lazy_static later or something
-pub fn get_config_dir() -> PathBuf {
+pub fn get_config_file() -> PathBuf {
     get_project_dirs()
         .config_dir()
         .to_path_buf()
