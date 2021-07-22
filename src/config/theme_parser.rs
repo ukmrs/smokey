@@ -132,7 +132,7 @@ mod tests {
     fn test_parse_partial_theme() {
         // partial
         let partial_config = r##"
-        [theme]
+        [colors]
         done = "#fc08f4"
         active = "lightyellow"
         # invalid stuff should be ignored
@@ -151,10 +151,10 @@ mod tests {
     fn test_parse_complete_theme() {
         // complete
         let complete_config = r##"
-        [theme]
+        [colors]
         done = "#fc08f4"
         active = "lightyellow"
-        wrong = "maGenta"
+        mistake = "maGenta"
         hover = "BLUE"
         todo = "#ff0000"
     "##;
