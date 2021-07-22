@@ -1,8 +1,11 @@
+mod test_parser;
 mod theme_parser;
 
 use crate::{colorscheme::Theme, settings::TypingTestConfig, storage};
 use serde_derive::Deserialize;
 use std::fs;
+
+use test_parser::UserTest;
 use theme_parser::UserTheme;
 
 /// Default Config overwritten partially or completely
@@ -31,14 +34,6 @@ impl UserConfig {
             typing_test_config: TypingTestConfig::default(),
         }
     }
-}
-
-#[derive(Deserialize, Debug)]
-struct UserTest {
-    name: Option<String>,
-    len: Option<usize>,
-    pool: Option<usize>,
-    mods: Option<Vec<String>>,
 }
 
 fn parse_user_config() -> anyhow::Result<UserConfig> {

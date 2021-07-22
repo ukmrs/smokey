@@ -13,6 +13,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 fn main() -> crossterm::Result<()> {
     #[allow(unused_mut)]
     let mut sout = stdout();
+
     let backend = CrosstermBackend::new(sout);
     let terminal = Terminal::new(backend)?;
 

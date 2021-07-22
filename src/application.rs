@@ -91,7 +91,10 @@ impl<'t> App<'t> {
     pub fn from_config() -> Self {
         let final_config = config::get_final_config();
         let test = TestState::with_colors(final_config.theme.to_test_colors());
-        let settings = Settings::with_colors(final_config.theme.to_settings_colors());
+        let settings = Settings::with_config(
+            final_config.theme.to_settings_colors(),
+            final_config.typing_test_config,
+        );
 
         Self {
             test,

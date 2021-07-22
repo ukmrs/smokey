@@ -9,6 +9,12 @@ use tui::style::Color;
 
 pub const SCRIPT_SIGN: &'static str = "#!";
 
+pub static TEST_MODS: phf::Map<&'static str, TestMod> = phf::phf_map! {
+    "punctuation" => TestMod::Punctuation,
+    "numbers" => TestMod::Numbers,
+    "symbols" => TestMod::Symbols,
+};
+
 pub fn is_script(text: &str) -> bool {
     if text.len() < 2 {
         return false;
@@ -38,12 +44,6 @@ pub enum TestMod {
     Symbols,
 }
 
-pub static TEST_MODS: phf::Map<&'static str, TestMod> = phf::phf_map! {
-    "Punctuation" => TestMod::Punctuation,
-    "Numbers" => TestMod::Numbers,
-    "Symbols" => TestMod::Symbols,
-};
-
 impl fmt::Display for TestMod {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -72,12 +72,20 @@ impl Default for TestSummary {
     }
 }
 
+/// This stuct contains information about
+/// test type and also the eventual result of a test
+/// these are both dispalyed at the post screen
+/// so it makes sense to have them in one place
+/// but it is kinda messy???
 pub struct TypingTestConfig {
+    // test type
     pub name: String,
     pub variant: TestVariant,
     pub length: usize,
     pub word_pool: usize,
     pub mods: HashSet<TestMod>,
+
+    // summary
     pub test_summary: TestSummary,
 }
 
@@ -117,6 +125,33 @@ impl Default for TypingTestConfig {
 }
 
 impl TypingTestConfig {
+    /// checks if the file name corresponds to a valid path
+    /// and whether or not the word_pool field
+    /// is in bounds in respect to acutal number of words
+    /// avaible in the file
+    ///
+    /// returns the maximum possible value of word_pool to be cached
+    fn validate(&mut self) -> usize {
+        let path = self.get_file_path();
+        if !path.is_file() {
+            self.name = "english".to_string()
+        }
+
+        let lines = count_lines_from_path(path).expect(" fallback to the english word file ");
+
+        if self.word_pool > lines {
+            self.word_pool = lines;
+        }
+        lines
+    }
+
+    fn get_file_path(&self) -> PathBuf {
+        match self.variant {
+            TestVariant::Standard => self.get_words_file_path(),
+            TestVariant::Script => self.get_scripts_file_path(),
+        }
+    }
+
     pub fn get_words_file_path(&self) -> PathBuf {
         storage::get_word_list_path(&self.name)
     }
@@ -160,47 +195,15 @@ impl Default for Settings {
     fn default() -> Self {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
 
-        // TODO haphazardly implemented cleanup neeeded :broom:
-        // lets not kid myself everything is
-        // but this especially<question mark>
-        let mut words_list: Vec<String> = storage::get_storage_dir()
-            .join("words")
-            .read_dir()
-            .unwrap()
-            .map(|i| {
-                i.unwrap()
-                    .path()
-                    .iter()
-                    .last()
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_string()
-            })
-            .collect();
-
-        let scripts_iterator = storage::get_storage_dir()
-            .join("scripts")
-            .read_dir()
-            .unwrap()
-            .map(|i| {
-                i.unwrap()
-                    .path()
-                    .iter()
-                    .last()
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_string()
-            })
-            .map(|s| format!("{}{}", SCRIPT_SIGN, s));
-
-        words_list.extend(scripts_iterator);
+        let words_list = storage::parse_storage_contents();
 
         let mod_list: Vec<String> = TEST_MODS.keys().map(|&x| x.to_string()).collect();
 
         let test_cfg = TypingTestConfig::default();
+
         let mut word_amount_cache = HashMap::new();
 
-        let word_count = count_lines_from_path(&test_cfg.get_words_file_path());
+        let word_count = count_lines_from_path(&test_cfg.get_words_file_path()).unwrap();
         word_amount_cache.insert(test_cfg.name.clone(), word_count);
         let frequency_list = create_frequency_list(word_count);
 
@@ -220,10 +223,32 @@ impl Default for Settings {
 }
 
 impl Settings {
-    pub fn with_colors(colors: SettingsColors) -> Self {
+    /// TODO a lot of repetitive code taken from default function
+    /// restructure ?? idk
+    /// I can't do ..Self::default() as that would count lines twice
+    pub fn with_config(colors: SettingsColors, ttc: TypingTestConfig) -> Self {
+        let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
+        let words_list = storage::parse_storage_contents();
+        let mod_list: Vec<String> = TEST_MODS.keys().map(|&x| x.to_string()).collect();
+
+        let mut word_amount_cache = HashMap::new();
+
+        let mut test_cfg = ttc;
+        let word_count = test_cfg.validate();
+        word_amount_cache.insert(test_cfg.name.clone(), word_count);
+        let frequency_list = create_frequency_list(word_count);
+
         Self {
+            hovered: SetList::Length,
+            active: SetList::Nil,
+
+            length_list,
+            frequency_list,
+            word_amount_cache,
+            test_cfg,
+            tests_list: StatefulList::with_items(words_list),
+            mods_list: StatefulList::with_items(mod_list),
             colors,
-            ..Self::default()
         }
     }
 
@@ -257,7 +282,7 @@ impl Settings {
         if let Some(word_count) = self.word_amount_cache.get(key) {
             *word_count
         } else {
-            let word_count = count_lines_from_path(storage::get_word_list_path(key));
+            let word_count = count_lines_from_path(storage::get_word_list_path(key)).unwrap();
             self.word_amount_cache.insert(key.to_string(), word_count);
             word_count
         }

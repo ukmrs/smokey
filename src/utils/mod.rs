@@ -72,9 +72,9 @@ macro_rules! vec_of_strings {
     ($($x:expr),*) => (vec![$($x.to_string()),*]);
 }
 
-pub fn count_lines_from_path(filepath: impl AsRef<Path>) -> usize {
-    let file = File::open(filepath).unwrap();
-    count_lines(file).unwrap()
+pub fn count_lines_from_path(filepath: impl AsRef<Path>) -> anyhow::Result<usize> {
+    let file = File::open(filepath)?;
+    count_lines(file)
 }
 
 /// Expects a file and returns number of lines
@@ -90,7 +90,7 @@ pub fn count_lines_from_path(filepath: impl AsRef<Path>) -> usize {
 /// https://github.com/Freaky/cw
 /// a fast wc clone in Rust
 /// great stuff I use it as well
-pub fn count_lines<R: io::Read>(file: R) -> Result<usize, io::Error> {
+pub fn count_lines<R: io::Read>(file: R) -> anyhow::Result<usize> {
     let mut reader = io::BufReader::new(file);
     let mut count: usize = 0;
 

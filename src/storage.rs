@@ -1,3 +1,4 @@
+use crate::settings::SCRIPT_SIGN;
 use directories_next::ProjectDirs;
 use std::path::PathBuf;
 
@@ -19,4 +20,39 @@ pub fn get_config_dir() -> PathBuf {
         .config_dir()
         .to_path_buf()
         .join("smokey.toml")
+}
+
+pub fn parse_storage_contents() -> Vec<String> {
+    let mut words_list: Vec<String> = get_storage_dir()
+        .join("words")
+        .read_dir()
+        .unwrap()
+        .map(|i| {
+            i.unwrap()
+                .path()
+                .iter()
+                .last()
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        })
+        .collect();
+
+    let scripts_iterator = get_storage_dir()
+        .join("scripts")
+        .read_dir()
+        .unwrap()
+        .map(|i| {
+            i.unwrap()
+                .path()
+                .iter()
+                .last()
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        })
+        .map(|s| format!("{}{}", SCRIPT_SIGN, s));
+
+    words_list.extend(scripts_iterator);
+    words_list
 }
