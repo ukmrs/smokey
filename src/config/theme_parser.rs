@@ -13,7 +13,7 @@ pub struct UserTheme {
 }
 
 impl UserTheme {
-    pub fn to_theme(&self) -> Theme {
+    pub fn into_theme(self) -> Theme {
         let mut base = Theme::default();
 
         change_color_to_user_defined(&mut base.done, &self.done);
@@ -37,7 +37,7 @@ fn change_color_to_user_defined(final_color: &mut Color, user_defined_color: &Op
 pub fn parse_user_defined_colors(user_color: &str) -> Option<Color> {
     let prepared_user_color = user_color.trim();
 
-    if let Some(c) = prepared_user_color.chars().nth(0) {
+    if let Some(c) = prepared_user_color.chars().next() {
         if c == '#' && user_color.len() >= 7 {
             hex_to_color(prepared_user_color).ok()
         } else {
@@ -125,7 +125,7 @@ mod tests {
 
     fn theme_from_config(config: &str) -> Theme {
         let parsed_config: UserConfig = toml::from_str(config).unwrap();
-        parsed_config.colors.unwrap().to_theme()
+        parsed_config.colors.unwrap().into_theme()
     }
 
     #[test]

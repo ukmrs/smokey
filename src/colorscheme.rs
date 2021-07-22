@@ -35,13 +35,13 @@ impl Default for Theme {
 }
 
 impl Theme {
-    pub fn to_settings_colors(&self) -> SettingsColors {
+    pub fn to_settings_colors(self) -> SettingsColors {
         SettingsColors {
             hover: self.hover,
             active: self.active,
         }
     }
-    pub fn to_test_colors(&self) -> TestColors {
+    pub fn to_test_colors(self) -> TestColors {
         TestColors {
             todo: self.todo,
             done: self.done,

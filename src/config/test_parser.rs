@@ -11,7 +11,7 @@ pub struct UserTest {
 
 impl UserTest {
     /// consumes UserTest and returns TypingTestConfig
-    pub fn to_typing_test_config(self) -> TypingTestConfig {
+    pub fn into_typing_test_config(self) -> TypingTestConfig {
         let name = self.name.unwrap_or_else(|| "english".to_string());
         let variant = resolve_test_variant(&name);
         let mut ttc = TypingTestConfig {
@@ -40,7 +40,7 @@ impl UserTest {
     }
 }
 
-fn parse_mods(raw_mods: &Vec<String>) -> HashSet<TestMod> {
+fn parse_mods(raw_mods: &[String]) -> HashSet<TestMod> {
     let mut parsed_mods = HashSet::new();
     for raw_mod in raw_mods {
         if let Some(&parsed_mod) = TEST_MODS.get(raw_mod) {

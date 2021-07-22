@@ -97,8 +97,8 @@ impl<'t> App<'t> {
         );
 
         Self {
-            test,
             settings,
+            test,
             ..Self::default()
         }
     }

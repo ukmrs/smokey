@@ -25,14 +25,14 @@ struct UserConfig {
 impl UserConfig {
     // Consumes user_config and returns FinalConfig
     // that will be used during app runtime
-    fn to_final_config(self) -> FinalConfig {
+    fn into_final_config(self) -> FinalConfig {
         let final_theme = match self.colors {
-            Some(user_theme) => user_theme.to_theme(),
+            Some(user_theme) => user_theme.into_theme(),
             None => Theme::default(),
         };
 
         let final_ttc = match self.test {
-            Some(user_test) => user_test.to_typing_test_config(),
+            Some(user_test) => user_test.into_typing_test_config(),
             None => TypingTestConfig::default(),
         };
 
@@ -52,7 +52,7 @@ fn parse_user_config() -> anyhow::Result<UserConfig> {
 // Parses smokey.toml and returns FinalConfig struct
 pub fn get_final_config() -> FinalConfig {
     match parse_user_config() {
-        Ok(user_config) => user_config.to_final_config(),
+        Ok(user_config) => user_config.into_final_config(),
         _ => FinalConfig::default(),
     }
 }

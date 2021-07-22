@@ -7,7 +7,7 @@ use std::fmt;
 use std::path::PathBuf;
 use tui::style::Color;
 
-pub const SCRIPT_SIGN: &'static str = "#!";
+pub const SCRIPT_SIGN: &str = "#!";
 
 pub static TEST_MODS: phf::Map<&'static str, TestMod> = phf::phf_map! {
     "punctuation" => TestMod::Punctuation,
@@ -47,9 +47,9 @@ pub enum TestMod {
 impl fmt::Display for TestMod {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Punctuation => write!(f, "{}", "!?"),
-            Self::Numbers => write!(f, "{}", "17"),
-            Self::Symbols => write!(f, "{}", "#$"),
+            Self::Punctuation => write!(f, "!?"),
+            Self::Numbers => write!(f, "17"),
+            Self::Symbols => write!(f, "#$"),
         }
     }
 }
@@ -95,7 +95,7 @@ impl fmt::Display for TypingTestConfig {
             TestVariant::Standard => {
                 let mut mods = String::new();
                 if !self.mods.is_empty() {
-                    mods.push_str("+")
+                    mods.push('+')
                 }
                 for test_mod in &self.mods {
                     mods.push_str(&format!(" {}", test_mod));

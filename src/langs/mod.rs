@@ -32,8 +32,7 @@ pub fn prepare_test<'a>(config: &TypingTestConfig, colors: &TestColors) -> Vec<V
 
 fn prepare_script_test<'a>(config: &TypingTestConfig, colors: &TestColors) -> Vec<Vec<Span<'a>>> {
     let script_output = call_script(config.get_scripts_file_path());
-    let testable = to_testable_span(&script_output, colors);
-    testable
+    to_testable_span(&script_output, colors)
 }
 
 fn prepare_standart_test<'a>(config: &TypingTestConfig, colors: &TestColors) -> Vec<Vec<Span<'a>>> {
@@ -110,8 +109,7 @@ fn add_space_with_blank(container: &mut Vec<Span>, colors: &TestColors) {
 // calls script
 fn call_script(script_path: impl AsRef<OsStr>) -> String {
     let output = Command::new(script_path).output().unwrap();
-    let stdout = String::from_utf8(output.stdout).unwrap();
-    stdout
+    String::from_utf8(output.stdout).unwrap()
 }
 
 fn to_testable_span<'a>(text: &str, colors: &TestColors) -> Vec<Vec<Span<'a>>> {
@@ -149,7 +147,7 @@ fn to_testable_span<'a>(text: &str, colors: &TestColors) -> Vec<Vec<Span<'a>>> {
 
 fn prepare_modded_test<'a>(
     config: &TypingTestConfig,
-    words: &Vec<String>,
+    words: &[String],
     colors: &TestColors,
 ) -> Vec<Vec<Span<'a>>> {
     let p = PunctuationInsertFrequency::from_test_mods(&config.mods);
