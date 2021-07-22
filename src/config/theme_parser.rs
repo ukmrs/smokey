@@ -125,7 +125,7 @@ mod tests {
 
     fn theme_from_config(config: &str) -> Theme {
         let parsed_config: UserConfig = toml::from_str(config).unwrap();
-        parsed_config.theme.unwrap().to_theme()
+        parsed_config.colors.unwrap().to_theme()
     }
 
     #[test]

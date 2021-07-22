@@ -18,7 +18,7 @@ pub struct FinalConfig {
 
 #[derive(Deserialize, Debug)]
 struct UserConfig {
-    theme: Option<UserTheme>,
+    colors: Option<UserTheme>,
     test: Option<UserTest>,
 }
 
@@ -26,7 +26,7 @@ impl UserConfig {
     // Consumes user_config and returns FinalConfig
     // that will be used during app runtime
     fn to_final_config(self) -> FinalConfig {
-        let final_theme = match self.theme {
+        let final_theme = match self.colors {
             Some(user_theme) => user_theme.to_theme(),
             None => Theme::default(),
         };
