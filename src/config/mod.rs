@@ -23,15 +23,22 @@ struct UserConfig {
 }
 
 impl UserConfig {
-    fn to_final_config(&self) -> FinalConfig {
-        let final_theme = match &self.theme {
+    // Consumes user_config and returns FinalConfig
+    // that will be used during app runtime
+    fn to_final_config(self) -> FinalConfig {
+        let final_theme = match self.theme {
             Some(user_theme) => user_theme.to_theme(),
             None => Theme::default(),
         };
 
+        let final_ttc = match self.test {
+            Some(user_test) => user_test.to_typing_test_config(),
+            None => TypingTestConfig::default(),
+        };
+
         FinalConfig {
             theme: final_theme,
-            typing_test_config: TypingTestConfig::default(),
+            typing_test_config: final_ttc,
         }
     }
 }

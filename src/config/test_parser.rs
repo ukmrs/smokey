@@ -11,7 +11,7 @@ pub struct UserTest {
 
 impl UserTest {
     /// consumes UserTest and returns TypingTestConfig
-    fn to_typing_test_config(self) -> TypingTestConfig {
+    pub fn to_typing_test_config(self) -> TypingTestConfig {
         let name = self.name.unwrap_or_else(|| "english".to_string());
         let variant = resolve_test_variant(&name);
         let mut ttc = TypingTestConfig {
@@ -21,11 +21,15 @@ impl UserTest {
         };
 
         if let Some(length) = self.len {
-            ttc.length = length
+            if length > 0 {
+                ttc.length = length
+            }
         }
 
         if let Some(word_pool) = self.pool {
-            ttc.word_pool = word_pool
+            if word_pool > 0 {
+                ttc.word_pool = word_pool
+            }
         }
 
         if let Some(mods) = self.mods {
@@ -57,17 +61,21 @@ fn resolve_test_variant(test_name: &str) -> TestVariant {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::TestMod;
+    use crate::vec_of_strings;
+    use std::collections::HashSet;
 
     #[test]
-    fn test_parse_complete_theme() {
-        // complete
-        let complete_config = r##"
-        [theme]
-        done = "#fc08f4"
-        active = "lightyellow"
-        wrong = "maGenta"
-        hover = "BLUE"
-        todo = "#ff0000"
-    "##;
+    fn test_parse_mods() {
+        let faulty = vec_of_strings!["nonexitant", "punctuation"];
+        let full = vec_of_strings!["numbers", "punctuation", "symbols"];
+        let empty: Vec<String> = vec_of_strings![];
+        let mut hs = HashSet::new();
+        assert_eq!(parse_mods(&empty), hs);
+        hs.insert(TestMod::Punctuation);
+        assert_eq!(parse_mods(&faulty), hs);
+        hs.insert(TestMod::Numbers);
+        hs.insert(TestMod::Symbols);
+        assert_eq!(parse_mods(&full), hs);
     }
 }

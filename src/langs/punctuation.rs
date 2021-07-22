@@ -74,7 +74,7 @@ impl PunctuationInsertFrequency {
                     protoplast.append(&mut we);
                 }
                 TestMod::Numbers => {
-                    protoplast.push((Punctuation::InBetweener(InnerWord::Number), 69));
+                    protoplast.push((Punctuation::InBetweener(InnerWord::Number), 150));
                 }
                 // TODO symbols may be better served with their own punctuation table
                 TestMod::Symbols => {

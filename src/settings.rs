@@ -37,7 +37,7 @@ pub enum TestVariant {
     Script,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TestMod {
     Punctuation,
     Numbers,

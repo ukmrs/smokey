@@ -6,7 +6,7 @@ use tui::style::Color;
 #[derive(Deserialize, Debug)]
 pub struct UserTheme {
     done: Option<String>,
-    wrong: Option<String>,
+    mistake: Option<String>,
     todo: Option<String>,
     hover: Option<String>,
     active: Option<String>,
@@ -17,7 +17,7 @@ impl UserTheme {
         let mut base = Theme::default();
 
         change_color_to_user_defined(&mut base.done, &self.done);
-        change_color_to_user_defined(&mut base.wrong, &self.wrong);
+        change_color_to_user_defined(&mut base.mistake, &self.mistake);
         change_color_to_user_defined(&mut base.todo, &self.todo);
         change_color_to_user_defined(&mut base.active, &self.active);
         change_color_to_user_defined(&mut base.hover, &self.hover);
@@ -162,7 +162,7 @@ mod tests {
         let th = Theme {
             done: Color::Rgb(252, 8, 244),
             active: Color::LightYellow,
-            wrong: Color::Magenta,
+            mistake: Color::Magenta,
             hover: Color::Blue,
             todo: Color::Rgb(255, 0, 0),
         };
