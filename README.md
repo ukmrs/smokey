@@ -70,7 +70,9 @@ Smokey ships with a sizeable english word list (~60_000 words) which on linux ca
 
 ~/.local/smokey/storage/words
 
-Other lists can be added to the folder. Smokey expects a list sorted by word frequency with each
+Otherwise location can be found with the --storage flag.
+
+More lists can be added to the folder. Smokey expects a list sorted by word frequency with each
 word separated by a newline character.
 Other languages are not provided but most of the time can be easily DIYed.
 
@@ -113,3 +115,38 @@ and  [LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Othe
 I kept "sex" though. Otherwise it wouldn't be fair to plants who
 just cross-pollinate without causing too much of a ruckus.
 Future me here, I forgot about accursed pollen allergies, I might reconsider my stance on this.
+
+## Config
+You can create smokey.toml configuration file that allows to
+change colors or set default test settings. On linux:
+
+~/.config/smokey/smokey.toml
+
+Other OS:
+```
+smokey --config
+```
+
+### Example smokey.toml
+
+For colors you can use either hex codes or standard colors
+([supported names](https://docs.rs/tui/0.15.0/tui/style/enum.Color.html)).
+
+```toml
+[colors]
+# test colors
+todo = "grey"
+done = "#96BB7C"
+mistake = "#C64756"
+
+# settings colors
+active = "#93a1bf"
+hover = "#aa78bf"
+
+[test]
+# default test settings
+name = "english"
+mods = ["punctuation", "numbers"]
+len = 20
+pool = 60000
+```

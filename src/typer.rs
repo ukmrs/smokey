@@ -1,16 +1,14 @@
-use crate::colorscheme::{ToForeground, THEME};
+use crate::colorscheme::ToForeground;
 use crate::langs;
 use crate::settings::TestSummary;
 use crate::settings::TypingTestConfig;
 use std::time::Instant;
-use tui::text::Span;
+use tui::{style::Color, text::Span};
 
 pub struct WpmHoarder {
     pub wpms: Vec<f64>,
     pub capacity: usize,
     pub seconds: u64,
-    pub final_wpm: f64,
-    pub final_acc: f64,
 }
 
 impl WpmHoarder {
@@ -19,8 +17,6 @@ impl WpmHoarder {
             capacity,
             wpms: Vec::with_capacity(capacity),
             seconds: 1,
-            final_wpm: 0.,
-            final_acc: 0.,
         }
     }
 
@@ -59,6 +55,22 @@ impl WpmHoarder {
     }
 }
 
+pub struct TestColors {
+    pub wrong: Color,
+    pub todo: Color,
+    pub done: Color,
+}
+
+impl Default for TestColors {
+    fn default() -> Self {
+        Self {
+            wrong: Color::Red,
+            todo: Color::Gray,
+            done: Color::White,
+        }
+    }
+}
+
 pub struct TestState<'a> {
     pub up: Vec<Span<'a>>,
     pub active: Vec<Span<'a>>,
@@ -87,7 +99,10 @@ pub struct TestState<'a> {
 
     pub text: Vec<Span<'a>>,
     pub length: usize,
+
     pub hoarder: WpmHoarder,
+
+    pub colors: TestColors,
 }
 
 impl<'a> Default for TestState<'a> {
@@ -121,11 +136,19 @@ impl<'a> Default for TestState<'a> {
             length: 0,
             current_char: ' ',
             hoarder: WpmHoarder::new(32),
+            colors: TestColors::default(),
         }
     }
 }
 
 impl<'a> TestState<'a> {
+    pub fn with_colors(colors: TestColors) -> Self {
+        Self {
+            colors,
+            ..Self::default()
+        }
+    }
+
     pub fn calculate_wpm(&self) -> f64 {
         let numerator: f64 = 12. * (self.pdone + self.done - self.blanks - self.mistakes) as f64;
         let elapsed = Instant::now().duration_since(self.begining).as_secs_f64();
@@ -156,7 +179,7 @@ impl<'a> TestState<'a> {
         self.mistakes = 0;
         self.hoarder.reset();
 
-        let mut wordy = langs::prepare_test(config);
+        let mut wordy = langs::prepare_test(config, &self.colors);
         self.active = wordy.pop().expect("prep_test output shouldn't be empty");
         self.length = self.active.len();
         self.down = wordy.pop().unwrap_or_default();
@@ -164,11 +187,6 @@ impl<'a> TestState<'a> {
         self.current_char = self.active[self.done].content.chars().next().unwrap();
         self.length = self.active.len();
         self.begining = Instant::now();
-    }
-
-    pub fn end(&mut self) {
-        self.hoarder.final_wpm = self.calculate_wpm();
-        self.hoarder.final_acc = self.calculate_acc();
     }
 
     pub fn update_wpm_history(&mut self) {
@@ -180,7 +198,7 @@ impl<'a> TestState<'a> {
     /// chekcs if char is a mistake and deducts it from
     /// the total count
     pub fn if_mistake_deduct(&mut self, index: usize) {
-        if THEME.wrong == self.active[index].style.fg.unwrap() {
+        if self.colors.wrong == self.active[index].style.fg.unwrap() {
             self.mistakes -= 1;
         }
     }
@@ -219,7 +237,6 @@ impl<'a> TestState<'a> {
         self.up.clear();
         self.up.append(&mut self.active);
         if self.down.is_empty() {
-            self.end();
             return true;
         }
         self.active.append(&mut self.down);
@@ -276,7 +293,7 @@ impl<'a> TestState<'a> {
     pub fn on_char(&mut self, c: char) -> bool {
         self.cursor_x += 1;
         if c == self.current_char {
-            self.active[self.done].style = THEME.done.fg();
+            self.active[self.done].style = self.colors.done.fg();
             self.done += 1;
             return self.set_next_char_or_end();
         }
@@ -298,7 +315,7 @@ impl<'a> TestState<'a> {
         } else {
             self.mistakes += 1;
             self.pmiss += 1;
-            self.active[self.done].style = THEME.wrong.fg();
+            self.active[self.done].style = self.colors.wrong.fg();
             self.done += 1;
             return self.set_next_char_or_end();
         }
@@ -315,7 +332,7 @@ impl<'a> TestState<'a> {
         self.done -= 2;
 
         self.if_mistake_deduct(self.done);
-        self.active[self.done].style = THEME.todo.fg();
+        self.active[self.done].style = self.colors.todo.fg();
         self.blanks -= 1;
     }
 
@@ -333,7 +350,7 @@ impl<'a> TestState<'a> {
         } else if self.fetch(self.done - 1) == " " {
             self.done -= 1;
             self.cursor_x -= 1;
-            self.active[self.done].style = THEME.todo.fg();
+            self.active[self.done].style = self.colors.todo.fg();
 
             self.undo_space_char_and_extras();
         }
@@ -342,7 +359,7 @@ impl<'a> TestState<'a> {
             self.cursor_x -= 1;
             self.done -= 1;
             self.if_mistake_deduct(self.done);
-            self.active[self.done].style = THEME.todo.fg();
+            self.active[self.done].style = self.colors.todo.fg();
         }
     }
 
@@ -358,7 +375,7 @@ impl<'a> TestState<'a> {
                     self.done -= 2;
                     self.blanks -= 1;
                     self.set_next_char();
-                    self.active[self.done].style = THEME.todo.fg();
+                    self.active[self.done].style = self.colors.todo.fg();
                 } else {
                     // shaves off one from extras
                     self.active[self.done - 1]
@@ -371,7 +388,7 @@ impl<'a> TestState<'a> {
                 self.done -= 1;
                 self.if_mistake_deduct(self.done);
                 self.set_next_char();
-                self.active[self.done].style = THEME.todo.fg();
+                self.active[self.done].style = self.colors.todo.fg();
             }
             return;
         }

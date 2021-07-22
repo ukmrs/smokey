@@ -40,7 +40,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     Span::raw("mis: "),
                     Span::styled(
                         format!("{}", summary.mistakes),
-                        Style::default().fg(Color::Red),
+                        Style::default().fg(test.colors.wrong),
                     ),
                 ]),
             ];

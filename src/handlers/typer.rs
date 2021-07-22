@@ -137,10 +137,12 @@ mod tests {
             app.handle_key_event(kv);
         }
 
-        let final_wpm = app.test.hoarder.final_wpm;
+        let final_wpm = app.test.summarize().wpm;
+
         // final_wmp can be lower by a thin margin given in the toleranca variable
         // than the requested wpm, but it can never be higher
-        // as std::thread::sleep is guaranteed to sleep for at least the specified duration
+        // as std::thread::sleep is guaranteed to sleep for
+        // at least the specified duration
         let tolerated = 0.99 * wpm;
         assert!(final_wpm < wpm);
         assert!(final_wpm > tolerated);
@@ -177,7 +179,8 @@ mod tests {
             app.handle_key_event(kv);
         }
 
-        let final_acc = app.test.hoarder.final_acc;
+        let final_acc = app.test.summarize().acc;
+
         let acc = {
             let denom = (key_events_len + amount_of_mistakes) as f64;
             key_events_len as f64 / denom * 100.

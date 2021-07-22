@@ -1,6 +1,6 @@
 [package]
 name = "smokey"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["ukmrs <murias.wstork@gmail.com>"]
 edition = "2018"
 description = "Handsome TUI typing test"
@@ -23,6 +23,12 @@ rand = "0.8.3"
 rusqlite = "0.25.3"
 simplelog = "0.9.0"
 tui = { version = "0.15.0", features = ["crossterm"], default-features = false }
+serde_derive = "1.0.126"
+serde = "1.0.126"
+toml = "0.5.8"
+anyhow = "1.0.42"
+structopt = "0.3.22"
+
 
 [build-dependencies]
 directories-next = "2.0.0"

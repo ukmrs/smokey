@@ -1,9 +1,11 @@
-pub mod application;
-pub mod colorscheme;
-pub mod database;
 mod handlers;
 mod langs;
 mod painters;
+
+pub mod application;
+pub mod colorscheme;
+pub mod config;
+pub mod database;
 pub mod settings;
 pub mod storage;
 pub mod typer;

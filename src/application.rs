@@ -2,9 +2,9 @@
 //! as well as current typing test
 //! main structs App and TestState
 
+use crate::config;
 use crossterm::event::KeyEvent;
 
-use crate::colorscheme::Theme;
 use crate::handlers::{self, KeyHandler};
 use crate::painters::*;
 use crate::settings::Settings;
@@ -18,12 +18,10 @@ _>| | |(_)|<(/_\\/
 pub struct App<'t> {
     pub settings: Settings,
     pub test: TestState<'t>,
-    pub theme: Theme,
     pub margin: u16,
     pub paragraph: u16,
     pub key_handler: KeyHandler,
     pub painter: Painter,
-
     pub is_alive: bool,
 }
 
@@ -89,21 +87,33 @@ impl<'t> App<'t> {
         self.test.cursor_x = 1;
         self.test.reset(&self.settings.test_cfg);
     }
+
+    pub fn from_config() -> Self {
+        let final_config = config::get_final_config();
+        let test = TestState::with_colors(final_config.theme.to_test_colors());
+        let settings = Settings::with_config(
+            final_config.theme.to_settings_colors(),
+            final_config.typing_test_config,
+        );
+
+        Self {
+            test,
+            settings,
+            ..Self::default()
+        }
+    }
 }
 
 impl<'t> Default for App<'t> {
     /// Creates App instance
     /// the test isnt initialized though
     fn default() -> Self {
-        let settings = Settings::default();
-
         Self {
             test: TestState::default(),
-            theme: Theme::default(),
             is_alive: true,
             margin: 2,
             paragraph: 62,
-            settings,
+            settings: Settings::default(),
             /// unwrap wont painc because the Squad Default always returns Some
             painter: draw_test_and_update,
             key_handler: handlers::typer::handle,
