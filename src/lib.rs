@@ -5,6 +5,7 @@ mod painters;
 pub mod application;
 pub mod colorscheme;
 pub mod config;
+pub mod database;
 pub mod settings;
 pub mod storage;
 pub mod typer;
@@ -30,6 +31,11 @@ pub fn run(mut app: App, terminal: Term) -> crossterm::Result<()> {
 
     app.reset_test();
     termprep::init();
+
+    // delete this
+    database::init::debug_init_db();
+    //
+
     main_loop(app, terminal)?;
     termprep::shutdown();
     Ok(())

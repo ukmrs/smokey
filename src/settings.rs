@@ -1,7 +1,6 @@
 use crate::storage;
 use crate::utils::{count_lines_from_path, StatefulList};
 use crate::vec_of_strings;
-use phf;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::path::PathBuf;
@@ -9,11 +8,30 @@ use tui::style::Color;
 
 pub const SCRIPT_SIGN: &str = "#!";
 
-pub static TEST_MODS: phf::Map<&'static str, TestMod> = phf::phf_map! {
-    "punctuation" => TestMod::Punctuation,
-    "numbers" => TestMod::Numbers,
-    "symbols" => TestMod::Symbols,
-};
+use lazy_static::lazy_static;
+use bimap::BiMap;
+
+lazy_static! {
+    pub static ref TEST_MODS: BiMap<&'static str, TestMod> = [
+        ("punctuation", TestMod::Punctuation),
+        ("numbers", TestMod::Numbers),
+        ("symbols", TestMod::Symbols),
+    ]
+    .iter()
+    .copied()
+    .collect();
+}
+
+lazy_static! {
+    pub static ref BITFLAG_MODS: BiMap<u8, TestMod> = [
+        (0b00000001, TestMod::Punctuation),
+        (0b00000001, TestMod::Numbers),
+        (0b00000100, TestMod::Symbols),
+    ]
+    .iter()
+    .copied()
+    .collect();
+}
 
 pub fn is_script(text: &str) -> bool {
     if text.len() < 2 {
@@ -44,6 +62,17 @@ pub enum TestMod {
     Symbols,
 }
 
+impl TestMod {
+    pub fn from_bitflag(bitflag: u8) -> Self {
+        match bitflag {
+            0b00000001 => TestMod::Punctuation,
+            0b00000010 => TestMod::Numbers,
+            0b00000100 => TestMod::Symbols,
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl fmt::Display for TestMod {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -52,6 +81,18 @@ impl fmt::Display for TestMod {
             Self::Symbols => write!(f, "#$"),
         }
     }
+}
+
+pub fn decode_test_mod_bitflags(bitflag: u8) -> HashSet<TestMod> {
+    let mut test_mods: HashSet<TestMod> = HashSet::new();
+
+    for i in 0..8 {
+        if bitflag >> i & 1 == 1 {
+            test_mods.insert(TestMod::from_bitflag(2_u8.pow(i)));
+        };
+    }
+
+    test_mods
 }
 
 pub struct TestSummary {
@@ -197,7 +238,7 @@ impl Default for Settings {
 
         let words_list = storage::parse_storage_contents();
 
-        let mod_list: Vec<String> = TEST_MODS.keys().map(|&x| x.to_string()).collect();
+        let mod_list: Vec<String> = TEST_MODS.left_values().map(|&x| x.to_string()).collect();
 
         let test_cfg = TypingTestConfig::default();
 
@@ -229,7 +270,7 @@ impl Settings {
     pub fn with_config(colors: SettingsColors, ttc: TypingTestConfig) -> Self {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
         let words_list = storage::parse_storage_contents();
-        let mod_list: Vec<String> = TEST_MODS.keys().map(|&x| x.to_string()).collect();
+        let mod_list: Vec<String> = TEST_MODS.left_values().map(|&x| x.to_string()).collect();
 
         let mut word_amount_cache = HashMap::new();
 
@@ -335,7 +376,7 @@ impl Settings {
             // I prob won't be able to work on this for some time
             SetList::Mods => {
                 let test_mod = TEST_MODS
-                    .get(&self.mods_list.get_item())
+                    .get_by_left(&self.mods_list.get_item() as &str)
                     .expect("UI doesn't match TEST_MODS");
 
                 if !self.test_cfg.mods.remove(test_mod) {
@@ -423,6 +464,7 @@ fn create_frequency_list(word_count: usize) -> StatefulList<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
 
     #[test]
     fn test_create_frequency_list() {
@@ -438,5 +480,17 @@ mod tests {
         assert_eq!(medium.items, vec!["100", "1000", "5000", "10000", "15889"]);
         assert_eq!(small.items, vec!["100", "1000"]);
         assert_eq!(tiny.items, vec!["20"]);
+    }
+
+    #[test]
+    fn test_decode_bitflags() {
+        let ans = decode_test_mod_bitflags(0b00000101);
+        let mut hs = HashSet::new();
+        hs.insert(TestMod::Punctuation);
+        hs.insert(TestMod::Symbols);
+        assert_eq!(ans, hs);
+
+        let zero_ans = decode_test_mod_bitflags(0);
+        assert!(zero_ans.is_empty());
     }
 }
