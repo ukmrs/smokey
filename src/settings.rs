@@ -25,7 +25,7 @@ lazy_static! {
 lazy_static! {
     pub static ref BITFLAG_MODS: BiMap<u8, TestMod> = [
         (0b00000001, TestMod::Punctuation),
-        (0b00000001, TestMod::Numbers),
+        (0b00000010, TestMod::Numbers),
         (0b00000100, TestMod::Symbols),
     ]
     .iter()

@@ -30,14 +30,12 @@ pub fn run(mut app: App, terminal: Term) -> crossterm::Result<()> {
     init_logger();
 
     app.reset_test();
-    termprep::init();
-
-    // delete this
     database::init::debug_init_db();
-    //
 
+    termprep::init();
     main_loop(app, terminal)?;
     termprep::shutdown();
+
     Ok(())
 }
 

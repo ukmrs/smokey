@@ -15,8 +15,7 @@ use rusqlite::Result as SqlResult;
 use crate::storage;
 
 pub fn debug_init_db() {
-    let save_location = storage::get_storage_dir().join("run_history.db3");
-    match Connection::open(save_location) {
+    match Connection::open(&*storage::DATABASE) {
         Ok(mut conn) => init_db(&mut conn).unwrap(),
         _ => (),
     }

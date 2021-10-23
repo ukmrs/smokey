@@ -1,4 +1,5 @@
 use crate::application::App;
+use crate::database;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 /// handles keys during test
@@ -28,9 +29,13 @@ pub fn handle(key: KeyEvent, app: &mut App) {
     match key.code {
         KeyCode::Char(c) => {
             if test.on_char(c) {
+                // test ends
+                // we summarize and write to db?
                 let summary = test.summarize();
                 app.settings.test_cfg.test_summary = summary;
                 app.change_to_post();
+
+                database::debug_save_run(&app.settings.test_cfg);
             }
         }
 
