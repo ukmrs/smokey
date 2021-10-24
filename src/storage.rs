@@ -1,13 +1,11 @@
 use crate::settings::SCRIPT_SIGN;
 use directories_next::ProjectDirs;
-use std::path::PathBuf;
 use lazy_static::lazy_static;
-
+use std::path::PathBuf;
 
 lazy_static! {
     pub static ref DATABASE: PathBuf = get_storage_dir().join("run_history.db3");
 }
-
 
 fn get_project_dirs() -> ProjectDirs {
     ProjectDirs::from("pl", "ukmrs", "smokey").expect("no valid directories could be found")

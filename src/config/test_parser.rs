@@ -43,7 +43,7 @@ impl UserTest {
 fn parse_mods(raw_mods: &[String]) -> HashSet<TestMod> {
     let mut parsed_mods = HashSet::new();
     for raw_mod in raw_mods {
-        if let Some(&parsed_mod) = TEST_MODS.get_by_left(&raw_mod as &str) {
+        if let Some(&parsed_mod) = TEST_MODS.get_by_left(raw_mod as &str) {
             parsed_mods.insert(parsed_mod);
         }
     }

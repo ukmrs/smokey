@@ -1,5 +1,4 @@
 use crate::application::App;
-use crate::database;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 /// handles keys during test
@@ -34,8 +33,7 @@ pub fn handle(key: KeyEvent, app: &mut App) {
                 let summary = test.summarize();
                 app.settings.test_cfg.test_summary = summary;
                 app.change_to_post();
-
-                database::debug_save_run(&app.settings.test_cfg);
+                app.save_run_to_database();
             }
         }
 
@@ -46,12 +44,26 @@ pub fn handle(key: KeyEvent, app: &mut App) {
     }
 }
 
+// TODO i can write some db test here too I guess
 #[cfg(test)]
 mod tests {
     use crate::application::App;
+    use crate::database::{init::init_db, RunHistoryDatbase};
     use crossterm::event::{KeyCode, KeyEvent};
+    use rusqlite::Connection;
     use std::thread;
     use std::time::Duration;
+
+    fn get_test_app<'a>() -> App<'a> {
+        let mut app = App {
+            database: RunHistoryDatbase {
+                conn: Connection::open_in_memory().unwrap(),
+            },
+            ..App::setup()
+        };
+        init_db(&mut app.database.conn).unwrap();
+        app
+    }
 
     fn generate_key_events_passing_standart_test<'a>(app: &App) -> Vec<KeyEvent> {
         let mut kv = vec![];
@@ -85,7 +97,7 @@ mod tests {
     }
 
     fn go_thorugh_test_n_times(n: usize) {
-        let mut app = App::setup();
+        let mut app = get_test_app();
         for _ in 0..n {
             let key_events = generate_key_events_passing_standart_test(&app);
 
@@ -129,7 +141,7 @@ mod tests {
     fn wpm_test_setup(wpm: f64) {
         let delay = wpm_to_char_delay(wpm);
 
-        let mut app = App::setup();
+        let mut app = get_test_app();
 
         use crate::settings::TypingTestConfig;
         let mut cfg = TypingTestConfig::default();
@@ -163,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_accuracy() {
-        let mut app = App::setup();
+        let mut app = get_test_app();
         let key_events = generate_key_events_passing_standart_test(&app);
         let key_events_len = key_events.len();
         let amount_of_mistakes = 10;
@@ -199,7 +211,7 @@ mod tests {
 
     #[test]
     fn test_backspace_at_the_test_begining() {
-        let mut app = App::setup();
+        let mut app = get_test_app();
         for _ in 0..20 {
             app.handle_key_event(KeyEvent::from(KeyCode::Backspace))
         }

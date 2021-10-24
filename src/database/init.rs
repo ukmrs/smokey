@@ -10,17 +10,18 @@
 
 #![allow(dead_code)]
 
+use crate::storage;
 use rusqlite::Connection;
 use rusqlite::Result as SqlResult;
-use crate::storage;
 
+// TODO this shouldn't exist btw
 pub fn debug_init_db() {
-    match Connection::open(&*storage::DATABASE) {
-        Ok(mut conn) => init_db(&mut conn).unwrap(),
-        _ => (),
+    if let Ok(mut conn) = Connection::open(&*storage::DATABASE) {
+        init_db(&mut conn).unwrap()
     }
 }
 
+// TODO move to build???
 pub fn init_db(conn: &mut Connection) -> SqlResult<()> {
     let tx = conn.transaction()?;
 

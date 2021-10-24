@@ -99,7 +99,7 @@ pub fn count_lines<R: io::Read>(file: R) -> anyhow::Result<usize> {
         if buffer.is_empty() {
             break;
         }
-        count += bytecount::count(&buffer, b'\n');
+        count += bytecount::count(buffer, b'\n');
         let buflen = buffer.len();
         reader.consume(buflen);
     }

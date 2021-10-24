@@ -8,8 +8,8 @@ use tui::style::Color;
 
 pub const SCRIPT_SIGN: &str = "#!";
 
-use lazy_static::lazy_static;
 use bimap::BiMap;
+use lazy_static::lazy_static;
 
 lazy_static! {
     pub static ref TEST_MODS: BiMap<&'static str, TestMod> = [
@@ -376,7 +376,7 @@ impl Settings {
             // I prob won't be able to work on this for some time
             SetList::Mods => {
                 let test_mod = TEST_MODS
-                    .get_by_left(&self.mods_list.get_item() as &str)
+                    .get_by_left(self.mods_list.get_item() as &str)
                     .expect("UI doesn't match TEST_MODS");
 
                 if !self.test_cfg.mods.remove(test_mod) {
