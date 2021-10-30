@@ -88,11 +88,6 @@ mod tests {
             }
         }
 
-        for k in &kv {
-            if let KeyCode::Char(c) = k.code {
-                print!("{}", c);
-            }
-        }
         kv
     }
 

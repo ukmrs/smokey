@@ -36,10 +36,28 @@ impl RunHistoryDatbase {
     }
 }
 
-pub fn get_test_id(conn: &Connection, test_id: &str) -> Result<usize, rusqlite::Error> {
+pub fn get_max_wpm(conn: &Connection, ttc: &TypingTestConfig) -> Option<f64> {
+    conn.query_row(
+        "SELECT max(wpm) FROM run WHERE
+        test_id = (select test_id FROM test WHERE test_name = ?)
+        AND length = ?
+        AND word_pool = ?
+        AND mods = ?",
+        params![
+            &ttc.name,
+            ttc.length,
+            ttc.word_pool,
+            encode_test_mod_bitflag(&ttc.mods),
+        ],
+        |row| row.get(0),
+    )
+    .ok()
+}
+
+pub fn get_test_id(conn: &Connection, test_name: &str) -> Result<usize, rusqlite::Error> {
     conn.query_row(
         "select test_id from test where test_name = ?",
-        [test_id],
+        [test_name],
         |row| row.get(0),
     )
 }
@@ -57,7 +75,7 @@ pub fn get_test_id_or_create(conn: &Connection, test_id: &str) -> Result<usize> 
     }
 }
 
-fn encode_test_mod_bitflag(test_mods: &HashSet<TestMod>) -> u8 {
+pub fn encode_test_mod_bitflag(test_mods: &HashSet<TestMod>) -> u8 {
     let mut bitflag: u8 = 0;
     for test_mod in test_mods {
         bitflag += BITFLAG_MODS.get_by_right(test_mod).expect("wrong mod?");
@@ -69,6 +87,8 @@ fn encode_test_mod_bitflag(test_mods: &HashSet<TestMod>) -> u8 {
 mod tests {
     use super::*;
     use crate::settings::TestMod;
+    use crate::settings::TypingTestConfig;
+    use rusqlite::Connection;
     use std::collections::HashSet;
 
     #[test]
@@ -84,5 +104,29 @@ mod tests {
         tm.insert(TestMod::Symbols);
         let five = encode_test_mod_bitflag(&tm);
         assert_eq!(five, 5_u8);
+    }
+
+    #[test]
+    fn test_get_max_wpm() {
+        let mut conn = RunHistoryDatbase {
+            conn: Connection::open_in_memory().unwrap(),
+        };
+        init::init_db(&mut conn.conn).unwrap();
+        let mut ttc = TypingTestConfig::default();
+
+        let no_records_wpm = get_max_wpm(&conn.conn, &ttc);
+        assert!(no_records_wpm.is_none());
+
+        let wpms: [f64; 5] = [69., 152., 51., 72., 150.];
+        for wpm in wpms {
+            ttc.test_summary.wpm = wpm;
+            conn.save(&ttc);
+        }
+
+        let max_wpm = get_max_wpm(&conn.conn, &ttc).unwrap();
+        let should_be_max_wpm = 152.;
+
+        assert!(max_wpm - f64::EPSILON <= should_be_max_wpm);
+        assert!(max_wpm + f64::EPSILON >= should_be_max_wpm);
     }
 }

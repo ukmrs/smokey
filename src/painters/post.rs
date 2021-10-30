@@ -57,20 +57,33 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let length: f64 = test.hoarder.wpms.len() as f64;
             let max_wpm: f64 = test.hoarder.get_max_wpm();
 
-            let data = test
-                .hoarder
-                .wpms
-                .iter()
-                .enumerate()
-                .map(|(i, val)| (((i + 1) as f64 * secs as f64), *val))
-                .collect::<Vec<(f64, f64)>>();
+            // fing messy max wpm extraction from db
 
-            let wpm_datasets = vec![Dataset::default()
-                .name("wpm")
-                .marker(symbols::Marker::Dot)
-                .style(Style::default().fg(Color::Blue))
-                .graph_type(GraphType::Line)
-                .data(&data)];
+            let history_max_wpm: f64 = 0.;
+
+            let mut data: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
+            let mut beta: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
+
+            for (i, wpm) in test.hoarder.wpms.iter().enumerate() {
+                let sec = (i + 1) as f64 * secs;
+                data.push((sec, *wpm));
+                beta.push((sec, history_max_wpm));
+            }
+
+            let wpm_datasets = vec![
+                Dataset::default()
+                    .name("wpm")
+                    .marker(symbols::Marker::Braille)
+                    .style(Style::default().fg(Color::Blue))
+                    .graph_type(GraphType::Line)
+                    .data(&beta),
+                Dataset::default()
+                    .name("wpm")
+                    .marker(symbols::Marker::Braille)
+                    .style(Style::default().fg(Color::Yellow))
+                    .graph_type(GraphType::Line)
+                    .data(&data),
+            ];
 
             let x_labels: Vec<Span> = data
                 .iter()
@@ -78,7 +91,8 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .collect();
 
             let margin: f64 = 20.;
-            let y_upper_bound: f64 = max_wpm.div_euclid(10.) * 10. + margin;
+            let highest: f64 = f64::max(max_wpm, history_max_wpm);
+            let y_upper_bound: f64 = highest.div_euclid(10.) * 10. + margin;
 
             let y_labels: Vec<Span> = (0..=y_upper_bound.div_euclid(10.) as i32)
                 .map(|i| Span::styled(format!("{}", i * 10), Style::default().fg(Color::Blue)))

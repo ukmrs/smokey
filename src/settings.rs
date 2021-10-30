@@ -1,6 +1,8 @@
+use crate::database;
 use crate::storage;
 use crate::utils::{count_lines_from_path, StatefulList};
 use crate::vec_of_strings;
+use rusqlite::Connection;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::path::PathBuf;
@@ -178,7 +180,7 @@ impl TypingTestConfig {
             self.name = "english".to_string()
         }
 
-        let lines = count_lines_from_path(path).expect(" fallback to the english word file ");
+        let lines = count_lines_from_path(path).expect("fallback to the english word file");
 
         if self.word_pool > lines {
             self.word_pool = lines;
@@ -218,6 +220,11 @@ impl Default for SettingsColors {
     }
 }
 
+pub struct TestInfoCache {
+    pub max_wpm: Option<f64>,
+    max_word_amount: usize,
+}
+
 pub struct Settings {
     pub hovered: SetList,
     pub active: SetList,
@@ -229,7 +236,7 @@ pub struct Settings {
     pub frequency_list: StatefulList<String>,
     pub tests_list: StatefulList<String>,
     pub mods_list: StatefulList<String>,
-    pub word_amount_cache: HashMap<String, usize>,
+    pub info_cache: HashMap<String, TestInfoCache>,
 }
 
 impl Default for Settings {
@@ -242,10 +249,20 @@ impl Default for Settings {
 
         let test_cfg = TypingTestConfig::default();
 
-        let mut word_amount_cache = HashMap::new();
+        let mut info_cache = HashMap::new();
 
         let word_count = count_lines_from_path(&test_cfg.get_words_file_path()).unwrap();
-        word_amount_cache.insert(test_cfg.name.clone(), word_count);
+
+        // TODO
+        // This code is not only ass but also a dupe
+        let conn = Connection::open(&*storage::DATABASE).unwrap();
+        let max_wpm = database::get_max_wpm(&conn, &test_cfg);
+        let test_info = TestInfoCache {
+            max_word_amount: word_count,
+            max_wpm,
+        };
+
+        info_cache.insert(test_cfg.name.clone(), test_info);
         let frequency_list = create_frequency_list(word_count);
 
         Self {
@@ -254,7 +271,7 @@ impl Default for Settings {
 
             length_list,
             frequency_list,
-            word_amount_cache,
+            info_cache,
             test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
@@ -276,7 +293,12 @@ impl Settings {
 
         let mut test_cfg = ttc;
         let word_count = test_cfg.validate();
-        word_amount_cache.insert(test_cfg.name.clone(), word_count);
+
+        let test_info = TestInfoCache {
+            max_word_amount: word_count,
+            max_wpm: None,
+        };
+        word_amount_cache.insert(test_cfg.name.clone(), test_info);
         let frequency_list = create_frequency_list(word_count);
 
         Self {
@@ -285,7 +307,7 @@ impl Settings {
 
             length_list,
             frequency_list,
-            word_amount_cache,
+            info_cache: word_amount_cache,
             test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
@@ -320,11 +342,23 @@ impl Settings {
     }
 
     fn get_word_count(&mut self, key: &str) -> usize {
-        if let Some(word_count) = self.word_amount_cache.get(key) {
-            *word_count
+        if let Some(info_cache) = self.info_cache.get(key) {
+            info_cache.max_word_amount
         } else {
             let word_count = count_lines_from_path(storage::get_word_list_path(key)).unwrap();
-            self.word_amount_cache.insert(key.to_string(), word_count);
+
+            // TODO THIS IS ASS
+            // I shouldn't just open a new connection xD;
+            // I have to restructure a little bit
+            // and also rename/change this function
+
+            let conn = Connection::open(&*storage::DATABASE).unwrap();
+            let max_wpm = database::get_max_wpm(&conn, &self.test_cfg);
+            let test_info = TestInfoCache {
+                max_word_amount: word_count,
+                max_wpm,
+            };
+            self.info_cache.insert(key.to_string(), test_info);
             word_count
         }
     }
