@@ -56,10 +56,16 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let secs: f64 = test.hoarder.seconds as f64;
             let length: f64 = test.hoarder.wpms.len() as f64;
             let max_wpm: f64 = test.hoarder.get_max_wpm();
-
-            // fing messy max wpm extraction from db
-
             let history_max_wpm: f64 = app.settings.get_current_historic_max_wpm().unwrap_or(0.);
+
+            let mut wpm_line_style = Style::default().fg(Color::Yellow);
+
+            let mut highest = history_max_wpm;
+            if max_wpm > history_max_wpm {
+                wpm_line_style = Style::default().fg(Color::Red);
+                app.settings.update_historic_max_wpm(max_wpm);
+                highest = max_wpm;
+            }
 
             let mut data: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
             let mut beta: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
@@ -72,7 +78,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             let wpm_datasets = vec![
                 Dataset::default()
-                    .name("wpm")
+                    .name("pb")
                     .marker(symbols::Marker::Braille)
                     .style(Style::default().fg(Color::Blue))
                     .graph_type(GraphType::Line)
@@ -80,7 +86,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 Dataset::default()
                     .name("wpm")
                     .marker(symbols::Marker::Braille)
-                    .style(Style::default().fg(Color::Yellow))
+                    .style(wpm_line_style)
                     .graph_type(GraphType::Line)
                     .data(&data),
             ];
@@ -91,7 +97,6 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .collect();
 
             let margin: f64 = 20.;
-            let highest: f64 = f64::max(max_wpm, history_max_wpm);
             let y_upper_bound: f64 = highest.div_euclid(10.) * 10. + margin;
 
             let y_labels: Vec<Span> = (0..=y_upper_bound.div_euclid(10.) as i32)

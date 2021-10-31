@@ -367,13 +367,22 @@ impl Settings {
         }
     }
 
+    pub fn update_historic_max_wpm(&mut self, max_wpm: f64) {
+        *self.info_cache
+            .get_mut(&self.test_cfg.name)
+            .unwrap()
+            .1
+            .get_mut(&self.test_cfg.gib_identity())
+            .unwrap() = Some(max_wpm);
+    }
+
     // TODO these unwraps may be questionable
     pub fn get_current_historic_max_wpm(&self) -> Option<f64> {
         let first = &self.info_cache.get(&self.test_cfg.name).unwrap().1;
         *first.get(&self.test_cfg.gib_identity()).unwrap()
     }
 
-    fn update_max_wpm(&mut self) -> () {
+    fn cache_historic_max_wpm(&mut self) -> () {
         let tid = self.test_cfg.gib_identity();
 
         let inner_cache = &mut self
@@ -419,7 +428,7 @@ impl Settings {
         match self.active {
             SetList::Length => {
                 self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap();
-                self.update_max_wpm();
+                self.cache_historic_max_wpm();
             }
 
             SetList::Test => {
@@ -438,7 +447,7 @@ impl Settings {
                         self.test_cfg.word_pool = word_count;
                     }
 
-                    self.update_max_wpm();
+                    self.cache_historic_max_wpm();
                 }
             }
 
@@ -448,7 +457,7 @@ impl Settings {
                     .get_item()
                     .parse::<usize>()
                     .unwrap_or(69);
-                self.update_max_wpm();
+                self.cache_historic_max_wpm();
             }
 
             SetList::Mods => {
@@ -459,7 +468,7 @@ impl Settings {
                 if !self.test_cfg.mods.remove(test_mod) {
                     self.test_cfg.mods.insert(*test_mod);
                 }
-                self.update_max_wpm();
+                self.cache_historic_max_wpm();
             }
             SetList::Nil => unreachable!(),
         }
