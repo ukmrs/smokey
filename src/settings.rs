@@ -5,7 +5,7 @@ use crate::vec_of_strings;
 use rusqlite::Connection;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::path::PathBuf;
 use tui::style::Color;
 
@@ -239,12 +239,6 @@ impl Default for SettingsColors {
         }
     }
 }
-
-pub struct TestInfoCache {
-    pub max_wpm: Option<f64>,
-    max_word_amount: usize,
-}
-
 // Option feels more clean than f64::NAN
 type InfoCache = HashMap<String, (usize, HashMap<TestIdentity, Option<f64>>)>;
 
@@ -368,7 +362,8 @@ impl Settings {
     }
 
     pub fn update_historic_max_wpm(&mut self, max_wpm: f64) {
-        *self.info_cache
+        *self
+            .info_cache
             .get_mut(&self.test_cfg.name)
             .unwrap()
             .1
@@ -382,7 +377,7 @@ impl Settings {
         *first.get(&self.test_cfg.gib_identity()).unwrap()
     }
 
-    fn cache_historic_max_wpm(&mut self) -> () {
+    fn cache_historic_max_wpm(&mut self) {
         let tid = self.test_cfg.gib_identity();
 
         let inner_cache = &mut self

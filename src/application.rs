@@ -25,6 +25,7 @@ pub struct App<'t> {
     pub painter: Painter,
     pub is_alive: bool,
     pub database: RunHistoryDatbase,
+    pub postbox: PostBox,
 }
 
 impl<'t> App<'t> {
@@ -125,6 +126,12 @@ impl<'t> Default for App<'t> {
             settings: Settings::default(),
             test: TestState::default(),
             database: RunHistoryDatbase::default(),
+            postbox: PostBox::default(),
         }
     }
+}
+
+#[derive(Default)]
+pub struct PostBox {
+    pub cached_historic_wpm: f64,
 }

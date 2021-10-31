@@ -32,6 +32,19 @@ pub fn handle(key: KeyEvent, app: &mut App) {
                 // we summarize and write to db?
                 let summary = test.summarize();
                 app.settings.test_cfg.test_summary = summary;
+
+                // If record is beat the historic_max_wpm but the
+                // previous one is cached so it can be displayed in
+                // the post screen
+                let history_max_wpm: f64 =
+                    app.settings.get_current_historic_max_wpm().unwrap_or(0.);
+                app.postbox.cached_historic_wpm = history_max_wpm;
+                let final_wpm = app.settings.test_cfg.test_summary.wpm;
+
+                if final_wpm > history_max_wpm {
+                    app.settings.update_historic_max_wpm(final_wpm);
+                }
+
                 app.change_to_post();
                 app.save_run_to_database();
             }

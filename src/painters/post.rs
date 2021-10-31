@@ -56,24 +56,23 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let secs: f64 = test.hoarder.seconds as f64;
             let length: f64 = test.hoarder.wpms.len() as f64;
             let max_wpm: f64 = test.hoarder.get_max_wpm();
-            let history_max_wpm: f64 = app.settings.get_current_historic_max_wpm().unwrap_or(0.);
+            let history_max_wpm: f64 = app.postbox.cached_historic_wpm;
 
             let mut wpm_line_style = Style::default().fg(Color::Yellow);
 
-            let mut highest = history_max_wpm;
-            if max_wpm > history_max_wpm {
+            if summary.wpm > history_max_wpm {
                 wpm_line_style = Style::default().fg(Color::Red);
-                app.settings.update_historic_max_wpm(max_wpm);
-                highest = max_wpm;
             }
 
-            let mut data: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
-            let mut beta: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
+            let highest = f64::max(max_wpm, history_max_wpm);
+
+            let mut wpm_dataset: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
+            let mut pb_dataset: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
 
             for (i, wpm) in test.hoarder.wpms.iter().enumerate() {
                 let sec = (i + 1) as f64 * secs;
-                data.push((sec, *wpm));
-                beta.push((sec, history_max_wpm));
+                wpm_dataset.push((sec, *wpm));
+                pb_dataset.push((sec, history_max_wpm));
             }
 
             let wpm_datasets = vec![
@@ -82,16 +81,16 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     .marker(symbols::Marker::Braille)
                     .style(Style::default().fg(Color::Blue))
                     .graph_type(GraphType::Line)
-                    .data(&beta),
+                    .data(&pb_dataset),
                 Dataset::default()
                     .name("wpm")
                     .marker(symbols::Marker::Braille)
                     .style(wpm_line_style)
                     .graph_type(GraphType::Line)
-                    .data(&data),
+                    .data(&wpm_dataset),
             ];
 
-            let x_labels: Vec<Span> = data
+            let x_labels: Vec<Span> = wpm_dataset
                 .iter()
                 .map(|&(i, _)| Span::styled(format!("{}", i), Style::default().fg(Color::Blue)))
                 .collect();
