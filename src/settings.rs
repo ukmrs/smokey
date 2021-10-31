@@ -5,6 +5,7 @@ use crate::vec_of_strings;
 use rusqlite::Connection;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use tui::style::Color;
 
@@ -115,6 +116,16 @@ impl Default for TestSummary {
     }
 }
 
+/// Basically a dupe of some of the info of ttc
+/// but allows me to be more flexible in the future
+/// when it comes to caching test info
+#[derive(PartialEq, Eq, Hash, Debug)]
+pub struct TestIdentity {
+    pub length: usize,
+    pub word_pool: usize,
+    pub mods: u8,
+}
+
 /// This stuct contains information about
 /// test type and also the eventual result of a test
 /// these are both dispalyed at the post screen
@@ -188,6 +199,15 @@ impl TypingTestConfig {
         lines
     }
 
+    // TODO rename this XD
+    pub fn gib_identity(&self) -> TestIdentity {
+        TestIdentity {
+            length: self.length,
+            word_pool: self.word_pool,
+            mods: database::encode_test_mod_bitflag(&self.mods),
+        }
+    }
+
     fn get_file_path(&self) -> PathBuf {
         match self.variant {
             TestVariant::Standard => self.get_words_file_path(),
@@ -225,6 +245,9 @@ pub struct TestInfoCache {
     max_word_amount: usize,
 }
 
+// Option feels more clean than f64::NAN
+type InfoCache = HashMap<String, (usize, HashMap<TestIdentity, Option<f64>>)>;
+
 pub struct Settings {
     pub hovered: SetList,
     pub active: SetList,
@@ -236,7 +259,9 @@ pub struct Settings {
     pub frequency_list: StatefulList<String>,
     pub tests_list: StatefulList<String>,
     pub mods_list: StatefulList<String>,
-    pub info_cache: HashMap<String, TestInfoCache>,
+    // HM<test.name (file_word_amount, HM<TestIdentity, historic_max_wpm>)>
+    // NaN = historic_max_wpm wasnt cached
+    pub info_cache: InfoCache,
 }
 
 impl Default for Settings {
@@ -249,7 +274,7 @@ impl Default for Settings {
 
         let test_cfg = TypingTestConfig::default();
 
-        let mut info_cache = HashMap::new();
+        let mut info_cache: InfoCache = HashMap::new();
 
         let word_count = count_lines_from_path(&test_cfg.get_words_file_path()).unwrap();
 
@@ -257,14 +282,13 @@ impl Default for Settings {
         // This code is not only ass but also a dupe
         let conn = Connection::open(&*storage::DATABASE).unwrap();
         let max_wpm = database::get_max_wpm(&conn, &test_cfg);
-        let test_info = TestInfoCache {
-            max_word_amount: word_count,
-            max_wpm,
-        };
 
-        info_cache.insert(test_cfg.name.clone(), test_info);
+        let mut hs: HashMap<TestIdentity, Option<f64>> = HashMap::new();
+        hs.insert(test_cfg.gib_identity(), max_wpm);
+
+        info_cache.insert(test_cfg.name.clone(), (word_count, hs));
+
         let frequency_list = create_frequency_list(word_count);
-
         Self {
             hovered: SetList::Length,
             active: SetList::Nil,
@@ -289,25 +313,27 @@ impl Settings {
         let words_list = storage::parse_storage_contents();
         let mod_list: Vec<String> = TEST_MODS.left_values().map(|&x| x.to_string()).collect();
 
-        let mut word_amount_cache = HashMap::new();
-
         let mut test_cfg = ttc;
         let word_count = test_cfg.validate();
 
-        let test_info = TestInfoCache {
-            max_word_amount: word_count,
-            max_wpm: None,
-        };
-        word_amount_cache.insert(test_cfg.name.clone(), test_info);
-        let frequency_list = create_frequency_list(word_count);
+        let mut info_cache: InfoCache = HashMap::new();
 
+        let conn = Connection::open(&*storage::DATABASE).unwrap();
+        let max_wpm = database::get_max_wpm(&conn, &test_cfg);
+
+        let mut hs: HashMap<TestIdentity, Option<f64>> = HashMap::new();
+        hs.insert(test_cfg.gib_identity(), max_wpm);
+
+        info_cache.insert(test_cfg.name.clone(), (word_count, hs));
+
+        let frequency_list = create_frequency_list(word_count);
         Self {
             hovered: SetList::Length,
             active: SetList::Nil,
 
             length_list,
             frequency_list,
-            info_cache: word_amount_cache,
+            info_cache,
             test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
@@ -341,24 +367,40 @@ impl Settings {
         }
     }
 
-    fn get_word_count(&mut self, key: &str) -> usize {
-        if let Some(info_cache) = self.info_cache.get(key) {
-            info_cache.max_word_amount
-        } else {
-            let word_count = count_lines_from_path(storage::get_word_list_path(key)).unwrap();
+    // TODO these unwraps may be questionable
+    pub fn get_current_historic_max_wpm(&self) -> Option<f64> {
+        let first = &self.info_cache.get(&self.test_cfg.name).unwrap().1;
+        *first.get(&self.test_cfg.gib_identity()).unwrap()
+    }
 
-            // TODO THIS IS ASS
-            // I shouldn't just open a new connection xD;
-            // I have to restructure a little bit
-            // and also rename/change this function
+    fn update_max_wpm(&mut self) -> () {
+        let tid = self.test_cfg.gib_identity();
 
+        let inner_cache = &mut self
+            .info_cache
+            .get_mut(&self.test_cfg.name)
+            .expect("this should never fail beacuase name is set beforehand")
+            .1;
+
+        if inner_cache.get(&tid).is_none() {
+            // TODO clean up those connections jesus
             let conn = Connection::open(&*storage::DATABASE).unwrap();
             let max_wpm = database::get_max_wpm(&conn, &self.test_cfg);
-            let test_info = TestInfoCache {
-                max_word_amount: word_count,
-                max_wpm,
-            };
-            self.info_cache.insert(key.to_string(), test_info);
+            inner_cache.insert(tid, max_wpm);
+        }
+        debug!("{:?}", &self.info_cache);
+    }
+
+    /// TODO
+    /// this function is really bad
+    fn get_word_count(&mut self) -> usize {
+        if let Some(info_cache) = self.info_cache.get(&self.test_cfg.name) {
+            info_cache.0
+        } else {
+            let word_count =
+                count_lines_from_path(storage::get_word_list_path(&self.test_cfg.name)).unwrap();
+            self.info_cache
+                .insert(self.test_cfg.name.clone(), (word_count, HashMap::new()));
             word_count
         }
     }
@@ -376,25 +418,28 @@ impl Settings {
 
         match self.active {
             SetList::Length => {
-                self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap()
+                self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap();
+                self.update_max_wpm();
             }
 
             SetList::Test => {
                 let chosen_test_name = self.tests_list.get_item().clone();
+                self.test_cfg.name = chosen_test_name;
 
-                if is_script(&chosen_test_name) {
+                if is_script(&self.test_cfg.name) {
                     self.test_cfg.variant = TestVariant::Script;
                 } else {
                     self.test_cfg.variant = TestVariant::Standard;
-                    let word_count = self.get_word_count(&chosen_test_name);
+
+                    let word_count = self.get_word_count();
 
                     self.frequency_list = create_frequency_list(word_count);
                     if self.test_cfg.word_pool > word_count {
                         self.test_cfg.word_pool = word_count;
                     }
-                }
 
-                self.test_cfg.name = chosen_test_name;
+                    self.update_max_wpm();
+                }
             }
 
             SetList::Frequency => {
@@ -403,11 +448,9 @@ impl Settings {
                     .get_item()
                     .parse::<usize>()
                     .unwrap_or(69);
+                self.update_max_wpm();
             }
-            // TODO this isnt robust implementation
-            // It doesnt allow for adding more mods in the future
-            // its one of the haphazard changes to make smokey semi-functional before
-            // I prob won't be able to work on this for some time
+
             SetList::Mods => {
                 let test_mod = TEST_MODS
                     .get_by_left(self.mods_list.get_item() as &str)
@@ -416,6 +459,7 @@ impl Settings {
                 if !self.test_cfg.mods.remove(test_mod) {
                     self.test_cfg.mods.insert(*test_mod);
                 }
+                self.update_max_wpm();
             }
             SetList::Nil => unreachable!(),
         }

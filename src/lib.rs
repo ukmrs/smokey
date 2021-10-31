@@ -29,6 +29,7 @@ pub fn run(mut app: App, terminal: Term) -> crossterm::Result<()> {
     #[cfg(debug_assertions)]
     init_logger();
 
+    debug!("{:?}", app.settings.info_cache);
     app.reset_test();
     database::init::debug_init_db();
 

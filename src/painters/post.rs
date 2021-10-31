@@ -59,7 +59,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             // fing messy max wpm extraction from db
 
-            let history_max_wpm: f64 = 0.;
+            let history_max_wpm: f64 = app.settings.get_current_historic_max_wpm().unwrap_or(0.);
 
             let mut data: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
             let mut beta: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
