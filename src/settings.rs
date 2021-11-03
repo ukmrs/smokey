@@ -1,4 +1,4 @@
-use crate::database;
+use crate::database::{self, RunHistoryDatbase};
 use crate::storage;
 use crate::utils::{count_lines_from_path, StatefulList};
 use crate::vec_of_strings;
@@ -114,6 +114,11 @@ impl Default for TestSummary {
             acc: 0.,
         }
     }
+}
+
+#[derive(Default)]
+pub struct PostBox {
+    pub cached_historic_wpm: f64,
 }
 
 /// Basically a dupe of some of the info of ttc
@@ -241,6 +246,7 @@ impl Default for SettingsColors {
 }
 // Option feels more clean than f64::NAN
 type InfoCache = HashMap<String, (usize, HashMap<TestIdentity, Option<f64>>)>;
+type ScriptCache = HashMap<String, Option<f64>>;
 
 pub struct Settings {
     pub hovered: SetList,
@@ -256,20 +262,19 @@ pub struct Settings {
     // HM<test.name (file_word_amount, HM<TestIdentity, historic_max_wpm>)>
     // NaN = historic_max_wpm wasnt cached
     pub info_cache: InfoCache,
+    pub script_cache: ScriptCache,
+
+    pub database: RunHistoryDatbase,
+    pub postbox: PostBox,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
-
         let words_list = storage::parse_storage_contents();
-
         let mod_list: Vec<String> = TEST_MODS.left_values().map(|&x| x.to_string()).collect();
-
         let test_cfg = TypingTestConfig::default();
-
         let mut info_cache: InfoCache = HashMap::new();
-
         let word_count = count_lines_from_path(&test_cfg.get_words_file_path()).unwrap();
 
         // TODO
@@ -294,6 +299,9 @@ impl Default for Settings {
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
             colors: SettingsColors::default(),
+            script_cache: ScriptCache::default(),
+            database: RunHistoryDatbase::default(),
+            postbox: PostBox::default(),
         }
     }
 }
@@ -331,6 +339,9 @@ impl Settings {
             test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
+            script_cache: ScriptCache::default(),
+            database: RunHistoryDatbase::default(),
+            postbox: PostBox::default(),
             colors,
         }
     }
@@ -362,19 +373,74 @@ impl Settings {
     }
 
     pub fn update_historic_max_wpm(&mut self, max_wpm: f64) {
-        *self
-            .info_cache
-            .get_mut(&self.test_cfg.name)
-            .unwrap()
-            .1
-            .get_mut(&self.test_cfg.gib_identity())
-            .unwrap() = Some(max_wpm);
+        match self.test_cfg.variant {
+            TestVariant::Standard => {
+                *self
+                    .info_cache
+                    .get_mut(&self.test_cfg.name)
+                    .unwrap()
+                    .1
+                    .get_mut(&self.test_cfg.gib_identity())
+                    .unwrap() = Some(max_wpm);
+            }
+            TestVariant::Script => {
+                *self.script_cache.get_mut(&self.test_cfg.name).unwrap() = Some(max_wpm);
+            }
+        }
     }
 
     // TODO these unwraps may be questionable
     pub fn get_current_historic_max_wpm(&self) -> Option<f64> {
         let first = &self.info_cache.get(&self.test_cfg.name).unwrap().1;
         *first.get(&self.test_cfg.gib_identity()).unwrap()
+    }
+
+    pub fn get_current_historic_max_wpm_script(&self) -> Option<f64> {
+        *self.script_cache.get(&self.test_cfg.name).unwrap()
+    }
+
+    // ------------- TESTEND / DATABASE METHODS ---------------------
+
+    /// This function performs actions needed after test termination
+    /// that includes saving results to db and caching new max_wpm if need be
+    pub fn save_test_results(&mut self, summary: TestSummary) {
+        self.test_cfg.test_summary = summary;
+        let final_wpm = self.test_cfg.test_summary.wpm;
+
+        // If record is beat the historic_max_wpm but the
+        // previous one is cached so it can be displayed in
+        // the post screen
+        match self.test_cfg.variant {
+            TestVariant::Standard => {
+                let historic_max_wpm: f64 = self.get_current_historic_max_wpm().unwrap_or(0.);
+
+                self.postbox.cached_historic_wpm = historic_max_wpm;
+
+                if final_wpm > historic_max_wpm {
+                    self.update_historic_max_wpm(final_wpm);
+                }
+                self.database.save_test(&self.test_cfg);
+            }
+
+            TestVariant::Script => {
+                // Check for cached max_wpm
+                let historic_max_wpm = self
+                    .script_cache
+                    .get(&self.test_cfg.name)
+                    .unwrap()
+                    .unwrap_or(0.);
+
+                self.postbox.cached_historic_wpm = historic_max_wpm;
+                if final_wpm > historic_max_wpm {
+                    *self.script_cache.get_mut(&self.test_cfg.name).unwrap() = Some(final_wpm);
+                }
+                self.database.save_script(&self.test_cfg);
+            }
+        }
+    }
+
+    pub fn save_run_to_database(&mut self) {
+        self.database.save(&self.test_cfg);
     }
 
     fn cache_historic_max_wpm(&mut self) {
@@ -387,9 +453,7 @@ impl Settings {
             .1;
 
         if inner_cache.get(&tid).is_none() {
-            // TODO clean up those connections jesus
-            let conn = Connection::open(&*storage::DATABASE).unwrap();
-            let max_wpm = database::get_max_wpm(&conn, &self.test_cfg);
+            let max_wpm = database::get_max_wpm(&self.database.conn, &self.test_cfg);
             inner_cache.insert(tid, max_wpm);
         }
         debug!("{:?}", &self.info_cache);
@@ -408,6 +472,8 @@ impl Settings {
             word_count
         }
     }
+
+    // ------------------ KEYBOUND METHODS ------------------
 
     pub fn enter(&mut self) {
         if self.hovered != SetList::Nil {
@@ -432,6 +498,11 @@ impl Settings {
 
                 if is_script(&self.test_cfg.name) {
                     self.test_cfg.variant = TestVariant::Script;
+                    debug!("{:?}", &self.test_cfg.name);
+                    let hwpm =
+                        database::get_max_wpm_script(&self.database.conn, &self.test_cfg.name);
+                    debug!("{:?}", hwpm);
+                    self.script_cache.insert(self.test_cfg.name.clone(), hwpm);
                 } else {
                     self.test_cfg.variant = TestVariant::Standard;
 

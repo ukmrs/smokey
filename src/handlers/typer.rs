@@ -28,25 +28,27 @@ pub fn handle(key: KeyEvent, app: &mut App) {
     match key.code {
         KeyCode::Char(c) => {
             if test.on_char(c) {
-                // test ends
+                // TEST ENDS
                 // we summarize and write to db?
                 let summary = test.summarize();
-                app.settings.test_cfg.test_summary = summary;
+                app.settings.save_test_results(summary);
 
-                // If record is beat the historic_max_wpm but the
-                // previous one is cached so it can be displayed in
-                // the post screen
-                let history_max_wpm: f64 =
-                    app.settings.get_current_historic_max_wpm().unwrap_or(0.);
-                app.postbox.cached_historic_wpm = history_max_wpm;
-                let final_wpm = app.settings.test_cfg.test_summary.wpm;
+                // app.settings.test_cfg.test_summary = summary;
 
-                if final_wpm > history_max_wpm {
-                    app.settings.update_historic_max_wpm(final_wpm);
-                }
+                // // If record is beat the historic_max_wpm but the
+                // // previous one is cached so it can be displayed in
+                // // the post screen
+                // let history_max_wpm: f64 =
+                //     app.settings.get_current_historic_max_wpm().unwrap_or(0.);
+                // app.postbox.cached_historic_wpm = history_max_wpm;
+                // let final_wpm = app.settings.test_cfg.test_summary.wpm;
 
+                // if final_wpm > history_max_wpm {
+                //     app.settings.update_historic_max_wpm(final_wpm);
+                // }
+
+                // app.settings.save_run_to_database();
                 app.change_to_post();
-                app.save_run_to_database();
             }
         }
 

@@ -26,6 +26,8 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             let final_wpm = format!("{}", summary.wpm.round());
             let final_acc = format!("{}", summary.acc.round());
+            let diff = format!("{}", summary.wpm - app.settings.postbox.cached_historic_wpm)[..6]
+                .to_string();
 
             let up_txt = vec![
                 Spans::from(vec![
@@ -43,6 +45,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         Style::default().fg(test.colors.wrong),
                     ),
                 ]),
+                Spans::from(vec![Span::styled(diff, Style::default().fg(Color::Blue))]),
             ];
 
             // TODO move this logic to TypingTestConfig???;
@@ -56,7 +59,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let secs: f64 = test.hoarder.seconds as f64;
             let length: f64 = test.hoarder.wpms.len() as f64;
             let max_wpm: f64 = test.hoarder.get_max_wpm();
-            let history_max_wpm: f64 = app.postbox.cached_historic_wpm;
+            let history_max_wpm: f64 = app.settings.postbox.cached_historic_wpm;
 
             let mut wpm_line_style = Style::default().fg(Color::Yellow);
 
@@ -74,6 +77,9 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 wpm_dataset.push((sec, *wpm));
                 pb_dataset.push((sec, history_max_wpm));
             }
+
+            debug!("{:#?}", wpm_dataset);
+            debug!("{}", history_max_wpm);
 
             let wpm_datasets = vec![
                 Dataset::default()

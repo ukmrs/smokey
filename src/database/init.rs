@@ -28,6 +28,8 @@ pub fn init_db(conn: &mut Connection) -> SqlResult<()> {
     test_table_init(&tx)?;
     run_table_init(&tx)?;
     mod_table_init(&tx)?;
+    script_table_init(&tx)?;
+    run_script_table_init(&tx)?;
 
     tx.commit()?;
 
@@ -76,9 +78,9 @@ fn script_table_init(conn: &Connection) -> SqlResult<()> {
     Ok(())
 }
 
-fn run_script_table_init(conn: Connection) -> SqlResult<()> {
+fn run_script_table_init(conn: &Connection) -> SqlResult<()> {
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS run (
+        "CREATE TABLE IF NOT EXISTS srun (
     run_id INTEGER PRIMARY KEY,
     date INTEGER NOT NULL,
     script_id INTEGER NOT NULL,
