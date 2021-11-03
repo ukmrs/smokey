@@ -225,9 +225,7 @@ impl TypingTestConfig {
     }
 
     pub fn get_scripts_file_path(&self) -> PathBuf {
-        storage::get_storage_dir()
-            .join("scripts")
-            .join(&self.name[2..])
+        storage::get_storage_dir().join("scripts").join(&self.name)
     }
 }
 
@@ -487,17 +485,26 @@ impl Settings {
         }
 
         match self.active {
+            // low priority consideration:
+            // take into account these changes
+            // and have em ready when user swaps to TestVariant::Standard
+            // again. As it stands the changes are ignored
+            // which isn't bad tbh
             SetList::Length => {
+                if let TestVariant::Script = self.test_cfg.variant {
+                    return;
+                }
                 self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap();
                 self.cache_historic_max_wpm();
             }
 
             SetList::Test => {
-                let chosen_test_name = self.tests_list.get_item().clone();
-                self.test_cfg.name = chosen_test_name;
+                let chosen_test_name = self.tests_list.get_item();
 
-                if is_script(&self.test_cfg.name) {
+                if is_script(chosen_test_name) {
                     self.test_cfg.variant = TestVariant::Script;
+
+                    self.test_cfg.name = chosen_test_name[2..].to_string();
                     debug!("{:?}", &self.test_cfg.name);
                     let hwpm =
                         database::get_max_wpm_script(&self.database.conn, &self.test_cfg.name);
@@ -505,6 +512,7 @@ impl Settings {
                     self.script_cache.insert(self.test_cfg.name.clone(), hwpm);
                 } else {
                     self.test_cfg.variant = TestVariant::Standard;
+                    self.test_cfg.name = chosen_test_name.to_string();
 
                     let word_count = self.get_word_count();
 
@@ -518,6 +526,9 @@ impl Settings {
             }
 
             SetList::Frequency => {
+                if let TestVariant::Script = self.test_cfg.variant {
+                    return;
+                }
                 self.test_cfg.word_pool = self
                     .frequency_list
                     .get_item()
@@ -527,6 +538,9 @@ impl Settings {
             }
 
             SetList::Mods => {
+                if let TestVariant::Script = self.test_cfg.variant {
+                    return;
+                }
                 let test_mod = TEST_MODS
                     .get_by_left(self.mods_list.get_item() as &str)
                     .expect("UI doesn't match TEST_MODS");
