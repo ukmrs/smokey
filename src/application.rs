@@ -5,7 +5,6 @@
 use crate::config;
 use crossterm::event::KeyEvent;
 
-use crate::database::RunHistoryDatbase;
 use crate::handlers::{self, KeyHandler};
 use crate::painters::{draw_post, draw_settings, draw_test_and_update, Painter};
 use crate::settings::Settings;
@@ -24,7 +23,6 @@ pub struct App<'t> {
     pub key_handler: KeyHandler,
     pub painter: Painter,
     pub is_alive: bool,
-    pub database: RunHistoryDatbase,
 }
 
 impl<'t> App<'t> {
@@ -104,10 +102,6 @@ impl<'t> App<'t> {
             ..Self::default()
         }
     }
-
-    pub fn save_run_to_database(&mut self) {
-        self.database.save(&self.settings.test_cfg);
-    }
 }
 
 impl<'t> Default for App<'t> {
@@ -124,7 +118,6 @@ impl<'t> Default for App<'t> {
 
             settings: Settings::default(),
             test: TestState::default(),
-            database: RunHistoryDatbase::default(),
         }
     }
 }
