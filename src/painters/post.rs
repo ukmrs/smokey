@@ -10,6 +10,9 @@ use tui::{
     Terminal,
 };
 
+const WINCOLOR: Color = Color::Yellow;
+const STANDARDCOLOR: Color = Color::Cyan;
+
 pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal
         .draw(|frame| {
@@ -29,6 +32,19 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let diff = format!("{}", summary.wpm - app.settings.postbox.cached_historic_wpm)[..6]
                 .to_string();
 
+            let secs: f64 = test.hoarder.seconds as f64;
+            let length: f64 = test.hoarder.wpms.len() as f64;
+            let max_wpm: f64 = test.hoarder.get_max_wpm();
+            let history_max_wpm: f64 = app.settings.postbox.cached_historic_wpm;
+
+            let mut wpm_line_style = Style::default().fg(STANDARDCOLOR);
+
+            if summary.wpm > history_max_wpm {
+                wpm_line_style = Style::default().fg(WINCOLOR);
+            }
+
+            let highest = f64::max(max_wpm, history_max_wpm);
+
             let up_txt = vec![
                 Spans::from(vec![
                     Span::raw("wpm: "),
@@ -45,7 +61,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         Style::default().fg(test.colors.wrong),
                     ),
                 ]),
-                Spans::from(vec![Span::styled(diff, Style::default().fg(Color::Blue))]),
+                Spans::from(vec![Span::styled(diff, wpm_line_style)]),
             ];
 
             // TODO move this logic to TypingTestConfig???;
@@ -56,18 +72,6 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             frame.render_widget(block, chunks[0]);
 
-            let secs: f64 = test.hoarder.seconds as f64;
-            let length: f64 = test.hoarder.wpms.len() as f64;
-            let max_wpm: f64 = test.hoarder.get_max_wpm();
-            let history_max_wpm: f64 = app.settings.postbox.cached_historic_wpm;
-
-            let mut wpm_line_style = Style::default().fg(Color::Yellow);
-
-            if summary.wpm > history_max_wpm {
-                wpm_line_style = Style::default().fg(Color::Red);
-            }
-
-            let highest = f64::max(max_wpm, history_max_wpm);
 
             let mut wpm_dataset: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
             let mut pb_dataset: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
