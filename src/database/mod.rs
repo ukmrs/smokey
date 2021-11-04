@@ -35,7 +35,7 @@ impl RunHistoryDatbase {
         self.conn
             .execute(
                 "INSERT INTO srun (date, script_id, correct_chars, mistakes, wpm, acc)
-            VALUES ((SELECT strftime('%s', 'now', 'localtime')), ?,  ?, ?, ?, ?);",
+            VALUES ((SELECT strftime('%s', 'now')), ?,  ?, ?, ?, ?);",
                 params![script_id, sum.correct_chars, sum.mistakes, sum.wpm, sum.acc],
             )
             .expect("inserting into srun");
@@ -48,7 +48,7 @@ impl RunHistoryDatbase {
 
         self.conn.execute(
             "INSERT INTO run (date, test_id, length, mods, word_pool, correct_chars, mistakes, wpm, acc)
-            VALUES ((SELECT strftime('%s', 'now', 'localtime')), ?, ?, ?, ?, ?, ?, ?, ?);",
+            VALUES ((SELECT strftime('%s', 'now')), ?, ?, ?, ?, ?, ?, ?, ?);",
             params![test_id, ttc.length, mods, ttc.word_pool,
             sum.correct_chars, sum.mistakes, sum.wpm, sum.acc],
             )

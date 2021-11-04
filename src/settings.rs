@@ -505,10 +505,8 @@ impl Settings {
                     self.test_cfg.variant = TestVariant::Script;
 
                     self.test_cfg.name = chosen_test_name[2..].to_string();
-                    debug!("{:?}", &self.test_cfg.name);
                     let hwpm =
                         database::get_max_wpm_script(&self.database.conn, &self.test_cfg.name);
-                    debug!("{:?}", hwpm);
                     self.script_cache.insert(self.test_cfg.name.clone(), hwpm);
                 } else {
                     self.test_cfg.variant = TestVariant::Standard;

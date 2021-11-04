@@ -64,19 +64,27 @@ pub fn handle(key: KeyEvent, app: &mut App) {
 mod tests {
     use crate::application::App;
     use crate::database::{init::init_db, RunHistoryDatbase};
+    use crate::settings::Settings;
     use crossterm::event::{KeyCode, KeyEvent};
     use rusqlite::Connection;
     use std::thread;
     use std::time::Duration;
 
     fn get_test_app<'a>() -> App<'a> {
-        let mut app = App {
+        let mut settings = Settings {
             database: RunHistoryDatbase {
                 conn: Connection::open_in_memory().unwrap(),
             },
+            ..Default::default()
+        };
+
+        init_db(&mut settings.database.conn).unwrap();
+
+        let app = App {
+            settings,
             ..App::setup()
         };
-        init_db(&mut app.database.conn).unwrap();
+
         app
     }
 
