@@ -68,7 +68,7 @@ If you have [xsv](https://github.com/BurntSushi/xsv) installed,
 here is an **almost one liner** to convert it to smokey-friendly format:
 
 ```bash
-xsv sort -s freqlivres -N -R Lexique383.tsv | xsv select ortho > french
+xsv sort -s freqlivres -N -R Lexique382.tsv | xsv select ortho > french
 sed '1d' french > tmpfile && mv tmpfile french
 ```
 The only purpose of the sed command is to delete the first line which will be "ortho" - the column name.
