@@ -278,6 +278,7 @@ impl Default for Settings {
         // TODO
         // This code is not only ass but also a dupe
         let conn = Connection::open(&*storage::DATABASE).unwrap();
+        database::init::enable_foreign_keys(&conn);
         let max_wpm = database::get_max_wpm(&conn, &test_cfg);
 
         let mut hs: HashMap<TestIdentity, Option<f64>> = HashMap::new();
@@ -319,6 +320,7 @@ impl Settings {
         let mut info_cache: InfoCache = HashMap::new();
 
         let conn = Connection::open(&*storage::DATABASE).unwrap();
+        database::init::enable_foreign_keys(&conn);
         let max_wpm = database::get_max_wpm(&conn, &test_cfg);
 
         let mut hs: HashMap<TestIdentity, Option<f64>> = HashMap::new();

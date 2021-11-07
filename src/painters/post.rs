@@ -48,7 +48,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
             let up_txt = vec![
                 Spans::from(vec![
                     Span::raw("wpm: "),
-                    Span::styled(final_wpm, Style::default().fg(Color::Blue)),
+                    Span::styled(final_wpm, Style::default().fg(wpm_line_style.fg.unwrap())),
                 ]),
                 Spans::from(vec![
                     Span::raw("acc: "),
@@ -71,7 +71,6 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 .block(Block::default().title("summary").borders(Borders::ALL));
 
             frame.render_widget(block, chunks[0]);
-
 
             let mut wpm_dataset: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
             let mut pb_dataset: Vec<(f64, f64)> = Vec::with_capacity(length as usize);

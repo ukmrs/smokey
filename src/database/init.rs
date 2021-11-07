@@ -1,15 +1,3 @@
-//! Dead Code for now
-//! But shows what I plan to do for saving progress
-//! I am not confident in this particular db design
-//! so comments are welcome
-//!
-//! mods in the run table will be stored as integer
-//! and encoded in the binary. I tried many-to-many approach
-//! but working with many-to-many through rusqlite interface
-//! was wacky to nightmarish
-
-#![allow(dead_code)]
-
 use crate::storage;
 use rusqlite::Connection;
 use rusqlite::Result as SqlResult;
@@ -106,7 +94,7 @@ fn mod_table_init(conn: &Connection) -> SqlResult<()> {
     Ok(())
 }
 
-fn enable_foreign_keys(conn: &Connection) {
+pub fn enable_foreign_keys(conn: &Connection) {
     conn.execute("PRAGMA foreign_keys = ON", []).unwrap();
 }
 
