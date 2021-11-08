@@ -1,6 +1,6 @@
 [package]
 name = "smokey"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["ukmrs <murias.wstork@gmail.com>"]
 edition = "2018"
 description = "Handsome TUI typing test"
@@ -8,8 +8,6 @@ license = "MIT"
 repository = "https://github.com/ukmrs/smokey.git"
 homepage = "https://github.com/ukmrs/smokey"
 keywords = ["tui", "typing", "wpm"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bytecount = "0.6.2"
@@ -21,14 +19,17 @@ bimap = "0.6.1"
 log = "0.4.11"
 rand = "0.8.3"
 simplelog = "0.9.0"
-tui = { version = "0.15.0", features = ["crossterm"], default-features = false }
+tui = { version = "0.16.0", features = ["crossterm"], default-features = false }
 serde_derive = "1.0.126"
 serde = "1.0.126"
 toml = "0.5.8"
 anyhow = "1.0.42"
 structopt = "0.3.22"
+# it would be nice if I could make bundled default but optional?
 rusqlite = "0.26.0"
 
+[features]
+default = ["rusqlite/bundled"]
 
 [build-dependencies]
 directories-next = "2.0.0"
