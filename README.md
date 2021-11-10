@@ -100,6 +100,13 @@ I kept "sex" though. Otherwise it wouldn't be fair to plants who
 just cross-pollinate without causing too much of a ruckus.
 Future me here, I forgot about accursed pollen allergies, I might reconsider my stance on this.
 
+## Scripts
+There is a scripts directory in which you can throw... scripts.
+Just chmod +x, add a shebang, slap it in there and the output will be converted to a typing test.
+There is an example python script shipped with smokey that produces gibberish but of course you can add whatever else.
+For instance, I use a script that fetches me a random quote from a local database.
+You can snatch some from [Monkeytype](https://github.com/Miodec/monkeytype/tree/master/static/quotes) or [TypeRacer](https://typeracerdata.com/texts?texts=full&sort=relative_average) to name a few.
+
 ## Config
 You can create smokey.toml configuration file that allows to
 change colors or set default test settings. On linux:
