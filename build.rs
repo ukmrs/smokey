@@ -19,8 +19,6 @@ fn main() {
     copy_dir_recursively(&source_storage, &local_storage).expect("couldnt install word packs");
 }
 
-// thanks doug
-// https://stackoverflow.com/users/353820/doug
 pub fn copy_dir_recursively<U: AsRef<Path>, V: AsRef<Path>>(
     from: U,
     to: V,

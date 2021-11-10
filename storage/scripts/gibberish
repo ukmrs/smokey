@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+import random
+from string import ascii_lowercase
+
+TEST_LENGTH = 20
+
+WEIGHTS = [3, 33, 97, 219, 203, 143, 125, 89, 43, 23, 12, 6, 3, 1]
+
+LENGTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+
+
+def main():
+    letters = list(ascii_lowercase)
+    lens = random.choices(population=LENGTHS, weights=WEIGHTS, k=TEST_LENGTH)
+    for ln in lens:
+        print("".join(random.choices(population=letters, k=ln)))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,19 +1,40 @@
+use crate::database::{self, RunHistoryDatbase};
 use crate::storage;
 use crate::utils::{count_lines_from_path, StatefulList};
 use crate::vec_of_strings;
-use phf;
+use rusqlite::Connection;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
+use std::hash::Hash;
 use std::path::PathBuf;
 use tui::style::Color;
 
 pub const SCRIPT_SIGN: &str = "#!";
 
-pub static TEST_MODS: phf::Map<&'static str, TestMod> = phf::phf_map! {
-    "punctuation" => TestMod::Punctuation,
-    "numbers" => TestMod::Numbers,
-    "symbols" => TestMod::Symbols,
-};
+use bimap::BiMap;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref TEST_MODS: BiMap<&'static str, TestMod> = [
+        ("punctuation", TestMod::Punctuation),
+        ("numbers", TestMod::Numbers),
+        ("symbols", TestMod::Symbols),
+    ]
+    .iter()
+    .copied()
+    .collect();
+}
+
+lazy_static! {
+    pub static ref BITFLAG_MODS: BiMap<u8, TestMod> = [
+        (0b00000001, TestMod::Punctuation),
+        (0b00000010, TestMod::Numbers),
+        (0b00000100, TestMod::Symbols),
+    ]
+    .iter()
+    .copied()
+    .collect();
+}
 
 pub fn is_script(text: &str) -> bool {
     if text.len() < 2 {
@@ -44,6 +65,17 @@ pub enum TestMod {
     Symbols,
 }
 
+impl TestMod {
+    pub fn from_bitflag(bitflag: u8) -> Self {
+        match bitflag {
+            0b00000001 => TestMod::Punctuation,
+            0b00000010 => TestMod::Numbers,
+            0b00000100 => TestMod::Symbols,
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl fmt::Display for TestMod {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -52,6 +84,18 @@ impl fmt::Display for TestMod {
             Self::Symbols => write!(f, "#$"),
         }
     }
+}
+
+pub fn decode_test_mod_bitflags(bitflag: u8) -> HashSet<TestMod> {
+    let mut test_mods: HashSet<TestMod> = HashSet::new();
+
+    for i in 0..8 {
+        if bitflag >> i & 1 == 1 {
+            test_mods.insert(TestMod::from_bitflag(2_u8.pow(i)));
+        };
+    }
+
+    test_mods
 }
 
 pub struct TestSummary {
@@ -70,6 +114,21 @@ impl Default for TestSummary {
             acc: 0.,
         }
     }
+}
+
+#[derive(Default)]
+pub struct PostBox {
+    pub cached_historic_wpm: f64,
+}
+
+/// Basically a dupe of some of the info of ttc
+/// but allows me to be more flexible in the future
+/// when it comes to caching test info
+#[derive(PartialEq, Eq, Hash, Debug)]
+pub struct TestIdentity {
+    pub length: usize,
+    pub word_pool: usize,
+    pub mods: u8,
 }
 
 /// This stuct contains information about
@@ -137,12 +196,21 @@ impl TypingTestConfig {
             self.name = "english".to_string()
         }
 
-        let lines = count_lines_from_path(path).expect(" fallback to the english word file ");
+        let lines = count_lines_from_path(path).expect("fallback to the english word file");
 
         if self.word_pool > lines {
             self.word_pool = lines;
         }
         lines
+    }
+
+    // TODO rename this XD
+    pub fn gib_identity(&self) -> TestIdentity {
+        TestIdentity {
+            length: self.length,
+            word_pool: self.word_pool,
+            mods: database::encode_test_mod_bitflag(&self.mods),
+        }
     }
 
     fn get_file_path(&self) -> PathBuf {
@@ -157,9 +225,7 @@ impl TypingTestConfig {
     }
 
     pub fn get_scripts_file_path(&self) -> PathBuf {
-        storage::get_storage_dir()
-            .join("scripts")
-            .join(&self.name[2..])
+        storage::get_storage_dir().join("scripts").join(&self.name)
     }
 }
 
@@ -176,6 +242,9 @@ impl Default for SettingsColors {
         }
     }
 }
+// Option feels more clean than f64::NAN
+type InfoCache = HashMap<String, (usize, HashMap<TestIdentity, Option<f64>>)>;
+type ScriptCache = HashMap<String, Option<f64>>;
 
 pub struct Settings {
     pub hovered: SetList,
@@ -188,36 +257,50 @@ pub struct Settings {
     pub frequency_list: StatefulList<String>,
     pub tests_list: StatefulList<String>,
     pub mods_list: StatefulList<String>,
-    pub word_amount_cache: HashMap<String, usize>,
+    // HM<test.name (file_word_amount, HM<TestIdentity, historic_max_wpm>)>
+    // NaN = historic_max_wpm wasnt cached
+    pub info_cache: InfoCache,
+    pub script_cache: ScriptCache,
+
+    pub database: RunHistoryDatbase,
+    pub postbox: PostBox,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
-
         let words_list = storage::parse_storage_contents();
-
-        let mod_list: Vec<String> = TEST_MODS.keys().map(|&x| x.to_string()).collect();
-
+        let mod_list: Vec<String> = TEST_MODS.left_values().map(|&x| x.to_string()).collect();
         let test_cfg = TypingTestConfig::default();
-
-        let mut word_amount_cache = HashMap::new();
-
+        let mut info_cache: InfoCache = HashMap::new();
         let word_count = count_lines_from_path(&test_cfg.get_words_file_path()).unwrap();
-        word_amount_cache.insert(test_cfg.name.clone(), word_count);
-        let frequency_list = create_frequency_list(word_count);
 
+        // TODO
+        // This code is not only ass but also a dupe
+        let conn = Connection::open(&*storage::DATABASE).unwrap();
+        database::init::enable_foreign_keys(&conn);
+        let max_wpm = database::get_max_wpm(&conn, &test_cfg);
+
+        let mut hs: HashMap<TestIdentity, Option<f64>> = HashMap::new();
+        hs.insert(test_cfg.gib_identity(), max_wpm);
+
+        info_cache.insert(test_cfg.name.clone(), (word_count, hs));
+
+        let frequency_list = create_frequency_list(word_count);
         Self {
             hovered: SetList::Length,
             active: SetList::Nil,
 
             length_list,
             frequency_list,
-            word_amount_cache,
+            info_cache,
             test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
             colors: SettingsColors::default(),
+            script_cache: ScriptCache::default(),
+            database: RunHistoryDatbase::default(),
+            postbox: PostBox::default(),
         }
     }
 }
@@ -229,25 +312,36 @@ impl Settings {
     pub fn with_config(colors: SettingsColors, ttc: TypingTestConfig) -> Self {
         let length_list = StatefulList::with_items(vec_of_strings!["10", "15", "25", "50", "100"]);
         let words_list = storage::parse_storage_contents();
-        let mod_list: Vec<String> = TEST_MODS.keys().map(|&x| x.to_string()).collect();
-
-        let mut word_amount_cache = HashMap::new();
+        let mod_list: Vec<String> = TEST_MODS.left_values().map(|&x| x.to_string()).collect();
 
         let mut test_cfg = ttc;
         let word_count = test_cfg.validate();
-        word_amount_cache.insert(test_cfg.name.clone(), word_count);
-        let frequency_list = create_frequency_list(word_count);
 
+        let mut info_cache: InfoCache = HashMap::new();
+
+        let conn = Connection::open(&*storage::DATABASE).unwrap();
+        database::init::enable_foreign_keys(&conn);
+        let max_wpm = database::get_max_wpm(&conn, &test_cfg);
+
+        let mut hs: HashMap<TestIdentity, Option<f64>> = HashMap::new();
+        hs.insert(test_cfg.gib_identity(), max_wpm);
+
+        info_cache.insert(test_cfg.name.clone(), (word_count, hs));
+
+        let frequency_list = create_frequency_list(word_count);
         Self {
             hovered: SetList::Length,
             active: SetList::Nil,
 
             length_list,
             frequency_list,
-            word_amount_cache,
+            info_cache,
             test_cfg,
             tests_list: StatefulList::with_items(words_list),
             mods_list: StatefulList::with_items(mod_list),
+            script_cache: ScriptCache::default(),
+            database: RunHistoryDatbase::default(),
+            postbox: PostBox::default(),
             colors,
         }
     }
@@ -278,15 +372,108 @@ impl Settings {
         }
     }
 
-    fn get_word_count(&mut self, key: &str) -> usize {
-        if let Some(word_count) = self.word_amount_cache.get(key) {
-            *word_count
+    pub fn update_historic_max_wpm(&mut self, max_wpm: f64) {
+        match self.test_cfg.variant {
+            TestVariant::Standard => {
+                *self
+                    .info_cache
+                    .get_mut(&self.test_cfg.name)
+                    .unwrap()
+                    .1
+                    .get_mut(&self.test_cfg.gib_identity())
+                    .unwrap() = Some(max_wpm);
+            }
+            TestVariant::Script => {
+                *self.script_cache.get_mut(&self.test_cfg.name).unwrap() = Some(max_wpm);
+            }
+        }
+    }
+
+    // TODO these unwraps may be questionable
+    pub fn get_current_historic_max_wpm(&self) -> Option<f64> {
+        let first = &self.info_cache.get(&self.test_cfg.name).unwrap().1;
+        *first.get(&self.test_cfg.gib_identity()).unwrap()
+    }
+
+    pub fn get_current_historic_max_wpm_script(&self) -> Option<f64> {
+        *self.script_cache.get(&self.test_cfg.name).unwrap()
+    }
+
+    // ------------- TESTEND / DATABASE METHODS ---------------------
+
+    /// This function performs actions needed after test termination
+    /// that includes saving results to db and caching new max_wpm if need be
+    pub fn save_test_results(&mut self, summary: TestSummary) {
+        self.test_cfg.test_summary = summary;
+        let final_wpm = self.test_cfg.test_summary.wpm;
+
+        // If record is beat the historic_max_wpm but the
+        // previous one is cached so it can be displayed in
+        // the post screen
+        match self.test_cfg.variant {
+            TestVariant::Standard => {
+                let historic_max_wpm: f64 = self.get_current_historic_max_wpm().unwrap_or(0.);
+
+                self.postbox.cached_historic_wpm = historic_max_wpm;
+
+                if final_wpm > historic_max_wpm {
+                    self.update_historic_max_wpm(final_wpm);
+                }
+                self.database.save_test(&self.test_cfg);
+            }
+
+            TestVariant::Script => {
+                // Check for cached max_wpm
+                let historic_max_wpm = self
+                    .script_cache
+                    .get(&self.test_cfg.name)
+                    .unwrap()
+                    .unwrap_or(0.);
+
+                self.postbox.cached_historic_wpm = historic_max_wpm;
+                if final_wpm > historic_max_wpm {
+                    *self.script_cache.get_mut(&self.test_cfg.name).unwrap() = Some(final_wpm);
+                }
+                self.database.save_script(&self.test_cfg);
+            }
+        }
+    }
+
+    pub fn save_run_to_database(&mut self) {
+        self.database.save(&self.test_cfg);
+    }
+
+    fn cache_historic_max_wpm(&mut self) {
+        let tid = self.test_cfg.gib_identity();
+
+        let inner_cache = &mut self
+            .info_cache
+            .get_mut(&self.test_cfg.name)
+            .expect("this should never fail beacuase name is set beforehand")
+            .1;
+
+        if inner_cache.get(&tid).is_none() {
+            let max_wpm = database::get_max_wpm(&self.database.conn, &self.test_cfg);
+            inner_cache.insert(tid, max_wpm);
+        }
+        debug!("{:?}", &self.info_cache);
+    }
+
+    /// TODO
+    /// this function is really bad
+    fn get_word_count(&mut self) -> usize {
+        if let Some(info_cache) = self.info_cache.get(&self.test_cfg.name) {
+            info_cache.0
         } else {
-            let word_count = count_lines_from_path(storage::get_word_list_path(key)).unwrap();
-            self.word_amount_cache.insert(key.to_string(), word_count);
+            let word_count =
+                count_lines_from_path(storage::get_word_list_path(&self.test_cfg.name)).unwrap();
+            self.info_cache
+                .insert(self.test_cfg.name.clone(), (word_count, HashMap::new()));
             word_count
         }
     }
+
+    // ------------------ KEYBOUND METHODS ------------------
 
     pub fn enter(&mut self) {
         if self.hovered != SetList::Nil {
@@ -300,47 +487,68 @@ impl Settings {
         }
 
         match self.active {
+            // low priority consideration:
+            // take into account these changes
+            // and have em ready when user swaps to TestVariant::Standard
+            // again. As it stands the changes are ignored
+            // which isn't bad tbh
             SetList::Length => {
-                self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap()
+                if let TestVariant::Script = self.test_cfg.variant {
+                    return;
+                }
+                self.test_cfg.length = self.length_list.get_item().parse::<usize>().unwrap();
+                self.cache_historic_max_wpm();
             }
 
             SetList::Test => {
-                let chosen_test_name = self.tests_list.get_item().clone();
+                let chosen_test_name = self.tests_list.get_item();
 
-                if is_script(&chosen_test_name) {
+                if is_script(chosen_test_name) {
                     self.test_cfg.variant = TestVariant::Script;
+
+                    self.test_cfg.name = chosen_test_name[2..].to_string();
+                    let hwpm =
+                        database::get_max_wpm_script(&self.database.conn, &self.test_cfg.name);
+                    self.script_cache.insert(self.test_cfg.name.clone(), hwpm);
                 } else {
                     self.test_cfg.variant = TestVariant::Standard;
-                    let word_count = self.get_word_count(&chosen_test_name);
+                    self.test_cfg.name = chosen_test_name.to_string();
+
+                    let word_count = self.get_word_count();
 
                     self.frequency_list = create_frequency_list(word_count);
                     if self.test_cfg.word_pool > word_count {
                         self.test_cfg.word_pool = word_count;
                     }
-                }
 
-                self.test_cfg.name = chosen_test_name;
+                    self.cache_historic_max_wpm();
+                }
             }
 
             SetList::Frequency => {
+                if let TestVariant::Script = self.test_cfg.variant {
+                    return;
+                }
                 self.test_cfg.word_pool = self
                     .frequency_list
                     .get_item()
                     .parse::<usize>()
                     .unwrap_or(69);
+                self.cache_historic_max_wpm();
             }
-            // TODO this isnt robust implementation
-            // It doesnt allow for adding more mods in the future
-            // its one of the haphazard changes to make smokey semi-functional before
-            // I prob won't be able to work on this for some time
+
             SetList::Mods => {
+                if let TestVariant::Script = self.test_cfg.variant {
+                    return;
+                }
                 let test_mod = TEST_MODS
-                    .get(&self.mods_list.get_item())
+                    .get_by_left(self.mods_list.get_item() as &str)
                     .expect("UI doesn't match TEST_MODS");
 
                 if !self.test_cfg.mods.remove(test_mod) {
                     self.test_cfg.mods.insert(*test_mod);
                 }
+                self.cache_historic_max_wpm();
             }
             SetList::Nil => unreachable!(),
         }
@@ -423,6 +631,7 @@ fn create_frequency_list(word_count: usize) -> StatefulList<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
 
     #[test]
     fn test_create_frequency_list() {
@@ -438,5 +647,17 @@ mod tests {
         assert_eq!(medium.items, vec!["100", "1000", "5000", "10000", "15889"]);
         assert_eq!(small.items, vec!["100", "1000"]);
         assert_eq!(tiny.items, vec!["20"]);
+    }
+
+    #[test]
+    fn test_decode_bitflags() {
+        let ans = decode_test_mod_bitflags(0b00000101);
+        let mut hs = HashSet::new();
+        hs.insert(TestMod::Punctuation);
+        hs.insert(TestMod::Symbols);
+        assert_eq!(ans, hs);
+
+        let zero_ans = decode_test_mod_bitflags(0);
+        assert!(zero_ans.is_empty());
     }
 }

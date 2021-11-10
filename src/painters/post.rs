@@ -10,6 +10,9 @@ use tui::{
     Terminal,
 };
 
+const WINCOLOR: Color = Color::Yellow;
+const STANDARDCOLOR: Color = Color::Cyan;
+
 pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
     terminal
         .draw(|frame| {
@@ -26,11 +29,26 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             let final_wpm = format!("{}", summary.wpm.round());
             let final_acc = format!("{}", summary.acc.round());
+            let diff = format!("{}", summary.wpm - app.settings.postbox.cached_historic_wpm)[..6]
+                .to_string();
+
+            let secs: f64 = test.hoarder.seconds as f64;
+            let length: f64 = test.hoarder.wpms.len() as f64;
+            let max_wpm: f64 = test.hoarder.get_max_wpm();
+            let history_max_wpm: f64 = app.settings.postbox.cached_historic_wpm;
+
+            let mut wpm_line_style = Style::default().fg(STANDARDCOLOR);
+
+            if summary.wpm > history_max_wpm {
+                wpm_line_style = Style::default().fg(WINCOLOR);
+            }
+
+            let highest = f64::max(max_wpm, history_max_wpm);
 
             let up_txt = vec![
                 Spans::from(vec![
                     Span::raw("wpm: "),
-                    Span::styled(final_wpm, Style::default().fg(Color::Blue)),
+                    Span::styled(final_wpm, Style::default().fg(wpm_line_style.fg.unwrap())),
                 ]),
                 Spans::from(vec![
                     Span::raw("acc: "),
@@ -43,6 +61,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         Style::default().fg(test.colors.wrong),
                     ),
                 ]),
+                Spans::from(vec![Span::styled(diff, wpm_line_style)]),
             ];
 
             // TODO move this logic to TypingTestConfig???;
@@ -53,32 +72,40 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             frame.render_widget(block, chunks[0]);
 
-            let secs: f64 = test.hoarder.seconds as f64;
-            let length: f64 = test.hoarder.wpms.len() as f64;
-            let max_wpm: f64 = test.hoarder.get_max_wpm();
+            let mut wpm_dataset: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
+            let mut pb_dataset: Vec<(f64, f64)> = Vec::with_capacity(length as usize);
 
-            let data = test
-                .hoarder
-                .wpms
-                .iter()
-                .enumerate()
-                .map(|(i, val)| (((i + 1) as f64 * secs as f64), *val))
-                .collect::<Vec<(f64, f64)>>();
+            for (i, wpm) in test.hoarder.wpms.iter().enumerate() {
+                let sec = (i + 1) as f64 * secs;
+                wpm_dataset.push((sec, *wpm));
+                pb_dataset.push((sec, history_max_wpm));
+            }
 
-            let wpm_datasets = vec![Dataset::default()
-                .name("wpm")
-                .marker(symbols::Marker::Dot)
-                .style(Style::default().fg(Color::Blue))
-                .graph_type(GraphType::Line)
-                .data(&data)];
+            debug!("{:#?}", wpm_dataset);
+            debug!("{}", history_max_wpm);
 
-            let x_labels: Vec<Span> = data
+            let wpm_datasets = vec![
+                Dataset::default()
+                    .name("pb")
+                    .marker(symbols::Marker::Braille)
+                    .style(Style::default().fg(Color::Blue))
+                    .graph_type(GraphType::Line)
+                    .data(&pb_dataset),
+                Dataset::default()
+                    .name("wpm")
+                    .marker(symbols::Marker::Braille)
+                    .style(wpm_line_style)
+                    .graph_type(GraphType::Line)
+                    .data(&wpm_dataset),
+            ];
+
+            let x_labels: Vec<Span> = wpm_dataset
                 .iter()
                 .map(|&(i, _)| Span::styled(format!("{}", i), Style::default().fg(Color::Blue)))
                 .collect();
 
             let margin: f64 = 20.;
-            let y_upper_bound: f64 = max_wpm.div_euclid(10.) * 10. + margin;
+            let y_upper_bound: f64 = highest.div_euclid(10.) * 10. + margin;
 
             let y_labels: Vec<Span> = (0..=y_upper_bound.div_euclid(10.) as i32)
                 .map(|i| Span::styled(format!("{}", i * 10), Style::default().fg(Color::Blue)))

@@ -28,8 +28,26 @@ pub fn handle(key: KeyEvent, app: &mut App) {
     match key.code {
         KeyCode::Char(c) => {
             if test.on_char(c) {
+                // TEST ENDS
+                // we summarize and write to db?
                 let summary = test.summarize();
-                app.settings.test_cfg.test_summary = summary;
+                app.settings.save_test_results(summary);
+
+                // app.settings.test_cfg.test_summary = summary;
+
+                // // If record is beat the historic_max_wpm but the
+                // // previous one is cached so it can be displayed in
+                // // the post screen
+                // let history_max_wpm: f64 =
+                //     app.settings.get_current_historic_max_wpm().unwrap_or(0.);
+                // app.postbox.cached_historic_wpm = history_max_wpm;
+                // let final_wpm = app.settings.test_cfg.test_summary.wpm;
+
+                // if final_wpm > history_max_wpm {
+                //     app.settings.update_historic_max_wpm(final_wpm);
+                // }
+
+                // app.settings.save_run_to_database();
                 app.change_to_post();
             }
         }
@@ -41,12 +59,34 @@ pub fn handle(key: KeyEvent, app: &mut App) {
     }
 }
 
+// TODO i can write some db test here too I guess
 #[cfg(test)]
 mod tests {
     use crate::application::App;
+    use crate::database::{init::init_db, RunHistoryDatbase};
+    use crate::settings::Settings;
     use crossterm::event::{KeyCode, KeyEvent};
+    use rusqlite::Connection;
     use std::thread;
     use std::time::Duration;
+
+    fn get_test_app<'a>() -> App<'a> {
+        let mut settings = Settings {
+            database: RunHistoryDatbase {
+                conn: Connection::open_in_memory().unwrap(),
+            },
+            ..Default::default()
+        };
+
+        init_db(&mut settings.database.conn).unwrap();
+
+        let app = App {
+            settings,
+            ..App::setup()
+        };
+
+        app
+    }
 
     fn generate_key_events_passing_standart_test<'a>(app: &App) -> Vec<KeyEvent> {
         let mut kv = vec![];
@@ -71,16 +111,11 @@ mod tests {
             }
         }
 
-        for k in &kv {
-            if let KeyCode::Char(c) = k.code {
-                print!("{}", c);
-            }
-        }
         kv
     }
 
     fn go_thorugh_test_n_times(n: usize) {
-        let mut app = App::setup();
+        let mut app = get_test_app();
         for _ in 0..n {
             let key_events = generate_key_events_passing_standart_test(&app);
 
@@ -124,7 +159,7 @@ mod tests {
     fn wpm_test_setup(wpm: f64) {
         let delay = wpm_to_char_delay(wpm);
 
-        let mut app = App::setup();
+        let mut app = get_test_app();
 
         use crate::settings::TypingTestConfig;
         let mut cfg = TypingTestConfig::default();
@@ -158,7 +193,7 @@ mod tests {
 
     #[test]
     fn test_accuracy() {
-        let mut app = App::setup();
+        let mut app = get_test_app();
         let key_events = generate_key_events_passing_standart_test(&app);
         let key_events_len = key_events.len();
         let amount_of_mistakes = 10;
@@ -194,7 +229,7 @@ mod tests {
 
     #[test]
     fn test_backspace_at_the_test_begining() {
-        let mut app = App::setup();
+        let mut app = get_test_app();
         for _ in 0..20 {
             app.handle_key_event(KeyEvent::from(KeyCode::Backspace))
         }

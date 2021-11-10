@@ -5,6 +5,7 @@ mod painters;
 pub mod application;
 pub mod colorscheme;
 pub mod config;
+pub mod database;
 pub mod settings;
 pub mod storage;
 pub mod typer;
@@ -28,10 +29,13 @@ pub fn run(mut app: App, terminal: Term) -> crossterm::Result<()> {
     #[cfg(debug_assertions)]
     init_logger();
 
+    database::init::debug_init_db();
     app.reset_test();
+
     termprep::init();
     main_loop(app, terminal)?;
     termprep::shutdown();
+
     Ok(())
 }
 

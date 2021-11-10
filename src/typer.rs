@@ -163,7 +163,7 @@ impl<'a> TestState<'a> {
 
     pub fn summarize(&self) -> TestSummary {
         TestSummary {
-            correct_chars: self.pdone + self.done - self.mistakes,
+            correct_chars: self.pdone + self.done - self.blanks - self.mistakes,
             mistakes: self.mistakes,
             wpm: self.calculate_wpm(),
             acc: self.calculate_acc(),
@@ -401,6 +401,8 @@ impl<'a> TestState<'a> {
     }
 }
 
+// TODO these tests save to real database XEDDD
+// plx fix
 #[cfg(test)]
 mod tests {
     use super::*;
