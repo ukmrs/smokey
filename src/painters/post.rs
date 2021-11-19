@@ -81,9 +81,6 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                 pb_dataset.push((sec, history_max_wpm));
             }
 
-            debug!("{:#?}", wpm_dataset);
-            debug!("{}", history_max_wpm);
-
             let wpm_datasets = vec![
                 Dataset::default()
                     .name("pb")
