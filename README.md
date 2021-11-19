@@ -2,7 +2,7 @@
 
 Program that allows training wpm from the comfort of a terminal.
 
-[![asciicast](https://asciinema.org/a/419067.svg)](https://asciinema.org/a/419067)
+[![asciicast](https://asciinema.org/a/450192.svg)](https://asciinema.org/a/450192)
 
 ## Installing
 ### With cargo
@@ -52,7 +52,7 @@ then copy target/release/smokey to a known location
 ## word lists
 Smokey ships with a sizeable english word list (~60_000 words) which on linux can be found in
 
-~/.local/smokey/storage/words
+~/.local/share/smokey/words
 
 Otherwise location can be found with the --storage flag.
 
@@ -121,7 +121,7 @@ smokey --config
 ### Example smokey.toml
 
 For colors you can use either hex codes or standard colors
-([supported names](https://docs.rs/tui/0.15.0/tui/style/enum.Color.html)).
+([supported names](https://docs.rs/tui/0.16.0/tui/style/enum.Color.html)).
 
 ```toml
 [colors]
@@ -141,3 +141,12 @@ mods = ["punctuation", "numbers"]
 len = 20
 pool = 60000
 ```
+
+## Run history
+Runs are saved to a sqlite database, on linux you can find it here:
+
+~/.local/share/smokey/run_history.db3
+
+For now it is only used to fetch and compare against your record wpm.
+In the very near future there will be a nice way to explore the history,
+but I haven't implemented that yet, soz.
