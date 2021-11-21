@@ -114,7 +114,7 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         .title(Span::styled(
                             graph_title,
                             Style::default()
-                                .fg(Color::Cyan)
+                                .fg(Color::Blue)
                                 .add_modifier(Modifier::BOLD),
                         ))
                         .borders(Borders::ALL),
