@@ -1,8 +1,7 @@
 # smokey
+Typing training from the comfort of a terminal.
 
-Program that allows training wpm from the comfort of a terminal.
-
-[![asciicast](https://asciinema.org/a/450192.svg)](https://asciinema.org/a/450192)
+[![asciicast](https://asciinema.org/a/b6gHOCIJbGgJ2J5XayjgxU9nw.svg)](https://asciinema.org/a/b6gHOCIJbGgJ2J5XayjgxU9nw)
 
 ## Installing
 ### With cargo
