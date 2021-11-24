@@ -171,6 +171,7 @@ impl fmt::Display for TypingTestConfig {
 }
 
 impl Default for TypingTestConfig {
+    // TODO name can probably can be &str XD
     fn default() -> Self {
         Self {
             name: String::from("english"),
@@ -419,7 +420,7 @@ impl Settings {
                 if final_wpm > historic_max_wpm {
                     self.update_historic_max_wpm(final_wpm);
                 }
-                self.database.save_test(&self.test_cfg);
+                self.database.save(&self.test_cfg);
             }
 
             TestVariant::Script => {
@@ -427,14 +428,14 @@ impl Settings {
                 let historic_max_wpm = self
                     .script_cache
                     .get(&self.test_cfg.name)
-                    .unwrap()
+                    .expect("The name isn't registered in the script_cache")
                     .unwrap_or(0.);
 
                 self.postbox.cached_historic_wpm = historic_max_wpm;
                 if final_wpm > historic_max_wpm {
                     *self.script_cache.get_mut(&self.test_cfg.name).unwrap() = Some(final_wpm);
                 }
-                self.database.save_script(&self.test_cfg);
+                self.database.save(&self.test_cfg);
             }
         }
     }
@@ -449,7 +450,7 @@ impl Settings {
         let inner_cache = &mut self
             .info_cache
             .get_mut(&self.test_cfg.name)
-            .expect("this should never fail beacuase name is set beforehand")
+            .expect("this should never fail because name is set beforehand")
             .1;
 
         if inner_cache.get(&tid).is_none() {
@@ -487,11 +488,6 @@ impl Settings {
         }
 
         match self.active {
-            // low priority consideration:
-            // take into account these changes
-            // and have em ready when user swaps to TestVariant::Standard
-            // again. As it stands the changes are ignored
-            // which isn't bad tbh
             SetList::Length => {
                 if let TestVariant::Script = self.test_cfg.variant {
                     return;
@@ -506,6 +502,7 @@ impl Settings {
                 if is_script(chosen_test_name) {
                     self.test_cfg.variant = TestVariant::Script;
 
+                    // TODO change
                     self.test_cfg.name = chosen_test_name[2..].to_string();
                     let hwpm =
                         database::get_max_wpm_script(&self.database.conn, &self.test_cfg.name);

@@ -22,34 +22,28 @@ impl Default for RunHistoryDatbase {
 
 impl RunHistoryDatbase {
     pub fn save(&mut self, ttc: &TypingTestConfig) {
-        match ttc.variant {
-            TestVariant::Standard => self.save_test(ttc),
-            TestVariant::Script => self.save_script(ttc),
-        }
-    }
-
-    pub fn save_script(&mut self, ttc: &TypingTestConfig) {
-        let sum = &ttc.test_summary;
-        let script_id = get_script_id_or_create(&self.conn, &ttc.name).unwrap();
-
-        self.conn
-            .execute(
-                "INSERT INTO srun (date, script_id, correct_chars, mistakes, wpm, acc)
-            VALUES ((SELECT strftime('%s', 'now')), ?,  ?, ?, ?, ?);",
-                params![script_id, sum.correct_chars, sum.mistakes, sum.wpm, sum.acc],
-            )
-            .expect("inserting into srun");
-    }
-
-    pub fn save_test(&mut self, ttc: &TypingTestConfig) {
         let test_id = get_test_id_or_create(&self.conn, &ttc.name).unwrap();
-        let mods = encode_test_mod_bitflag(&ttc.mods);
         let sum = &ttc.test_summary;
+
+        let (len, mods, pool): (usize, u8, usize);
+
+        match ttc.variant {
+            TestVariant::Script => {
+                len = 0;
+                mods = 0;
+                pool = 0;
+            }
+            TestVariant::Standard => {
+                len = ttc.length;
+                mods = encode_test_mod_bitflag(&ttc.mods);
+                pool = ttc.word_pool;
+            }
+        }
 
         self.conn.execute(
             "INSERT INTO run (date, test_id, length, mods, word_pool, correct_chars, mistakes, wpm, acc)
             VALUES ((SELECT strftime('%s', 'now')), ?, ?, ?, ?, ?, ?, ?, ?);",
-            params![test_id, ttc.length, mods, ttc.word_pool,
+            params![test_id, len, mods, pool,
             sum.correct_chars, sum.mistakes, sum.wpm, sum.acc],
             )
             .expect("inserting into run");
@@ -58,8 +52,8 @@ impl RunHistoryDatbase {
 
 pub fn get_max_wpm_script(conn: &Connection, script_name: &str) -> Option<f64> {
     conn.query_row(
-        "SELECT max(wpm) FROM srun WHERE
-        script_id = (select script_id FROM script WHERE script_name = ?)",
+        "SELECT max(wpm) FROM run WHERE
+        test_id = (select test_id FROM test WHERE test_name = ?)",
         params![&script_name,],
         |row| row.get(0),
     )
@@ -99,29 +93,6 @@ pub fn get_test_id_or_create(conn: &Connection, test_id: &str) -> Result<usize> 
             conn.execute(
                 "INSERT INTO test (test_name) VALUES (?) ;",
                 params![test_id],
-            )?;
-            Ok(conn.last_insert_rowid() as usize)
-        }
-    }
-}
-
-// TODO quick dupe to make thing work
-// it can be melted into less code later
-pub fn get_script_id(conn: &Connection, script_name: &str) -> Result<usize, rusqlite::Error> {
-    conn.query_row(
-        "select script_id from script where script_name = ?",
-        [script_name],
-        |row| row.get(0),
-    )
-}
-
-pub fn get_script_id_or_create(conn: &Connection, script_id: &str) -> Result<usize> {
-    match get_script_id(conn, script_id) {
-        Ok(id) => Ok(id),
-        Err(_) => {
-            conn.execute(
-                "INSERT INTO script (script_name) VALUES (?) ;",
-                params![script_id],
             )?;
             Ok(conn.last_insert_rowid() as usize)
         }

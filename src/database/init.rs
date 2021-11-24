@@ -15,9 +15,6 @@ pub fn init_db(conn: &mut Connection) -> SqlResult<()> {
 
     test_table_init(&tx)?;
     run_table_init(&tx)?;
-    mod_table_init(&tx)?;
-    script_table_init(&tx)?;
-    run_script_table_init(&tx)?;
 
     tx.commit()?;
 
@@ -50,45 +47,6 @@ fn run_table_init(conn: &Connection) -> SqlResult<()> {
     mods INTEGER NOT NULL,
     FOREIGN KEY (test_id) REFERENCES test (test_id) ON DELETE CASCADE
     );",
-        [],
-    )?;
-    Ok(())
-}
-
-fn script_table_init(conn: &Connection) -> SqlResult<()> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS script (
-    script_id INTEGER PRIMARY KEY,
-    script_name TEXT UNIQUE
-    );",
-        [],
-    )?;
-    Ok(())
-}
-
-fn run_script_table_init(conn: &Connection) -> SqlResult<()> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS srun (
-    run_id INTEGER PRIMARY KEY,
-    date INTEGER NOT NULL,
-    script_id INTEGER NOT NULL,
-    correct_chars INTEGER NOT NULL,
-    mistakes INTEGER NOT NULL,
-    wpm REAL NOT NULL,
-    acc REAL NOT NULL,
-    FOREIGN KEY (script_id) REFERENCES script (script_id)
-    );",
-        [],
-    )?;
-    Ok(())
-}
-
-fn mod_table_init(conn: &Connection) -> SqlResult<()> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS mod (
-        mod_id INTEGER PRIMARY KEY,
-        mod_name TEXT UNIQUE
-        );",
         [],
     )?;
     Ok(())

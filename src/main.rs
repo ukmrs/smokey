@@ -25,6 +25,7 @@ fn main() -> crossterm::Result<()> {
 
     let app = App::from_config();
 
+
     smokey::run(app, terminal)?;
     Ok(())
 }
