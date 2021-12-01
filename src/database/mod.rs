@@ -1,3 +1,4 @@
+pub mod history;
 pub mod init;
 use crate::settings::{TestMod, TestVariant, TypingTestConfig, BITFLAG_MODS};
 use crate::storage;
@@ -47,6 +48,12 @@ impl RunHistoryDatbase {
             sum.correct_chars, sum.mistakes, sum.wpm, sum.acc],
             )
             .expect("inserting into run");
+    }
+
+    pub fn print_history(&self, limit: usize) {
+        history::get_history(&self.conn, limit)
+            .expect("could")
+            .print();
     }
 }
 

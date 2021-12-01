@@ -6,7 +6,8 @@
 //! by ukmrs https://github.com/ukmrs/smokey
 //! A simple typing test terminal UI app
 
-use smokey::{application::App, storage};
+use smokey::{application::App, database, storage};
+
 use std::io::stdout;
 use structopt::StructOpt;
 use tui::{backend::CrosstermBackend, Terminal};
@@ -25,20 +26,23 @@ fn main() -> crossterm::Result<()> {
 
     let app = App::from_config();
 
-
     smokey::run(app, terminal)?;
     Ok(())
 }
 
 #[derive(StructOpt)]
 struct Opt {
-    /// prints expected path of the smokey config file
+    /// Prints expected path of the smokey config file
     #[structopt(short, long)]
     config: bool,
 
-    /// prints path of the smokey storage directory
+    /// Prints path of the smokey storage directory
     #[structopt(short, long)]
     storage: bool,
+
+    /// Prints out summaries of n most recent runs
+    #[structopt(short, long, name = "n")]
+    recent: Option<Option<usize>>,
 }
 
 fn execute_info_requests(opt: &Opt) -> bool {
@@ -51,6 +55,12 @@ fn execute_info_requests(opt: &Opt) -> bool {
     if opt.config {
         should_exit = true;
         println!("{}", storage::get_config_file().to_str().unwrap())
+    }
+
+    if let Some(us) = opt.recent {
+        let history_lines = us.unwrap_or(12);
+        should_exit = true;
+        database::RunHistoryDatbase::default().print_history(history_lines);
     }
 
     should_exit

@@ -14,6 +14,10 @@ pub const SCRIPT_SIGN: &str = "#!";
 use bimap::BiMap;
 use lazy_static::lazy_static;
 
+pub const PUNCTUATION_SHORTHAND: &str = "!?";
+pub const NUMBERS_SHORTHAND: &str = "17";
+pub const SYMBOLS_SHORTHAND: &str = "#$";
+
 lazy_static! {
     pub static ref TEST_MODS: BiMap<&'static str, TestMod> = [
         ("punctuation", TestMod::Punctuation),
