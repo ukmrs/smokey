@@ -2,8 +2,14 @@ use crate::colorscheme::ToForeground;
 use crate::langs;
 use crate::settings::TestSummary;
 use crate::settings::TypingTestConfig;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tui::{style::Color, text::Span};
+
+/// 0.05s tiny time offset appllied when pressed the first key
+/// 0.05s delay between chars corresponds to 240wpm
+/// which is more than the world record
+/// seems more than fair
+const INITAL_OFFSET: Duration = Duration::from_millis(50);
 
 pub struct WpmHoarder {
     pub wpms: Vec<f64>,
@@ -93,6 +99,7 @@ pub struct TestState<'a> {
     pub cursor_x: u16,
     pub current_char: char,
 
+    pub first: bool,
     pub begining: Instant,
     // source for generating test
     pub source: String,
@@ -119,6 +126,7 @@ impl<'a> Default for TestState<'a> {
             // characters done on current line
             // this variable is reset after each line
             done: 0,
+            first: true,
 
             // chars done on previous lines
             // p stands for persistent I guess
@@ -186,6 +194,7 @@ impl<'a> TestState<'a> {
         self.backburner = wordy;
         self.current_char = self.active[self.done].content.chars().next().unwrap();
         self.length = self.active.len();
+        self.first = true;
         self.begining = Instant::now();
     }
 
@@ -292,6 +301,13 @@ impl<'a> TestState<'a> {
     /// returns true when the test is done
     pub fn on_char(&mut self, c: char) -> bool {
         self.cursor_x += 1;
+
+        if self.first {
+            self.hoarder.reset();
+            self.first = false;
+            self.begining = Instant::now().checked_sub(INITAL_OFFSET).unwrap();
+        }
+
         if c == self.current_char {
             self.active[self.done].style = self.colors.done.fg();
             self.done += 1;
