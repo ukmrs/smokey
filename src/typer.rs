@@ -59,6 +59,20 @@ impl WpmHoarder {
         }
         max
     }
+
+    pub fn get_min_max_wpm(&self) -> (f64, f64) {
+        let mut max: f64 = self.wpms[0];
+        let mut min: f64 = self.wpms[0];
+
+        for wpm in &self.wpms[1..] {
+            if *wpm > max {
+                max = *wpm
+            } else if *wpm < min {
+                min = *wpm
+            }
+        }
+        (min, max)
+    }
 }
 
 pub struct TestColors {
@@ -302,9 +316,18 @@ impl<'a> TestState<'a> {
     pub fn on_char(&mut self, c: char) -> bool {
         self.cursor_x += 1;
 
+        // TODO this implemenation is quick and dirty
+        // and is just slapped onto existing infrastracture
+        // I don't really care for now
+        // as it works
         if self.first {
             self.hoarder.reset();
             self.first = false;
+            // ofseting begining prevents very ugly graph start though not entirely.
+            // It's also only fair as the player would get the first char for free
+            // instead he gets it on the above world record pace of 240wpm
+            // which isn't at all significant for the player
+            // but helps the software
             self.begining = Instant::now().checked_sub(INITAL_OFFSET).unwrap();
         }
 
