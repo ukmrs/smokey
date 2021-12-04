@@ -2,8 +2,14 @@ use crate::colorscheme::ToForeground;
 use crate::langs;
 use crate::settings::TestSummary;
 use crate::settings::TypingTestConfig;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tui::{style::Color, text::Span};
+
+/// 0.05s tiny time offset appllied when pressed the first key
+/// 0.05s delay between chars corresponds to 240wpm
+/// which is more than the world record
+/// seems more than fair
+const INITAL_OFFSET: Duration = Duration::from_millis(50);
 
 pub struct WpmHoarder {
     pub wpms: Vec<f64>,
@@ -53,6 +59,20 @@ impl WpmHoarder {
         }
         max
     }
+
+    pub fn get_min_max_wpm(&self) -> (f64, f64) {
+        let mut max: f64 = self.wpms[0];
+        let mut min: f64 = self.wpms[0];
+
+        for wpm in &self.wpms[1..] {
+            if *wpm > max {
+                max = *wpm
+            } else if *wpm < min {
+                min = *wpm
+            }
+        }
+        (min, max)
+    }
 }
 
 pub struct TestColors {
@@ -93,6 +113,7 @@ pub struct TestState<'a> {
     pub cursor_x: u16,
     pub current_char: char,
 
+    pub first: bool,
     pub begining: Instant,
     // source for generating test
     pub source: String,
@@ -119,6 +140,7 @@ impl<'a> Default for TestState<'a> {
             // characters done on current line
             // this variable is reset after each line
             done: 0,
+            first: true,
 
             // chars done on previous lines
             // p stands for persistent I guess
@@ -186,6 +208,7 @@ impl<'a> TestState<'a> {
         self.backburner = wordy;
         self.current_char = self.active[self.done].content.chars().next().unwrap();
         self.length = self.active.len();
+        self.first = true;
         self.begining = Instant::now();
     }
 
@@ -292,6 +315,22 @@ impl<'a> TestState<'a> {
     /// returns true when the test is done
     pub fn on_char(&mut self, c: char) -> bool {
         self.cursor_x += 1;
+
+        // TODO this implemenation is quick and dirty
+        // and is just slapped onto existing infrastracture
+        // I don't really care for now
+        // as it works
+        if self.first {
+            self.hoarder.reset();
+            self.first = false;
+            // ofseting begining prevents very ugly graph start though not entirely.
+            // It's also only fair as the player would get the first char for free
+            // instead he gets it on the above world record pace of 240wpm
+            // which isn't at all significant for the player
+            // but helps the software
+            self.begining = Instant::now().checked_sub(INITAL_OFFSET).unwrap();
+        }
+
         if c == self.current_char {
             self.active[self.done].style = self.colors.done.fg();
             self.done += 1;
