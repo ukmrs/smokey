@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.2 - 4.12.2021
+
+### Features
+
+* Test starts when the first key is pressed
+* Chart is now restricted by lower bound
+* Chart upper bound should be more  **a e s t h e t i c**
+
 ## v0.3.1 - 1.12.2021
 
 ### Features
