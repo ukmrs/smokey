@@ -1,6 +1,6 @@
 use crate::database::{self, RunHistoryDatbase};
 use crate::storage;
-use crate::utils::{count_lines_from_path, StatefulList};
+use crate::utils::{count_lines_from_path, termprep, StatefulList};
 use crate::vec_of_strings;
 use rusqlite::Connection;
 use std::collections::{HashMap, HashSet};
@@ -197,8 +197,12 @@ impl TypingTestConfig {
     /// returns the maximum possible value of word_pool to be cached
     fn validate(&mut self) -> usize {
         let path = self.get_file_path();
+
         if !path.is_file() {
-            self.name = "english".to_string()
+            termprep::panic_with_friendly_message(&format!(
+                "{:?}\nthis word file does not exist",
+                path
+            ))
         }
 
         let lines = count_lines_from_path(path).expect("fallback to the english word file");

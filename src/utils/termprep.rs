@@ -14,13 +14,14 @@
 
 use std::io::stdout;
 use std::panic;
+use std::process;
 
 use crossterm::{
     cursor, execute,
     style::Print,
     terminal::{
-        disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
-        LeaveAlternateScreen,
+        disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, Clear, ClearType,
+        EnterAlternateScreen, LeaveAlternateScreen,
     },
 };
 
@@ -35,6 +36,18 @@ pub fn init() {
 /// and return to terminal state before the program was run
 pub fn shutdown() {
     cleanup_terminal();
+}
+
+pub fn panic_with_friendly_message(msg: &str) {
+    let raw_mode_enabled = is_raw_mode_enabled()
+        .expect("funny thing: I tried to prepare a nice error message but failed");
+
+    if raw_mode_enabled {
+        shutdown();
+    }
+
+    eprintln!("{}", msg);
+    process::exit(1);
 }
 
 /// enters alt screen and all that good stuff
