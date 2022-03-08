@@ -12,14 +12,9 @@ impl<'a> SpanIntake for Vec<Span<'a>> {
 }
 
 /// Remembers that the next word needs to be capitalized
+#[derive(Default)]
 pub struct Capitalize {
     sync: [u8; 2],
-}
-
-impl Default for Capitalize {
-    fn default() -> Self {
-        Self { sync: [0, 0] }
-    }
 }
 
 impl Capitalize {
