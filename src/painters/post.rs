@@ -2,7 +2,7 @@ use crate::application::App;
 
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     symbols,
     text::{Span, Spans},
@@ -97,20 +97,22 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                     .data(&wpm_dataset),
             ];
 
-            let x_labels: Vec<Span> = wpm_dataset
-                .iter()
-                .map(|&(i, _)| Span::styled(format!("{}", i), Style::default().fg(Color::Blue)))
-                .collect();
-
-            let margin: f64;
+            let x_labels: Vec<Span> = vec![
+                wpm_dataset[0].0,
+                wpm_dataset[(wpm_dataset.len() - 1) / 2].0,
+                wpm_dataset[wpm_dataset.len() - 1].0,
+            ]
+            .into_iter()
+            .map(|i| Span::styled(format!("{}", i), Style::default().fg(Color::Blue)))
+            .collect();
 
             // Only apply larger margin if personal best line would be unsightly close
             // to the chart upper frame
-            if hmax_wpm - history_max_wpm > 10. || history_max_wpm % 10.0 < 8. {
-                margin = 10.
+            let margin = if hmax_wpm - history_max_wpm > 10. || history_max_wpm % 10.0 < 8. {
+                10.
             } else {
-                margin = 20.
-            }
+                20.
+            };
 
             let y_upper_bound: f64 = highest.div_euclid(10.) * 10. + margin;
             let y_lower_bound: f64 = f64::max(0., hmin_wpm.div_euclid(10.) * 10. - 10.);
@@ -137,7 +139,8 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
                         .title("time (s)")
                         .style(Style::default().fg(Color::Gray))
                         .bounds([secs, length * secs])
-                        .labels(x_labels),
+                        .labels(x_labels)
+                        .labels_alignment(Alignment::Center),
                 )
                 .y_axis(
                     Axis::default()
@@ -149,5 +152,5 @@ pub fn draw_post<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 
             frame.render_widget(chart, chunks[1]);
         })
-        .expect("drawing post went fine");
+        .expect("drawing post went oof");
 }

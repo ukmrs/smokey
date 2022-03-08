@@ -86,5 +86,5 @@ fn panic_hook(panic_info: &panic::PanicInfo) {
 
 /// In case of panic restores terminal before program terminates
 fn set_panic_hook() {
-    panic::set_hook(Box::new(|info| panic_hook(info)));
+    panic::set_hook(Box::new(panic_hook));
 }
