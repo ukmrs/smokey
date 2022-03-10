@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.3 - 10.03.2022
+
+### Changes
+
+* Chart: there are now only 3 labels on the time axis (decluttering)
+* The wpm hoarder range is massively increased (allowed by the above change)
+* Upgrades: 
+	* rust edition to 2021
+	* tui.rs to 17
+
 ## v0.3.2 - 4.12.2021
 
 ### Features

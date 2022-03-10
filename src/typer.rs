@@ -157,7 +157,7 @@ impl<'a> Default for TestState<'a> {
             source: "storage/words/english".to_string(),
             length: 0,
             current_char: ' ',
-            hoarder: WpmHoarder::new(32),
+            hoarder: WpmHoarder::new(400),
             colors: TestColors::default(),
         }
     }

@@ -109,22 +109,21 @@ pub fn get_history(conn: &Connection, limit: usize) -> Result<History, rusqlite:
     let mut justing = JustingInfo::default();
 
     let rows = stmt.query_map([limit], |row| {
-        let name: String;
         let word_pool: usize = row.get(8)?;
 
-        if word_pool == 0 {
-            name = row.get(2)?;
+        let name: String = if word_pool == 0 {
+            row.get(2)?
         } else {
             let raw_name: String = row.get(2)?;
             let length: usize = row.get(7)?;
-            name = format!(
+            format!(
                 "{} {}/{}{}",
                 raw_name,
                 length,
                 word_pool,
                 decode(row.get(3)?)
-            );
-        }
+            )
+        };
 
         let s = EntryCell {
             wpm: row.get(0)?,
