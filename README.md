@@ -1,7 +1,7 @@
 # smokey
-Typing training from the comfort of a terminal.
+Comfy terminal based typing test
 
-[![asciicast](https://asciinema.org/a/b6gHOCIJbGgJ2J5XayjgxU9nw.svg)](https://asciinema.org/a/b6gHOCIJbGgJ2J5XayjgxU9nw)
+![](https://i.imgur.com/PLV04NA.png)
 
 ## Installing
 ### With cargo
