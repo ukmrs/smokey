@@ -26,7 +26,7 @@ toml = "0.5.8"
 anyhow = "1.0.42"
 structopt = "0.3.22"
 # it would be nice if I could make bundled default but optional?
-rusqlite = "0.26.0"
+rusqlite = "0.27.0"
 
 [features]
 default = ["rusqlite/bundled"]
