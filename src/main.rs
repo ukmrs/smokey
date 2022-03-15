@@ -8,12 +8,12 @@
 
 use smokey::{application::App, database, storage};
 
+use clap::Parser;
 use std::io::stdout;
-use structopt::StructOpt;
 use tui::{backend::CrosstermBackend, Terminal};
 
 fn main() -> crossterm::Result<()> {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
     if execute_info_requests(&opt) {
         return Ok(());
     }
@@ -30,7 +30,8 @@ fn main() -> crossterm::Result<()> {
     Ok(())
 }
 
-#[derive(StructOpt)]
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
 struct Opt {
     /// Prints expected path of the smokey config file
     #[structopt(short, long)]
