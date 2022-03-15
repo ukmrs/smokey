@@ -1,6 +1,6 @@
 [package]
 name = "smokey"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["ukmrs <murias.wstork@gmail.com>"]
 edition = "2021"
 description = "Comfy terminal based typing test"
@@ -12,21 +12,21 @@ keywords = ["tui", "typing", "wpm"]
 [dependencies]
 bytecount = "0.6.2"
 crossterm = {version = "0.22.1", features = ["event-stream"]}
+clap = { version = "3.1.6", features = ["derive"] }
 directories-next = "2.0.0"
 fastrand = "1.4.0"
 lazy_static = "1.4.0"
 bimap = "0.6.1"
 log = "0.4.11"
-rand = "0.8.3"
+rand = "0.8.5"
 simplelog = "0.9.0"
 tui = { version = "0.17.0", features = ["crossterm"], default-features = false }
 serde_derive = "1.0.126"
 serde = "1.0.126"
 toml = "0.5.8"
 anyhow = "1.0.42"
-structopt = "0.3.22"
 # it would be nice if I could make bundled default but optional?
-rusqlite = "0.26.0"
+rusqlite = "0.27.0"
 
 [features]
 default = ["rusqlite/bundled"]
