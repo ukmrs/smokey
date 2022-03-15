@@ -465,7 +465,6 @@ impl Settings {
             let max_wpm = database::get_max_wpm(&self.database.conn, &self.test_cfg);
             inner_cache.insert(tid, max_wpm);
         }
-        debug!("{:?}", &self.info_cache);
     }
 
     /// TODO

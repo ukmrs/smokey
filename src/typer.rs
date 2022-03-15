@@ -10,6 +10,7 @@ use tui::{style::Color, text::Span};
 /// which is more than the world record
 /// seems more than fair
 const INITAL_OFFSET: Duration = Duration::from_millis(50);
+const MAX_EXTRA_MISTAKES: usize = 3;
 
 pub struct WpmHoarder {
     pub wpms: Vec<f64>,
@@ -108,6 +109,7 @@ pub struct TestState<'a> {
     pub blanks: usize,
 
     pub mistakes: usize,
+    pub extra_mistakes: usize,
     pub pmiss: usize,
 
     pub cursor_x: u16,
@@ -147,6 +149,7 @@ impl<'a> Default for TestState<'a> {
             pdone: 0,
             blanks: 0,
             mistakes: 0,
+            extra_mistakes: 0,
 
             // persistent mistakes - these cant be backspaced away
             // used to calculate accuracy
@@ -186,7 +189,7 @@ impl<'a> TestState<'a> {
     pub fn summarize(&self) -> TestSummary {
         TestSummary {
             correct_chars: self.pdone + self.done - self.blanks - self.mistakes,
-            mistakes: self.mistakes,
+            mistakes: self.mistakes + self.extra_mistakes,
             wpm: self.calculate_wpm(),
             acc: self.calculate_acc(),
         }
@@ -199,6 +202,7 @@ impl<'a> TestState<'a> {
         self.up = vec![];
         self.pmiss = 0;
         self.mistakes = 0;
+        self.extra_mistakes = 0;
         self.hoarder.reset();
 
         let mut wordy = langs::prepare_test(config, &self.colors);
@@ -340,14 +344,17 @@ impl<'a> TestState<'a> {
         // wrong key
         // adds the mistake and the end of the word
         if self.current_char == ' ' {
-            // doesnt count as mistake
-            // but maybe as some sort of extra
             self.pmiss += 1;
-            if self.fetch(self.done - 1).len() < 3 {
+            if self.fetch(self.done - 1).len() < MAX_EXTRA_MISTAKES {
+                self.extra_mistakes += 1;
                 self.active[self.done - 1].content.to_mut().push(c);
             } else {
                 // cursor is pushed +1 when KeyCode::Char is matched
-                // well in this rare case nothing happens so it needs to revert
+                // well in this rare case nothing happens so it needs to revert;
+                // $extra_mistakes is not incremented because the mistake itself
+                // isn't shown on the screen after exceeding the limit.
+                // the pmiss is bumped so it still contributes to the accuracy though
+                // TODO extremely low priority "controversial" decision to think through
                 self.cursor_x -= 1;
             }
         // just changes to wrong and moves on
@@ -366,7 +373,10 @@ impl<'a> TestState<'a> {
     // undo word
 
     fn undo_space_char_and_extras(&mut self) {
-        self.cursor_x -= self.fetch(self.done - 1).len() as u16 + 1;
+        let x = self.fetch(self.done - 1).len();
+        self.extra_mistakes -= x;
+        debug!("{}", x);
+        self.cursor_x -= x as u16 + 1;
         self.change(self.done - 1, String::new());
         self.done -= 2;
 
@@ -422,6 +432,7 @@ impl<'a> TestState<'a> {
                         .to_mut()
                         .pop()
                         .expect("checked above");
+                    self.extra_mistakes -= 1;
                 }
             } else {
                 self.done -= 1;

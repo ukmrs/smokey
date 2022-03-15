@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.4 - 15.03.2022
+
+### Changes
+* Extras now count as mistakes
+* Changed structopt to clap
+
 ## v0.3.3 - 10.03.2022
 
 ### Changes
