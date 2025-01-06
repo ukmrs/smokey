@@ -327,8 +327,11 @@ mod tests {
 
     #[test]
     fn test_prep() {
-        let mut cfg = TypingTestConfig::default();
-        cfg.length = 200;
+        let cfg = TypingTestConfig {
+            length: 200,
+            ..Default::default()
+        };
+
         let mut words = 1;
         let mut char_count = 0;
 
@@ -342,6 +345,7 @@ mod tests {
                     char_count += 1;
                 }
             }
+
             // there can be space at the end and I dont care for it
             assert!(char_count <= LIMIT + 1);
             char_count = 0;

@@ -88,7 +88,7 @@ mod tests {
         app
     }
 
-    fn generate_key_events_passing_standart_test<'a>(app: &App) -> Vec<KeyEvent> {
+    fn generate_key_events_passing_standart_test(app: &App) -> Vec<KeyEvent> {
         let mut kv = vec![];
 
         for a in &app.test.active {
@@ -157,14 +157,18 @@ mod tests {
     // this tests are hardware/os dependent
     // which make them potentially bad
     fn wpm_test_setup(wpm: f64) {
-        let delay = wpm_to_char_delay(wpm);
+        use crate::settings::TypingTestConfig;
 
+        let delay = wpm_to_char_delay(wpm);
         let mut app = get_test_app();
 
-        use crate::settings::TypingTestConfig;
-        let mut cfg = TypingTestConfig::default();
-        cfg.length = 500;
+        let cfg = TypingTestConfig {
+            length: 500,
+            ..Default::default()
+        };
+
         app.test.reset(&cfg);
+
         let key_events = generate_key_events_passing_standart_test(&app);
 
         for kv in key_events {

@@ -467,10 +467,14 @@ mod tests {
     }
 
     fn setup_new_test() -> TestState<'static> {
-        let mut config = TypingTestConfig::default();
-        config.length = 100;
+        let config = TypingTestConfig {
+            length: 100,
+            ..Default::default()
+        };
+
         let mut test = TestState::default();
         test.reset(&config);
+
         test
     }
 
