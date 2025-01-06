@@ -19,7 +19,7 @@ use crate::{application::App, Term};
 // re-exports
 pub use post::draw_post;
 pub use settings::draw_settings;
-pub use typer::{draw_test, draw_test_and_update};
+pub use typer::draw_test_and_update;
 
 /// Signature of a function responsible for drawing to the terminal
 pub type Painter = fn(&mut Term, &mut App);

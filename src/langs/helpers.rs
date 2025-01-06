@@ -5,7 +5,7 @@ pub trait SpanIntake {
     fn push_styled_char(&mut self, c: char, color: Color);
 }
 
-impl<'a> SpanIntake for Vec<Span<'a>> {
+impl SpanIntake for Vec<Span<'_>> {
     fn push_styled_char(&mut self, c: char, color: Color) {
         self.push(Span::styled(c.to_string(), color.fg()));
     }
