@@ -81,7 +81,7 @@ impl PunctuationInsertFrequency {
                     protoplast.push((Punctuation::InBetweener(InnerWord::Symbol), 71));
                 }
                 TestMod::Capitalization => {
-                    ()
+                    
                 }
             }
         }
