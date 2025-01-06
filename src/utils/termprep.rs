@@ -70,7 +70,7 @@ fn cleanup_terminal() {
 
 // would drop work?
 
-fn panic_hook(panic_info: &panic::PanicInfo) {
+fn panic_hook(panic_info: &panic::PanicHookInfo) {
     cleanup_terminal();
     let msg = match panic_info.payload().downcast_ref::<String>() {
         Some(s) => format!("p! {}", s),
