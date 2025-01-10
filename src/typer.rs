@@ -128,7 +128,7 @@ pub struct TestState<'a> {
     pub colors: TestColors,
 }
 
-impl<'a> Default for TestState<'a> {
+impl Default for TestState<'_> {
     fn default() -> Self {
         TestState {
             up: vec![],
@@ -166,7 +166,7 @@ impl<'a> Default for TestState<'a> {
     }
 }
 
-impl<'a> TestState<'a> {
+impl TestState<'_> {
     pub fn with_colors(colors: TestColors) -> Self {
         Self {
             colors,
@@ -467,10 +467,14 @@ mod tests {
     }
 
     fn setup_new_test() -> TestState<'static> {
-        let mut config = TypingTestConfig::default();
-        config.length = 100;
+        let config = TypingTestConfig {
+            length: 100,
+            ..Default::default()
+        };
+
         let mut test = TestState::default();
         test.reset(&config);
+
         test
     }
 

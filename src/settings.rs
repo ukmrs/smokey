@@ -23,6 +23,7 @@ lazy_static! {
         ("punctuation", TestMod::Punctuation),
         ("numbers", TestMod::Numbers),
         ("symbols", TestMod::Symbols),
+        ("capitalization", TestMod::Capitalization),
     ]
     .iter()
     .copied()
@@ -34,6 +35,7 @@ lazy_static! {
         (0b00000001, TestMod::Punctuation),
         (0b00000010, TestMod::Numbers),
         (0b00000100, TestMod::Symbols),
+        (0b00001000, TestMod::Capitalization),
     ]
     .iter()
     .copied()
@@ -67,6 +69,7 @@ pub enum TestMod {
     Punctuation,
     Numbers,
     Symbols,
+    Capitalization,
 }
 
 impl TestMod {
@@ -75,6 +78,7 @@ impl TestMod {
             0b00000001 => TestMod::Punctuation,
             0b00000010 => TestMod::Numbers,
             0b00000100 => TestMod::Symbols,
+            0b00001000 => TestMod::Capitalization,
             _ => unreachable!(),
         }
     }
@@ -86,6 +90,7 @@ impl fmt::Display for TestMod {
             Self::Punctuation => write!(f, "!?"),
             Self::Numbers => write!(f, "17"),
             Self::Symbols => write!(f, "#$"),
+            Self::Capitalization => write!(f, "Aa"),
         }
     }
 }
@@ -282,7 +287,7 @@ impl Default for Settings {
         let mod_list: Vec<String> = TEST_MODS.left_values().map(|&x| x.to_string()).collect();
         let test_cfg = TypingTestConfig::default();
         let mut info_cache: InfoCache = HashMap::new();
-        let word_count = count_lines_from_path(&test_cfg.get_words_file_path()).unwrap();
+        let word_count = count_lines_from_path(test_cfg.get_words_file_path()).unwrap();
 
         // TODO
         // This code is not only ass but also a dupe

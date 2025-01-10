@@ -2,7 +2,7 @@ mod helpers;
 mod punctuation;
 
 use crate::colorscheme::ToForeground;
-use crate::settings::{TestVariant, TypingTestConfig};
+use crate::settings::{TestMod, TestVariant, TypingTestConfig};
 use crate::typer::TestColors;
 use helpers::{Capitalize, SpanIntake};
 use punctuation::{InnerWord, Punctuation, PunctuationInsertFrequency};
@@ -158,10 +158,41 @@ fn prepare_modded_test<'a>(
 
     let mut rng = thread_rng();
 
-    // setup capitalazion for Punctuation::End
-    let mut capitalize = Capitalize::default();
-    capitalize.signal(); // start off with a capital letter
-    capitalize.capitalize();
+    struct Capitalizer {
+        opt_capitalize: Option<Capitalize>,
+    }
+
+    impl Capitalizer {
+        fn setup(&mut self) {
+            self.opt_capitalize = Some(Capitalize::default());
+            self.signal(); // start off with a capital letter
+            self.capitalize();
+        }
+
+        fn signal(&mut self) -> Option<()> {
+            if let Some(c) = &mut self.opt_capitalize {
+                c.signal();
+            }
+
+            None
+        }
+
+        fn capitalize(&mut self) -> Option<bool> {
+            if let Some(c) = &mut self.opt_capitalize {
+                return Some(c.capitalize());
+            }
+
+            None
+        }
+    }
+
+    let mut capitalizer = Capitalizer {
+        opt_capitalize: None,
+    };
+
+    if config.mods.contains(&TestMod::Capitalization) {
+        capitalizer.setup();
+    }
 
     // variables signaling variety of options of inserting
     // stuff into the text
@@ -187,7 +218,7 @@ fn prepare_modded_test<'a>(
             }
 
             Punctuation::End(c) => {
-                capitalize.signal();
+                capitalizer.signal();
                 begin = None;
                 end = Some(c);
                 count += 1;
@@ -222,13 +253,16 @@ fn prepare_modded_test<'a>(
         // the part where actual word is inserted
         // First letter
         let mut iter_chars = word.chars();
-        if capitalize.capitalize() {
-            let upper = iter_chars
-                .next()
-                .expect("word should never be empty")
-                .to_uppercase();
-            for upper_char in upper {
-                tmp[0].push_styled_char(upper_char, colors.todo);
+
+        if let Some(b) = capitalizer.capitalize() {
+            if b {
+                let upper = iter_chars
+                    .next()
+                    .expect("word should never be empty")
+                    .to_uppercase();
+                for upper_char in upper {
+                    tmp[0].push_styled_char(upper_char, colors.todo);
+                }
             }
         }
 
@@ -293,8 +327,11 @@ mod tests {
 
     #[test]
     fn test_prep() {
-        let mut cfg = TypingTestConfig::default();
-        cfg.length = 200;
+        let cfg = TypingTestConfig {
+            length: 200,
+            ..Default::default()
+        };
+
         let mut words = 1;
         let mut char_count = 0;
 
@@ -308,6 +345,7 @@ mod tests {
                     char_count += 1;
                 }
             }
+
             // there can be space at the end and I dont care for it
             assert!(char_count <= LIMIT + 1);
             char_count = 0;

@@ -25,7 +25,7 @@ pub struct App<'t> {
     pub is_alive: bool,
 }
 
-impl<'t> App<'t> {
+impl App<'_> {
     /// returns App instance with initialized test
     /// basically ready to use
     /// perhaps this will become the new function
@@ -104,7 +104,7 @@ impl<'t> App<'t> {
     }
 }
 
-impl<'t> Default for App<'t> {
+impl Default for App<'_> {
     /// Creates App instance
     /// the test isnt initialized though
     fn default() -> Self {
