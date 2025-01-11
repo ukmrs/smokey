@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.0 - 11.01.2024
+
+### Features
+* Capitalization Turned Into Separate Modifier | [PsychedelicShayna](https://github.com/PsychedelicShayna)
+
+
 ## v0.3.4 - 15.03.2022
 
 ### Changes
